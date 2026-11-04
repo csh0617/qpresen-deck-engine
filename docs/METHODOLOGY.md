@@ -166,3 +166,6 @@ POST deck-engine { action: "build", brief }                      → { jobId }  
 - `image.prompt` → 이미지 생성 API 연동(현재는 테마 아트로 대체)
 - 비전 리뷰(`reviewSlide`) 결과를 `fix` 패스에 자동 연결(현재는 로컬 build.ts에서만)
 - 슬라이드 간 전환 효과 옵션(현재 크로스페이드)
+
+## 8. Qpresen 연동 포맷 (검증 완료 2026-11-05)
+Qpresen 대시보드는 업로드된 HTML을 **`<!-- slide-title: slide-NN -->` 구분자 + 완전한 HTML 문서 + `<!-- SLIDE BREAK -->`** 로 이어 붙인 파일로 인식해 장별로 분할·재생한다(플레이어 셸 불필요, `page_count`=문서 수, `first_slide`=1번 문서에서 `<style id="pretendard-embedded">` 내용을 비운 것). 각 문서는 `.stage` 루트 + `window.DECK={n,total}` + `<meta name="qp-standalone-part" content="1">`. 엔진은 `qpresenBundle(parts)`로 이 형식을 만들고(폰트는 CDN 링크, 장당 ~80KB), 오프라인용 단일파일 플레이어(`deck.html`, 폰트 내장)는 별도로 낸다. 실제 업로드 테스트: 27장 인식·재생·넘김 정상.

@@ -64,7 +64,9 @@ export default function DeckStudio() {
     if (!result || !comment.trim()) return; const s = result.spec?.slides?.[cur - 1]; setBusy(true); setErr(null);
     try { await callEngine({ action: 'fix', jobId, slideId: s.id, comment, issues: [{ sev: 'warn', what: comment }] }); const d = await callEngine({ action: 'render', jobId, register: false }); setResult({ ...d, fileId: result.fileId }); setComment(''); } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
   }
-  function download() { if (!result?.html) return; const blob = new Blob([result.html], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${result.spec?.meta?.title || 'deck'}.html`; a.click(); }
+  function download(kind: 'player' | 'qpresen' = 'player') { const html = kind === 'player' ? result?.html : result?.qpresenHtml; if (!html) return; const blob = new Blob([html], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${result.spec?.meta?.title || 'deck'}${kind === 'qpresen' ? '.qpresen' : ''}.html`; a.click(); }
+  /** Fallback: register through the normal upload path (same as drag&drop) if the engine could not insert into pdf_files. Wire `uploadHtmlFile` to the dashboard's existing upload handler. */
+  async function uploadViaDashboard() { if (!result?.qpresenHtml) return; const file = new File([result.qpresenHtml], `${result.spec?.meta?.title || 'deck'}.html`, { type: 'text/html' }); const anyWin = window as any; if (typeof anyWin.qpresenUploadFile === 'function') { await anyWin.qpresenUploadFile(file); } else { download('qpresen'); } }
   const srcdoc = result?.html ? result.html.replace('<html lang=', `<html data-start="${cur}" lang=`) : '';
 
   return (
@@ -113,7 +115,7 @@ export default function DeckStudio() {
           {result && (
             <div className="bg-white rounded-2xl border p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2"><h2 className="font-bold">결과 — {result.pageCount}장 · {(result.bytes / 1048576).toFixed(1)}MB {result.fileId && <span className="text-green-700 text-sm font-normal">· 내 자료에 저장됨</span>}</h2>
-                <div className="flex gap-2"><button onClick={download} className="px-3 py-2 rounded-lg border text-sm">HTML 다운로드</button>{result.fileId && <a href="/dashboard" className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">발표하기 →</a>}</div></div>
+                <div className="flex gap-2"><button onClick={() => download('player')} className="px-3 py-2 rounded-lg border text-sm">오프라인 HTML</button><button onClick={() => download('qpresen')} className="px-3 py-2 rounded-lg border text-sm">Qpresen용 HTML</button>{result.fileId ? <a href="/dashboard" className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">발표하기 →</a> : <button onClick={uploadViaDashboard} className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">내 자료에 올리기</button>}</div></div>
               <div className="aspect-video rounded-xl overflow-hidden border bg-black"><iframe ref={frameRef} title="deck" className="w-full h-full" srcDoc={srcdoc} allow="fullscreen" /></div>
               <div className="flex items-center gap-2 flex-wrap text-sm"><span className="text-gray-500">현재 {cur}/{result.pageCount}장 · {result.titles?.[cur - 1]}</span>
                 <div className="ml-auto flex gap-2"><button onClick={() => doFeedback(5)} className="px-3 py-1.5 rounded-lg border">👍 좋아요</button><button onClick={() => doFeedback(2)} className="px-3 py-1.5 rounded-lg border">👎 별로</button></div></div>
