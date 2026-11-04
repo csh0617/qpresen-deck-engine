@@ -1,0 +1,2 @@
+{ "compilerOptions": { "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler", "allowImportingTsExtensions": true, "noEmit": true, "strict": true, "skipLibCheck": true, "types": ["node"], "lib": ["ES2022", "DOM"] },
+  "include": ["engine/**/*.ts", "supabase/functions/deck-engine/index.ts", "scripts/deno-shim.d.ts"] }

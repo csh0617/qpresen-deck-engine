@@ -1,0 +1,125 @@
+/* Deck pipeline: brief → plan → fill → spec → render. Runtime-agnostic (Node/Deno). */
+import { chat, extractJson, type ProviderConfig } from './provider.ts';
+import { PLAN_SYSTEM, FILL_SYSTEM, FIX_SYSTEM, REVIEW_SYSTEM, DISTILL_SYSTEM, rulesBlock } from './prompts.ts';
+import type { DeckSpec, Slide, Purpose, ThemeName } from '../renderer/types.ts';
+import { validateSpec } from '../renderer/validate.ts';
+
+export interface Brief {
+  topic: string;                 // 주제/제목 요청
+  purpose?: Purpose;
+  audience?: string;
+  durationMin?: number;
+  slideCount?: number;
+  tone?: 'formal' | 'friendly' | 'bold' | 'academic';
+  theme?: ThemeName;
+  lang?: string;
+  presenter?: { name: string; org?: string };
+  event?: string; date?: string; place?: string;
+  materials?: string;            // 붙여넣은 자료/메모 (최대 ~40K자)
+  extra?: string;                // 추가 지시
+  brand?: string;                // #hex
+}
+
+export interface Rule { scope: 'plan' | 'fill' | 'render' | 'all'; text: string; weight?: number }
+
+export interface PlanSlide { id: string; section?: string | null; type: string; title: string; sub?: string; intent?: string; content_hints?: string[]; visual_hint?: string; t?: number }
+export interface Plan { meta: DeckSpec['meta']; sections: DeckSpec['sections']; slides: PlanSlide[] }
+
+export interface PipelineOptions {
+  provider: ProviderConfig;
+  rules?: Rule[];
+  batchSize?: number;            // slides per fill call
+  concurrency?: number;
+  onProgress?: (e: { stage: string; done?: number; total?: number; msg?: string }) => void;
+  log?: (m: string) => void;
+}
+
+function briefText(b: Brief): string {
+  const lines = [
+    `주제/요청: ${b.topic}`,
+    b.purpose ? `목적(purpose): ${b.purpose}` : '', b.audience ? `청중: ${b.audience}` : '',
+    b.durationMin ? `발표 시간: ${b.durationMin}분` : '', b.slideCount ? `요청 장수: ${b.slideCount}장 (반드시 이 장수)` : '',
+    b.tone ? `톤: ${b.tone}` : '', b.theme ? `테마: ${b.theme}` : '', b.lang ? `언어: ${b.lang}` : '언어: ko',
+    b.presenter ? `발표자: ${b.presenter.name}${b.presenter.org ? ' (' + b.presenter.org + ')' : ''}` : '',
+    b.event ? `행사: ${b.event}` : '', b.date ? `일자: ${b.date}` : '', b.place ? `장소: ${b.place}` : '',
+    b.extra ? `추가 지시: ${b.extra}` : '',
+  ].filter(Boolean);
+  let t = lines.join('\n');
+  if (b.materials) t += `\n\n[참고 자료 — 사실·수치는 여기서만 가져올 것]\n${b.materials.slice(0, 60000)}`;
+  return t;
+}
+
+export async function planDeck(brief: Brief, opt: PipelineOptions): Promise<Plan> {
+  opt.onProgress?.({ stage: 'plan', msg: '덱 구조 설계 중' });
+  const system = PLAN_SYSTEM + rulesBlock(opt.rules || [], 'plan');
+  const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: briefText(brief) + '\n\n위 브리프로 덱 플랜 JSON을 작성하라.' }], maxTokens: 12000, temperature: 0.5 });
+  opt.log?.(`[plan] ${r.model} ${r.ms}ms`);
+  const plan = extractJson<Plan>(r.text);
+  if (!plan.slides?.length) throw new Error('plan has no slides');
+  plan.slides.forEach((s, i) => { if (!s.id) s.id = 'p' + String(i + 1).padStart(2, '0'); });
+  plan.sections = plan.sections || [];
+  if (brief.theme) plan.meta.theme = brief.theme;
+  if (brief.brand) (plan.meta as any).brand = brief.brand;
+  if (brief.presenter && !plan.meta.presenter) plan.meta.presenter = brief.presenter;
+  if (brief.slideCount && plan.slides.length !== brief.slideCount) opt.log?.(`[plan] requested ${brief.slideCount} got ${plan.slides.length}`);
+  return plan;
+}
+
+export async function fillSlides(brief: Brief, plan: Plan, ids: string[], opt: PipelineOptions): Promise<Slide[]> {
+  const system = FILL_SYSTEM + rulesBlock(opt.rules || [], 'fill');
+  const planText = JSON.stringify({ meta: plan.meta, sections: plan.sections, outline: plan.slides.map(s => ({ id: s.id, section: s.section, type: s.type, title: s.title })) });
+  const targets = plan.slides.filter(s => ids.includes(s.id));
+  const user = `${briefText(brief)}\n\n[덱 플랜 요약]\n${planText}\n\n[이번에 작성할 장 — 각 장의 완전한 스펙을 써라]\n${JSON.stringify(targets, null, 1)}`;
+  const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: user }], maxTokens: Math.min(16000, 2600 * targets.length + 1500), temperature: 0.4 });
+  opt.log?.(`[fill ${ids.join(',')}] ${r.model} ${r.ms}ms`);
+  const out = extractJson<{ slides: Slide[] }>(r.text);
+  const slides = (out.slides || []).filter(Boolean);
+  // ensure order + presence; fall back to a minimal slide from plan
+  return ids.map(id => {
+    const found = slides.find(s => s.id === id);
+    if (found) return found;
+    const p = targets.find(t => t.id === id)!;
+    opt.log?.(`[fill] missing ${id}, using fallback`);
+    return { id, section: p.section || undefined, title: p.title, sub: p.sub, notes: { t: p.t || 40, s: p.intent || '' }, body: { type: 'bullets-visual', bullets: (p.content_hints || [p.intent || p.title]).slice(0, 5).map(h => ({ title: h.slice(0, 40) })) } } as Slide;
+  });
+}
+
+export async function buildSpec(brief: Brief, opt: PipelineOptions, existingPlan?: Plan): Promise<{ spec: DeckSpec; plan: Plan; warnings: string[] }> {
+  const plan = existingPlan || await planDeck(brief, opt);
+  const batch = opt.batchSize || 3, conc = opt.concurrency || 4;
+  const ids = plan.slides.map(s => s.id);
+  const batches: string[][] = []; for (let i = 0; i < ids.length; i += batch) batches.push(ids.slice(i, i + batch));
+  const results: Record<string, Slide> = {}; let done = 0;
+  opt.onProgress?.({ stage: 'fill', done: 0, total: ids.length });
+  let cursor = 0;
+  const worker = async () => { while (cursor < batches.length) { const b = batches[cursor++]; try { const ss = await fillSlides(brief, plan, b, opt); ss.forEach(s => results[s.id!] = s); } catch (e: any) { opt.log?.(`[fill] batch ${b.join(',')} failed: ${e.message}`); b.forEach(id => { const p = plan.slides.find(x => x.id === id)!; results[id] = { id, section: p.section || undefined, title: p.title, sub: p.sub, notes: { t: p.t || 40, s: p.intent || '' }, body: { type: 'bullets-visual', bullets: (p.content_hints || [p.title]).slice(0, 5).map(h => ({ title: h.slice(0, 40) })) } } as Slide; }); } done += b.length; opt.onProgress?.({ stage: 'fill', done, total: ids.length }); } };
+  await Promise.all(Array.from({ length: Math.min(conc, batches.length) }, worker));
+  const slides = ids.map(id => results[id]);
+  // section ids: keep only valid
+  const secIds = new Set((plan.sections || []).map(s => s.id));
+  slides.forEach(s => { if (s.section && !secIds.has(s.section)) s.section = undefined; });
+  const raw: DeckSpec = { meta: plan.meta, sections: plan.sections, slides };
+  const { spec, warnings } = validateSpec(raw);
+  return { spec, plan, warnings };
+}
+
+export async function fixSlide(slide: Slide, issues: { code?: string; sev?: string; what?: string; extra?: any; el?: string; fix?: string }[], opt: PipelineOptions, specMeta?: DeckSpec['meta']): Promise<Slide> {
+  const user = `[덱 메타] ${JSON.stringify(specMeta || {})}\n[현재 슬라이드 스펙]\n${JSON.stringify(slide, null, 1)}\n\n[지적 사항]\n${issues.map(i => `- ${i.sev || ''} ${i.code || ''} ${i.el || ''} ${i.extra != null ? '(' + i.extra + ')' : ''} ${i.what || ''} ${i.fix ? '→ ' + i.fix : ''}`).join('\n')}\n\n수정된 슬라이드 JSON만 출력.`;
+  const r = await chat(opt.provider, { system: FIX_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: 6000, temperature: 0.3 });
+  opt.log?.(`[fix ${slide.id}] ${r.model} ${r.ms}ms`);
+  const fixed = extractJson<Slide>(r.text);
+  if (!fixed || !fixed.body) return slide;
+  fixed.id = slide.id; return fixed;
+}
+
+export async function reviewSlide(pngBase64: string, slide: Slide, opt: PipelineOptions): Promise<any> {
+  const r = await chat(opt.provider, { system: REVIEW_SYSTEM, messages: [{ role: 'user', content: [{ type: 'text', text: `슬라이드 ${slide.id} (${(slide.body as any).type}) "${slide.title}" 스크린샷을 평가하라.` }, { type: 'image', mime: 'image/jpeg', base64: pngBase64 }] }], maxTokens: 2000, temperature: 0.2 });
+  return extractJson(r.text);
+}
+
+export async function distillRules(feedback: any[], existing: Rule[], opt: PipelineOptions): Promise<Rule[]> {
+  const user = `[기존 규칙]\n${existing.map(r => `- (${r.scope}) ${r.text}`).join('\n') || '(없음)'}\n\n[누적 피드백]\n${JSON.stringify(feedback).slice(0, 60000)}\n\n새 규칙 JSON만 출력.`;
+  const r = await chat(opt.provider, { system: DISTILL_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: 3000, temperature: 0.2 });
+  const out = extractJson<{ rules: Rule[] }>(r.text);
+  return (out.rules || []).filter(x => x && x.text);
+}
