@@ -4,7 +4,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
-import { renderDeck } from './renderer/index.ts';
+import { renderDeck, qpresenBundle, firstSlidePayload } from './renderer/index.ts';
 import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from './llm/pipeline.ts';
 import { listModels, type ProviderConfig } from './llm/provider.ts';
 import { validateSpec } from './renderer/validate.ts';
@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200, origin = '*') => new Response(JSON.st
 function provider(): ProviderConfig {
   const kind = (Deno.env.get('LLM_KIND') || 'openai') as 'openai' | 'anthropic';
   const apiKey = kind === 'anthropic' ? (Deno.env.get('ANTHROPIC_API_KEY') || '') : (Deno.env.get('BIZROUTER_API_KEY') || '');
-  return { kind, apiKey, baseUrl: Deno.env.get('LLM_BASE_URL') || (kind === 'anthropic' ? 'https://api.anthropic.com' : 'https://bizrouter.ai/api/v1'), model: Deno.env.get('LLM_MODEL') || (kind === 'anthropic' ? 'claude-sonnet-5' : 'anthropic/claude-sonnet-5'), fallbackModels: (Deno.env.get('LLM_FALLBACKS') || '').split(',').map(s => s.trim()).filter(Boolean), timeoutMs: 120000, maxRetries: 1 };
+  return { kind, apiKey, baseUrl: Deno.env.get('LLM_BASE_URL') || (kind === 'anthropic' ? 'https://api.anthropic.com' : 'https://bizrouter.ai/api/v1'), model: Deno.env.get('LLM_MODEL') || (kind === 'anthropic' ? 'claude-sonnet-5-5' : 'anthropic/claude-sonnet-5.5'), fallbackModels: (Deno.env.get('LLM_FALLBACKS') || (kind === 'anthropic' ? '' : 'anthropic/claude-opus-5.5,anthropic/claude-haiku-5.5')).split(',').map(s => s.trim()).filter(Boolean), timeoutMs: 120000, maxRetries: 1 };
 }
 function qrSvg(text: string): string {
   const qr = qrcode(0, 'M'); qr.addData(text); qr.make();
@@ -103,21 +103,25 @@ Deno.serve(async (req: Request) => {
       // order slides by plan, drop missing
       if (plan) { const map = new Map<string, any>((spec.slides || []).map((s: any) => [s.id, s])); spec.slides = plan.slides.map(p => map.get(p.id)).filter(Boolean); }
       const { spec: valid, warnings } = validateSpec(spec);
-      const res = renderDeck(valid, { fontBase64: await getFontBase64(), qr: qrSvg });
+      // Qpresen-native bundle (slides concatenated with slide-title/SLIDE BREAK markers, CDN font) is what gets stored & registered;
+      // the offline single-file player (embedded font) is returned for download when requested.
+      const wantPlayer = body.includeHtml !== false;
+      const res = renderDeck(valid, { fontBase64: wantPlayer ? await getFontBase64() : undefined, qr: qrSvg, partsFontMode: 'cdn', partsOnly: !wantPlayer });
+      const bundle = qpresenBundle(res.parts);
       const title = safeName(valid.meta.title);
       const path = `${userId}/deck-engine/${jobId || Date.now()}.html`;
-      const bytes = new TextEncoder().encode(res.html);
+      const bytes = new TextEncoder().encode(bundle);
       const up = await db.storage.from('pdfs').upload(path, bytes, { contentType: 'text/html; charset=utf-8', upsert: true });
       let signedUrl: string | null = null;
       if (!up.error) { const s = await db.storage.from('pdfs').createSignedUrl(path, 60 * 60 * 24); signedUrl = s.data?.signedUrl || null; }
       let fileId: string | null = null;
       if (body.register !== false) {
-        const ins = await db.from('pdf_files').insert({ user_id: userId, name: title, file_name: `${title}.html`, file_path: path, file_type: 'html', page_count: res.parts.length, file_size: bytes.length, current_page: 1, auto_fullscreen: false, first_slide: { title: res.titles[0], css: '', html: res.parts[0] } }).select('id').single();
+        const ins = await db.from('pdf_files').insert({ user_id: userId, name: title, file_name: `${title}.html`, file_path: path, file_type: 'html', page_count: res.parts.length, file_size: bytes.length, current_page: 1, auto_fullscreen: false, first_slide: firstSlidePayload(res.parts[0], res.titles[0]) }).select('id').single();
         if (!ins.error) fileId = ins.data.id; else log('pdf_files insert failed: ' + ins.error.message);
       }
       if (jobId) await touch(jobId, { status: 'done', spec: valid, storage_path: path, page_count: res.parts.length, file_id: fileId, lint: { warnings } });
-      const includeHtml = body.includeHtml !== false && bytes.length < 9_000_000;
-      return json({ jobId, fileId, path, signedUrl, pageCount: res.parts.length, titles: res.titles, sections: res.sections, warnings, bytes: bytes.length, html: includeHtml ? res.html : undefined, spec: valid }, 200, allow);
+      const includeHtml = wantPlayer && res.html.length < 9_000_000;
+      return json({ jobId, fileId, path, signedUrl, pageCount: res.parts.length, titles: res.titles, sections: res.sections, warnings, bytes: bytes.length, html: includeHtml ? res.html : undefined, qpresenHtml: bytes.length < 6_000_000 ? bundle : undefined, spec: valid }, 200, allow);
     }
 
     if (action === 'status') {

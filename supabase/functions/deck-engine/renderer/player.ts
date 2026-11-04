@@ -10,7 +10,7 @@ export interface PlayerInput {
 export function renderPlayer(inp: PlayerInput): string {
   const { spec } = inp; const m = spec.meta; const N = inp.pages.length;
   const theme = m.theme || 'signature-white';
-  const data = { total: N, titles: inp.titles, notes: inp.notes, sections: inp.sections, font: inp.fontCss, pages: inp.pages, thumbs: inp.thumbs || [], meta: { title: m.title, subtitle: m.subtitle || '', presenter: m.presenter?.name || '', date: m.date || '', event: m.event || '' } };
+  const data = { total: N, titles: inp.titles, notes: inp.notes, sections: inp.sections, font: inp.fontCss, pages: inp.pages, thumbs: inp.thumbs || [], types: spec.slides.map(s => s.body?.type || ''), meta: { title: m.title, subtitle: m.subtitle || '', presenter: m.presenter?.name || '', date: m.date || '', event: m.event || '' } };
   const json = JSON.stringify(data).replace(/<\//g, '<\\/').replace(/<!--/g, '<\\!--');
   const title = esc(m.title);
   return `<!doctype html>
@@ -125,6 +125,8 @@ body.notes #notes{display:flex}
   function startClock(){ if(t0==null) t0=Date.now(); if(clk) return; clk=setInterval(function(){ var s=Math.floor((Date.now()-t0)/1000); document.getElementById('clock').innerHTML=pad(Math.floor(s/60))+':'+pad(s%60)+'<small>경과</small>'; },500); }
   function key(k){
     if(k==='n'||k==='N') toggleNotes();
+    else if(k==='h'||k==='H') toggleOv();
+    else if(k==='f'||k==='F') fullscreen();
     else if(k==='b'||k==='B'||k==='.') document.getElementById('black').classList.toggle('on');
     else if(k==='Escape'){ toggleOv(false); document.getElementById('help').classList.remove('on'); document.getElementById('black').classList.remove('on'); }
     else if(k==='?') document.getElementById('help').classList.toggle('on');
@@ -133,7 +135,7 @@ body.notes #notes{display:flex}
   var g=document.getElementById('ovg'), html='';
   (D.sections.length?D.sections:[['전체',1,N]]).forEach(function(s){
     html+='<h3>'+s[0]+'</h3><div class="grid">';
-    for(var i=s[1];i<=s[2];i++){ var th=D.thumbs[i-1]; html+='<a href="#s'+pad(i)+'" data-n="'+i+'">'+(th?'<img src="'+th+'" alt="">':'<div class="th"><b>SLIDE '+pad(i)+'</b><span>'+D.titles[i-1].replace(/</g,'&lt;')+'</span></div>')+'<span class="t"><b>'+pad(i)+'</b>'+D.titles[i-1].replace(/</g,'&lt;')+'</span></a>'; }
+    for(var i=s[1];i<=s[2];i++){ var th=D.thumbs[i-1]; html+='<a href="#s'+pad(i)+'" data-n="'+i+'">'+(th?'<img src="'+th+'" alt="">':'<div class="th"><b>SLIDE '+pad(i)+'</b><span>'+(D.types&&D.types[i-1]?D.types[i-1]:'')+'</span></div>')+'<span class="t"><b>'+pad(i)+'</b>'+D.titles[i-1].replace(/</g,'&lt;')+'</span></a>'; }
     html+='</div>';
   });
   g.innerHTML=html;
@@ -156,7 +158,7 @@ body.notes #notes{display:flex}
     else key(k);
   });
   window.addEventListener('hashchange',function(){ var m=location.hash.match(/^#s(\\d{2,3})$/); if(m) go(+m[1]); });
-  var m=location.hash.match(/^#s(\\d{2,3})$/); go(m?+m[1]:1); poke();
+  var m=location.hash.match(/^#s(\\d{2,3})$/); var ds=parseInt(document.documentElement.getAttribute('data-start')||'',10); go(m?+m[1]:(ds>0?ds:1)); poke();
   setTimeout(function(){ document.getElementById('hint').classList.add('off'); },6000);
 })();
 </script>

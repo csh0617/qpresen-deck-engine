@@ -358,9 +358,12 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 .a-proc.chev .st::after{display:none}
 .a-proc.circ .steps{position:relative}
 .a-proc.circ .st{align-items:center;text-align:center;border:none;box-shadow:none;background:transparent;min-height:0;padding:0}
-.a-proc.circ .st .big-ic{width:140px;height:140px;border-radius:50%;background:var(--f-100);color:var(--f);display:grid;place-items:center;border:6px solid var(--card);box-shadow:var(--shadow-lg);margin-bottom:8px}
-.a-proc.circ .st .big-ic .ic{width:58px;height:58px}
-.a-proc.circ .st::after{right:-30px;top:70px;translate:0 0}
+.a-proc.circ .st .big-ic{width:176px;height:176px;border-radius:50%;background:var(--f-100);color:var(--f-ink);display:grid;place-items:center;border:8px solid var(--card);box-shadow:var(--shadow-lg);margin-bottom:14px}
+.a-proc.circ .st .big-ic .ic{width:76px;height:76px}
+.a-proc.circ .st h3{font-size:28px}.a-proc.circ .st p{font-size:19px;max-width:260px;text-align:center}
+.a-proc.circ .steps::before{content:'';position:absolute;left:8%;right:8%;top:88px;height:4px;border-radius:2px;background:var(--line-2);z-index:0}
+.a-proc.circ .st{z-index:1}
+.a-proc.circ .st::after{right:-30px;top:76px;translate:0 0}
 .a-proc .result{display:flex;align-items:center;gap:16px;padding:22px 30px;border-radius:18px;background:var(--f-ink);color:#fff;font-size:22px;font-weight:700;box-shadow:var(--shadow-lg)}
 .a-proc .result .ic{width:28px;height:28px}
 .a-proc .steps.n5 .st h3,.a-proc .steps.n6 .st h3{font-size:21px}.a-proc .steps.n6 .st p{font-size:16px}
@@ -541,11 +544,12 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 /* team */
 .a-team{height:100%;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:22px;align-content:center}
 .a-team .mb{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:34px 26px 30px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
-.a-team .mb .avatar{width:112px;height:112px;font-size:44px}
-.a-team .mb .img{width:112px;height:112px;border-radius:50%;box-shadow:none}
-.a-team .mb h3{font-size:25px;font-weight:800;color:var(--ink);margin-top:6px}
+.a-team .mb .avatar{width:136px;height:136px;font-size:52px}
+.a-team .mb .img{width:136px;height:136px;border-radius:50%;box-shadow:none}
+.a-team .mb{padding:44px 30px 38px;min-height:400px;justify-content:center}
+.a-team .mb h3{font-size:28px;font-weight:800;color:var(--ink);margin-top:8px}
 .a-team .mb .role{font-size:16px;font-weight:800;color:var(--f-ink);letter-spacing:.06em}
-.a-team .mb p{font-size:16px;color:var(--muted);line-height:1.5}
+.a-team .mb p{font-size:18px;color:var(--muted);line-height:1.5;max-width:300px}
 .a-team .mb .tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:4px}
 
 /* checklist */

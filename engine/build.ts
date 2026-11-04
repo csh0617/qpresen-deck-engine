@@ -18,7 +18,7 @@ const doFix = !flags.includes('--no-fix'); const doReview = flags.includes('--re
 const provider: ProviderConfig = {
   kind: (process.env.LLM_KIND as any) || 'openai', apiKey: process.env.LLM_API_KEY || process.env.BIZROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || '',
   baseUrl: process.env.LLM_BASE_URL || (process.env.LLM_KIND === 'anthropic' ? 'https://api.anthropic.com' : 'https://bizrouter.ai/api/v1'),
-  model: process.env.LLM_MODEL || 'anthropic/claude-sonnet-5', fallbackModels: (process.env.LLM_FALLBACKS || '').split(',').filter(Boolean),
+  model: process.env.LLM_MODEL || 'anthropic/claude-sonnet-5.5', fallbackModels: (process.env.LLM_FALLBACKS || '').split(',').filter(Boolean),
 };
 if (!provider.apiKey) { console.error('LLM_API_KEY missing'); process.exit(1); }
 

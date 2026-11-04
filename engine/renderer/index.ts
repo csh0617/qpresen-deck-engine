@@ -8,12 +8,27 @@ export * from './types.ts';
 export { validateSpec } from './validate.ts';
 export { FONT_PLACEHOLDER } from './slide.ts';
 
-export function fontCss(base64?: string): string {
-  if (!base64) return `<style>/* system fonts */</style>`;
-  return `<style>@font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:block;src:url(data:font/woff2;base64,${base64}) format('woff2')}</style>`;
+export const PRETENDARD_CDN_CSS = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+
+/** Font block for a slide document. embed: base64 woff2 (offline). cdn: jsDelivr dynamic-subset css (online, tiny). none: system fonts. */
+export function fontCss(base64?: string, mode: 'embed' | 'cdn' | 'none' = base64 ? 'embed' : 'none'): string {
+  if (mode === 'cdn') return `<link rel="stylesheet" href="${PRETENDARD_CDN_CSS}"><style id="pretendard-embedded"></style>`;
+  if (mode === 'none' || !base64) return `<style id="pretendard-embedded">/* system fonts */</style>`;
+  return `<style id="pretendard-embedded">@font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:block;src:url(data:font/woff2;base64,${base64}) format('woff2')}</style>`;
 }
 
-export interface RenderDeckOptions extends RenderOptions { qr?: (text: string) => string }
+/** Qpresen upload format: full slide documents concatenated with slide-title / SLIDE BREAK markers (Qpresen splits and plays them itself). */
+export function qpresenBundle(parts: string[]): string {
+  return parts.map((p, i) => `<!-- slide-title: slide-${String(i + 1).padStart(2, '0')} -->\n${p.trim()}\n`).join('\n\n<!-- SLIDE BREAK -->\n\n');
+}
+
+/** first_slide payload the Qpresen dashboard stores (font style emptied to save space). */
+export function firstSlidePayload(part: string, title: string): { title: string; css: string; html: string } {
+  const html = part.replace(/<style id="pretendard-embedded">[\s\S]*?<\/style>/, '<style id="pretendard-embedded"></style>').replace(/<link rel="stylesheet" href="[^"]*pretendard[^"]*">/, '');
+  return { title, css: '', html };
+}
+
+export interface RenderDeckOptions extends RenderOptions { qr?: (text: string) => string; partsFontMode?: 'embed' | 'cdn' | 'none' }
 
 /** Spec → per-slide documents + single-file player */
 export function renderDeck(specIn: DeckSpec, opts: RenderDeckOptions = {}): RenderResult {
@@ -41,6 +56,7 @@ export function renderDeck(specIn: DeckSpec, opts: RenderDeckOptions = {}): Rend
   }
   const font = fontCss(opts.fontBase64);
   const html = opts.partsOnly ? '' : renderPlayer({ spec, pages, titles, notes, sections, fontCss: font, thumbs: opts.thumbs });
-  const parts = pages.map(p => p.replace(FONT_PLACEHOLDER, opts.embedFontInParts === false ? '<style></style>' : font));
+  const partsFont = fontCss(opts.fontBase64, opts.partsFontMode || (opts.embedFontInParts === false ? 'none' : (opts.fontBase64 ? 'embed' : 'none')));
+  const parts = pages.map(p => p.replace(FONT_PLACEHOLDER, partsFont));
   return { html, parts, titles, notes, sections, warnings };
 }
