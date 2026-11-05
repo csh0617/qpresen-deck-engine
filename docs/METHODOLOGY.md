@@ -171,6 +171,16 @@ POST deck-engine { action: "build", brief }                      → { jobId }  
 | R4(기술) | `finish_reason=length`로 잘린 JSON | 잘림 감지 → 토큰 2배+compact 재요청, 그래도 실패하면 열린 괄호를 닫는 복구 파서 |
 | R4(기술) | `reasoning:{enabled:false}`(OpenRouter식)는 BizRouter에서 무시됨 | 네이티브 `thinking` 파라미터만 유효 — 프롬프트에 compact JSON 지시 추가(토큰 30%↓) |
 
+| R5(실서비스) | 배포 함수에서 병렬 fill 5개가 같은 job.spec을 덮어써 14장 중 3장만 남음 | fill 병합을 낙관적 동시성(progress.rev 스탬프 + 조건부 UPDATE + 재시도)으로 교체 → 14/14 |
+| R5(실서비스) | 실모델 IR 덱: 카드 5장(3열 2행)이 겹침, 매트릭스 점 size=3으로 거의 안 보임, 큰숫자 비교 카드가 작음, 허브 다이어그램 글자 작음 | 카드 행 수별 타이포(rows-2/3), size<12는 등급으로 간주해 24+4n px, 비교 카드 확대, 허브 노드 290×112·중심원 102 |
+| R5(피드백 루프) | 리뷰어 피드백 6건 → distill 7초 → 규칙 5개 생성(fill 2·plan 1·render 2) | render 규칙 2개는 렌더러에 반영(목차 ≤3개 확대, 사진 표지 메타 글자 밝기·그림자). fill/plan 규칙은 다음 생성부터 프롬프트에 자동 주입 |
+
+### 자체 성장 루프 (검증됨 2026-11-05)
+1. 생성 결과에 대한 평가가 `deck_feedback`에 쌓인다 — 사용자 👍/👎·코멘트(스튜디오), 린트 이슈(`fix` 호출 시), 리뷰어 코멘트(`feedback` action, source='reviewer').
+2. `distill` action이 미처리 피드백을 모델에 넘겨 **규칙(scope: plan/fill/render)**으로 환원해 `deck_rules`에 넣는다.
+3. plan/fill 규칙은 즉시 다음 생성의 시스템 프롬프트에 주입된다(`rulesBlock`). render 규칙은 렌더러 개선 백로그(사람이 CSS/레이아웃에 반영).
+4. 주기: 피드백 20건 이상 쌓일 때마다 distill 1회 권장(관리자 버튼 또는 cron). 규칙이 30개를 넘으면 weight 낮은 것부터 비활성화해 프롬프트 길이를 관리한다.
+
 ### 다음 라운드 후보(backlog)
 - `image.prompt` → BizRouter 이미지 모델(gemini-3-pro-image / gpt-image-2)로 표지·히어로·간지 이미지 생성 (가장 큰 체감 품질 향상 후보)
 - 실제 썸네일을 Edge 경로에서도 생성(클라이언트 캡처 또는 워커)

@@ -139,7 +139,7 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
       const items = b.items.map((it, i) => rail
         ? `<div class="it ${fclass(cycleAccent(i))}" ${rv(i, 'right', 110)}><span class="rn">${esc(it.numeral || R[i] || String(i + 1))}</span><div><h3>${rich(it.label)}</h3>${it.desc ? `<p>${rich(it.desc)}</p>` : ''}</div>${it.minutes || it.pages ? `<div class="m">${ic('clock')} ${it.minutes ? esc(it.minutes) + '분' : ''}${it.pages ? ' · ' + esc(it.pages) : ''}</div>` : ''}</div>`
         : `<div class="it ${fclass(cycleAccent(i))}" ${rv(i, 'up', 80)}><span class="num">${esc(it.numeral || R[i] || String(i + 1))}</span><div><h3>${rich(it.label)}</h3>${it.desc ? `<p>${rich(it.desc)}</p>` : ''}${it.minutes || it.pages ? `<div class="m">${ic('clock')} ${it.minutes ? esc(it.minutes) + '분' : ''} ${it.pages ? '· ' + esc(it.pages) : ''}</div>` : ''}</div></div>`).join('');
-      return { html: `<div class="a-agenda ${rail ? 'rail' : ''}" style="--cols:${cols}">${items}</div>` };
+      return { html: `<div class="a-agenda ${rail ? 'rail n' + n : ''}" style="--cols:${cols}">${items}</div>` };
     }
     case 'question': {
       const opts = (b.options || []).map((o, i) => `<li ${rv(i + 2, 'right')}><span class="num">${String.fromCharCode(65 + i)}</span>${rich(o)}</li>`).join('');
