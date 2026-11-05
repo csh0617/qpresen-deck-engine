@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
       if (!job?.spec) return json({ error: 'JOB_NOT_FOUND' }, 404, allow);
       const spec = job.spec as any; const slide = spec.slides.find((x: any) => x.id === slideId); if (!slide) return json({ error: 'SLIDE_NOT_FOUND' }, 404, allow);
       const dir = spec.meta?.direction; const dirText = dir ? `${dir.mood || ''} / ${dir.concept || ''}` : undefined;
-      const review = await reviewSlide(String(image), slide, { provider: richProvider(prov), log }, { lint: Array.isArray(lint) ? lint : undefined, direction: dirText });
+      const review = await reviewSlide(String(image), slide, { provider: richProvider(prov), log }, { lint: Array.isArray(lint) ? lint : undefined, direction: dirText, motion: body.motion });
       await db.from('deck_feedback').insert({ job_id: jobId, user_id: userId, slide_id: slideId, slide_type: slide.body?.type, source: 'vision', rating: typeof review?.score === 'number' ? Math.round(review.score) : null, comment: review?.upgrade || null, data: { review } });
       return json({ review }, 200, allow);
     }

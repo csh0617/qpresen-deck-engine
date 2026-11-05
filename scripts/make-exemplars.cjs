@@ -8,6 +8,8 @@ const META = {
   'ir-04-market-slider': { kinds: ['chart', 'demo'], title: '인터랙티브 데모: 정적 표 ↔ SVG 차트 토글 + 연도 슬라이더 자동 스윕 + 오른쪽 순환 카드' },
   'gochang-21-prompt-formula': { kinds: ['process', 'concept'], title: '4칸(+1) 공식 → 조립된 결과 컴포저(순차 등장)' },
   'gochang-10-three-companies': { kinds: ['compare', 'concept'], title: '3열 비교 카드(성격·강점·수치) + 하단 결론 밴드' },
+  'ir-13-market-targets': { kinds: ['numbers', 'story', 'list', 'chart'], title: '시장·타깃(라이트 무대의 화사함): 동심원 TAM/SAM/SOM + 그라데이션 성장 막대 + 번호 타깃 카드 3장 + 큰 그라데이션 숫자' },
+  'gochang-12-chat-to-agent': { kinds: ['compare', 'concept', 'demo', 'process'], title: 'AS-IS/TO-BE 비교: 두 패널의 단계 흐름(아이콘 체인) + 앱 로그 목업 + 사례 칩 + 통계 카드 + 보라 메시지 카드' },
   'ir-01-cover': { kinds: ['cover'], title: '표지(엔진 헤더 없음): 제품 목업 사진 + 큰 제목 + KPI 띠 + 발표자/QR' },
   'gochang-01-cover': { kinds: ['cover', 'section'], title: '표지(시네마틱): 사진 백드롭 + 큰 제목 + 메타 줄 + 발표자 배지 + 목차' },
   'gochang-07-section': { kinds: ['section'], title: '섹션 간지(시네마틱): 사진 백드롭 + 로마숫자 + 섹션명 + 칩 + 섹션 진행 표시' },
@@ -27,7 +29,7 @@ out.push('};');
 out.push('');
 out.push('/** Pick exemplars for a slide kind: the kind-specific one first, then a complementary one. */');
 out.push('export function exemplarsFor(kind: string): Exemplar[] {');
-out.push("  const order: Record<string, string[]> = { numbers: ['gochang-05-numbers', 'ir-04-market-slider'], chart: ['ir-04-market-slider', 'gochang-05-numbers'], demo: ['ir-04-market-slider', 'gochang-21-prompt-formula'], process: ['gochang-21-prompt-formula', 'gochang-05-numbers'], compare: ['gochang-10-three-companies', 'gochang-05-numbers'], concept: ['gochang-10-three-companies', 'gochang-21-prompt-formula'], story: ['gochang-05-numbers', 'gochang-10-three-companies'], list: ['gochang-10-three-companies', 'gochang-05-numbers'], cover: ['ir-01-cover', 'gochang-01-cover'], section: ['gochang-07-section', 'gochang-01-cover'], closing: ['ir-20-closing', 'gochang-60-closing'], agenda: ['gochang-01-cover', 'gochang-21-prompt-formula'] };");
+out.push("  const order: Record<string, string[]> = { numbers: ['ir-13-market-targets', 'gochang-05-numbers'], chart: ['ir-04-market-slider', 'ir-13-market-targets'], demo: ['ir-04-market-slider', 'gochang-12-chat-to-agent'], process: ['gochang-21-prompt-formula', 'gochang-12-chat-to-agent'], compare: ['gochang-12-chat-to-agent', 'gochang-10-three-companies'], concept: ['gochang-12-chat-to-agent', 'ir-13-market-targets'], story: ['ir-13-market-targets', 'gochang-05-numbers'], list: ['ir-13-market-targets', 'gochang-10-three-companies'], cover: ['ir-01-cover', 'gochang-01-cover'], section: ['gochang-07-section', 'gochang-01-cover'], closing: ['ir-20-closing', 'gochang-60-closing'], agenda: ['gochang-01-cover', 'gochang-21-prompt-formula'] };");
 out.push("  const ids = order[kind] || order.story;");
 out.push('  return ids.map(id => EXEMPLARS[id]).filter(Boolean);');
 out.push('}');

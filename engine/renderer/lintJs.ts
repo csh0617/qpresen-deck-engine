@@ -33,10 +33,18 @@ export const LINT_JS = `(() => {
     const gx = 48, gy = 27; let hit = 0; for (let i = 0; i < gx; i++) for (let j = 0; j < gy; j++) { const x = br.left + (i + .5) * br.width / gx, y = br.top + (j + .5) * br.height / gy; if (boxes.some(b => x >= b.left && x <= b.right && y >= b.top && y <= b.bottom)) hit++; } occupancy = Math.round(hit / (gx * gy) * 100); if (occupancy < 35) issues.push({ sev: 'warn', code: 'SPARSE', extra: occupancy }); if (occupancy > 96) issues.push({ sev: 'warn', code: 'DENSE', extra: occupancy }); }
   // 7) images
   for (const img of stage.querySelectorAll('img')) { if (!img.complete || img.naturalWidth === 0) issues.push({ sev: 'error', code: 'BROKEN_IMAGE', el: desc(img) }); }
+  // 7b) motion inventory — a slide that only appears and then sits still fails the house style (premium)
+  const motion = { reveals: stage.querySelectorAll('[data-reveal]').length, counters: stage.querySelectorAll('[data-count]').length, numbers: 0, living: [], interactive: [], scripts: Math.max(0, document.scripts.length - 3) };
+  { const bodyEl = stage.querySelector('.body') || stage; const txt = (bodyEl.textContent || ''); motion.numbers = (txt.match(/\\d[\\d,.]*\\s*(?:%|만|억|조|명|대|개|년|ha|원|배|건|kg|km|GW|MW|TWh|M|B|K)/g) || []).length;
+    if (stage.querySelector('[data-cycle]')) motion.living.push('cycle'); if (stage.querySelector('.flowline,[data-draw]')) motion.living.push('draw'); if (stage.querySelector('.pulse,.lv,.g-cur')) motion.living.push('pulse'); if (stage.querySelector('[data-bar]')) motion.living.push('bar'); if (stage.querySelector('.backdrop.kb')) motion.living.push('kenburns'); if (stage.querySelector('[data-type]')) motion.living.push('type'); if (stage.querySelector('canvas')) motion.living.push('canvas'); if (stage.querySelector('[data-guide],[data-mock]')) motion.living.push('demo');
+    for (const el of stage.querySelectorAll('*')) { const an = getComputedStyle(el).animationName; if (an && an !== 'none' && !/aur|orbdrift|npop|blink/.test(an) && vis(el)) { motion.living.push('css-anim'); break; } }
+    if (stage.querySelector('input,button,.seg,.toggle,[data-guide],.rng')) motion.interactive.push('control'); if (stage.querySelector('.tilt,.lift')) motion.interactive.push('hover'); if (motion.scripts > 0) motion.interactive.push('script');
+    const low = motion.reveals < 8 || (motion.numbers >= 2 && motion.counters === 0) || !motion.living.length;
+    if (low) issues.push({ sev: 'warn', code: 'MOTION_LOW', extra: 'reveals=' + motion.reveals + ' counters=' + motion.counters + '/' + motion.numbers + '숫자 living=' + (motion.living.join('+') || '없음') + ' interactive=' + (motion.interactive.join('+') || '없음'), what: '등장 연쇄·카운트업·살아있는 요소가 부족해 정지 화면처럼 보임' }); }
   // 8) hidden reveals after done
   const notIn = Array.from(stage.querySelectorAll('[data-reveal]')).filter(el => !el.classList.contains('in') && !document.documentElement.classList.contains('reveal-done'));
   if (notIn.length) issues.push({ sev: 'warn', code: 'REVEAL_PENDING', extra: notIn.length });
-  return { issues, stats, occupancy, scale: s, title: document.title };
+  return { issues, stats, occupancy, motion, scale: s, title: document.title };
   function boxOf(el) { const r = el.getBoundingClientRect(); return [Math.round(r.width/s), Math.round(r.height/s)]; }
   function txt(el) { return (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40); }
   function desc(el) { if (!el) return ''; return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : ''); }

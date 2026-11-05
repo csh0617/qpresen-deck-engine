@@ -3,6 +3,7 @@
    deck CSS/JS layer, per-section accents, motifs, photo strategy (which slides get an image and what), and motion language. */
 import { chat } from './provider.ts';
 import { parseRich, sanitizeRich } from './rich.ts';
+import { HOUSE_STYLE } from './house.ts';
 import type { Brief, Plan, PipelineOptions } from './pipeline.ts';
 import type { DeckDirection, Accent } from '../renderer/types.ts';
 
@@ -23,7 +24,7 @@ export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디�
  "photoStrategy": "none|backdrops|side|mixed",
  "images": [ {"id":"p03","role":"backdrop|side|mock|illustration","prompt":"장면 묘사(한국어, 구체적·사실적)","ratio":"16:9|1:1|3:4|4:3"} ],  // 최대 imageBudget 장. cover/section/image-hero 제외(엔진이 따로 생성)
  "motion": "모션 언어 2~3문장(등장 리듬·강조 방식·인터랙션 톤)",
- "fx": ["aurora","rail","tilt","3d-in"],         // 덱 전체 효과: aurora(배경 오로라 블롭) rail(푸터 섹션 레일) tilt(카드 3D 틸트) 3d-in(블러+회전 등장). 격식 보고서는 aurora/3d-in 제외 가능
+ "fx": ["aurora","rail","tilt","3d-in"],         // 덱 전체 효과: aurora(배경 오로라 블롭) rail(푸터 섹션 레일) tilt(카드 3D 틸트) 3d-in(블러+회전 등장). 기본값 모두 켬 — 뺄 이유가 분명할 때만 제외
  "helpers": [ {"class":"d-…","purpose":"…"} ],  // 아래 CSS에서 정의한 helper 클래스 3~8개(이름·용도는 이 덱의 모티프에서)
  "typography": "제목·숫자·라벨 처리 메모 1~2문장",
  "notes": "장 설계자에게 주는 지시 2~4문장(해야 할 것/하지 말 것)"
@@ -39,11 +40,14 @@ export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디�
 [디자인 시스템 요약] 토큰: --ink --text --muted --faint --line --line-2 --bg --card --card-2 --card-3 --f(강조) --f-100 --f-50 --f-ink --q1 --q2 --q3(그라데이션 스톱) --qg(그라데이션) --r --r-sm --shadow --shadow-lg --ease --ease-out --ease-spring. 무대 1920×1080, 본문 박스 1728×~680.
 컴포넌트: .card(.tint .solid .glass .lift .edge) .pill .tag .chip(어두운 바탕용) .icon-circle .ic-sq .bullets .bar .tbl .callout .band .kpi .mega .big .num-g .gtext, 포토 백드롭 .backdrop(.kb .fade-r .fade-b .soft .dim)+.credit, 시네마틱 .stage.cine, 앱 목업 키트 .app(.chrome .app-side .app-top .msg .composer .amenu), 가이드 클릭 엔진 [data-guide].
 
+[하우스 스타일 — 반드시 이 안에서 변주한다]
+${HOUSE_STYLE}
+
 [원칙]
-- 주제·청중·목적에 맞는 '하나의' 강한 아이디어. 템플릿 기본값과 구별되는 덱 고유의 결(예: 산업 보고서=얇은 선·테이블 라벨·스탬프, 교육=둥근 카드·일러스트·대화 목업, IR=유리 카드·그라데이션·라이브 차트).
-- 색: 테마 토큰 위에서 섹션별 강조색을 배분하고, 한 덱 안에 2~4색만. 무지개 금지.
-- 사진: 메시지를 강화하는 장에만(현장·제품·사람·공간). 통계·구조 장에는 사진 대신 다이어그램. imageBudget 안에서.
-- 모션: 과하지 않게. 등장은 150~250ms 간격 리듬, 강조는 1곳, 인터랙션은 장당 1개.
+- 주제·청중·목적에 맞는 '하나의' 강한 아이디어를 하우스 스타일 위에 얹는다: 모티프·색 배분·장치의 선택으로 덱의 개성을 만들되, 밝고 화사하며 살아 움직이는 결은 유지한다. 회색 톤의 '얇은 선 리포트', 작은 색인 라벨, 어둡게 누른 사진 위의 작은 글자 같은 '무겁고 정적인' 방향은 어떤 주제에서도 택하지 않는다.
+- 색: 브랜드 그라데이션을 주인공으로 두고 섹션별 강조색(2~4색)을 배분한다. 시네마틱 다크 섹션은 최대 1개(임팩트 장면).
+- 사진: 메시지를 강화하는 장에만(현장·제품·사람·공간) — 밝은 무대에서는 측면 포토 카드 또는 흰색으로 페이드되는 백드롭. imageBudget 안에서.
+- 모션: 덱 전체 효과(fx)는 기본 네 가지를 모두 켠다(aurora·rail·tilt·3d-in). 모션 언어는 '리듬·살아있는 요소·상호작용'을 구체적으로 지시한다(예: "숫자는 카운트업 후 팝, 단계 체인은 400ms 간격 연쇄, 각 장에 순환 강조 1개, 카드 호버 틸트").
 - JSON은 compact하게, 설명 문장은 짧게. 구분선 밖에 다른 텍스트 금지.`;
 
 function themeSummary(plan: Plan): string {
@@ -69,7 +73,7 @@ export async function directDeck(brief: Brief, plan: Plan, opt: PipelineOptions 
     palette: { sectionAccents, notes: m.typography ? String(m.typography) : undefined },
     photoStrategy: ['none', 'backdrops', 'side', 'mixed'].includes(m.photoStrategy) ? m.photoStrategy : 'mixed',
     imageBudget: budget, motion: String(m.motion || ''),
-    fx: (Array.isArray(m.fx) ? m.fx.filter((f: string) => fxAll.includes(f)) : ['rail', 'tilt']) as any,
+    fx: (Array.isArray(m.fx) && m.fx.length ? m.fx.filter((f: string) => fxAll.includes(f)) : fxAll) as any,
     deckCss: parts.css.slice(0, 12000) || undefined, deckJs: parts.js.slice(0, 6000) || undefined,
     helpers: Array.isArray(m.helpers) ? m.helpers.map((h: any) => typeof h === 'string' ? h : `${h.class} — ${h.purpose || ''}`).slice(0, 10) : [],
     images: (Array.isArray(m.images) ? m.images : []).filter((x: any) => x && x.id && x.prompt).slice(0, budget).map((x: any) => ({ id: String(x.id), role: ['backdrop', 'side', 'mock', 'illustration'].includes(x.role) ? x.role : 'side', prompt: String(x.prompt), ratio: ['16:9', '1:1', '3:4', '4:3'].includes(x.ratio) ? x.ratio : undefined })),

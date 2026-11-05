@@ -110,7 +110,8 @@ export default function DeckStudio() {
         setQa({ stage: 'review', done: 0, total: N, round: 2 });
         const queue = Array.from({ length: N }, (_, i) => i + 1); const runner = async () => { while (queue.length) { const n = queue.shift()!; const s = cur.spec?.slides?.[n - 1]; if (!s) continue;
           try { const snap = await w.QPDeck.snapshot(n, { width: 1280, quality: 0.8 }); const lintIssues = ((lintRes || []).find((r: any) => r.n === n)?.issues || []).filter((i: any) => i.sev !== 'nit').slice(0, 6);
-            const rv = (await callEngine({ action: 'review', jobId, slideId: s.id, image: snap.image, lint: lintIssues })).review || {};
+            const motion = (lintRes || []).find((r: any) => r.n === n)?.motion;
+            const rv = (await callEngine({ action: 'review', jobId, slideId: s.id, image: snap.image, lint: lintIssues, motion })).review || {};
             const score = Number(rv.score) || 0; scores.push(score);
             const issues = (rv.issues || []).filter((i: any) => i.sev === 'error' || i.sev === 'warn').slice(0, 8);
             if (score < 4 || issues.some((i: any) => i.sev === 'error')) toFix.push({ slideId: s.id, issues: [...issues, ...(rv.upgrade ? [{ sev: 'warn', code: 'UPGRADE', what: rv.upgrade, fix: rv.upgrade }] : [])] });

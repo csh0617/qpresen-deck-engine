@@ -5,6 +5,8 @@ import { chat, type ProviderConfig } from './provider.ts';
 import { ICON_NAMES, rulesBlock } from './prompts.ts';
 import { exemplarsFor } from '../knowledge/exemplars.ts';
 import { directionBlock } from './direct.ts';
+import { HOUSE_STYLE } from './house.ts';
+export { HOUSE_STYLE } from './house.ts';
 import type { Brief, Plan, PlanSlide, PipelineOptions } from './pipeline.ts';
 import type { Slide, DeckSpec } from '../renderer/types.ts';
 
@@ -33,12 +35,14 @@ export function kindForType(type?: string, hint?: string): RichKind {
   return 'story';
 }
 
-export const DESIGN_SYSTEM = `[무대 규격]
+export const DESIGN_SYSTEM = `${HOUSE_STYLE}
+
+[무대 규격]
 - 엔진이 <main class="stage f-{accent}"> 안에 상단 바와 <header class="head">(eyebrow + h1 제목 + p.sub)를 그려 준다. 당신은 <section class="body"> 안에 들어갈 내용만 쓴다.
 - .body 박스: 가로 1728px × 세로 약 680px (sub가 없으면 약 730px). 모든 내용은 이 박스 안에 들어가야 하고 넘치면 안 된다. 스크롤 금지, 박스 밖 절대 배치 금지.
 - .body 기본값: display:flex; flex-direction:column; flex:1; min-height:0. CSS에서 .body{display:grid;grid-template-columns:…;grid-template-rows:minmax(0,1fr) auto;gap:…;min-height:0} 처럼 직접 바꿔 써도 된다(권장).
 - 그리드/플렉스 자식에는 min-height:0; min-width:0 을 넣어 넘침을 막는다. 높이는 1fr / flex:1 로 나누고 고정 px 높이는 작은 요소에만 쓴다. 긴 텍스트 요소에는 overflow:hidden 을 걸어 둔다.
-- 글자 크기 하한: 본문 17px, 캡션·태그 15px(절대 최소 14px). 카드 제목 22~28px, 큰 숫자 46~72px, 결론 문장 22~27px. h1 제목은 엔진이 58px로 그린다.
+- 글자 크기 하한: 본문 18px, 캡션·태그 15px(절대 최소 14px). 카드 제목 24~28px, 큰 숫자 60~120px(단위는 22~28px 분리), 결론 문장 22~27px. h1 제목은 엔진이 58px로 그린다. 한 장에 15px 이하 글자는 6개 이하.
 - 열 폭: 카드가 들어가는 열은 420px 이상, 카드 2열 영역은 760px 이상. 한글 단어가 세로로 쪼개질 만큼 좁은 칸을 만들지 않는다(라벨에 word-break:keep-all). 내용이 많은 쪽에 더 넓은 열을 준다.
 - 숫자·값은 HTML에 최종값을 적어 둔다(data-count 요소의 텍스트 = 최종값, JS가 갱신하는 값도 초기 표기값 필수). 정적 모드(썸네일·인쇄)에서 빈칸이 보이면 안 된다.
 
@@ -72,6 +76,7 @@ ${ICON_NAMES}
 - 부모 data-cycle="2800" 안의 [data-step] 요소를 차례로 .on 처리(자동 하이라이트, mouseenter로 선택).
 - [data-mock] 안의 [data-at="ms"] 요소가 시간차로 나타남(채팅·화면 시연). data-click 이면 .cursor 가 그 위치로 이동, data-type-text 는 타이핑, 부모 data-loop="ms" 면 반복.
 - <canvas data-particles="60"></canvas>: 파티클 배경.
+- 살아있는 요소 만들기: 순환 강조 <div data-cycle="2600"><article data-step>…</article>…</div>(.on 에 스타일), 흐르는 점선 <path class="flowline" data-draw> 또는 stroke-dasharray + @keyframes dashflow, 펄스 점 .pulse, 진행 바 .bar data-bar, 켄번즈 .backdrop.kb, 타자 data-type, 카운트업 data-count. 이 중 하나는 반드시 끝까지 움직인다(등장만 하고 멈추는 장 금지).
 - 정적 모드(html.static: 썸네일·인쇄)에서는 모든 reveal이 즉시 완료 상태로 그려진다. JS도 e.detail.static 이면 최종 상태를 즉시 그리고 끝낸다.
 
 - 연쇄 등장: data-after="#앞요소id" data-gap="ms" → 앞 요소의 타이핑/카운트/등장이 끝난 뒤 시작(레퍼런스 덱의 리듬). 긴 장면은 3~4단계로 연쇄.
@@ -215,6 +220,8 @@ export const RICH_FIX_SYSTEM = `당신은 Qpresen 프리미엄 덱의 슬라이�
 - SMALL_FONT: 14px 미만 글자를 키운다(캡션 15px 이상). LOW_CONTRAST: --muted/--faint 대신 --text/--ink, 면 위 글자는 -ink 토큰.
 - OVERLAP: 겹치는 요소의 간격·그리드 정의를 고친다. EMPTY/SPARSE: 내용을 보강하거나 요소를 키워 여백을 채운다. DENSE: 여백·간격을 늘리고 덜 중요한 요소를 뺀다.
 - 숫자가 비어 보이면(정적 모드) HTML에 최종값을 써 넣는다.
+- MOTION_LOW / 정적으로 보임: 등장 연쇄를 14개 이상으로 늘리고(data-reveal 변형과 data-delay 리듬), 숫자에 data-count, 살아있는 요소(data-cycle·flowline·pulse·bar·kb) 1개와 상호작용(hover/클릭/토글/슬라이더/자동 데모) 1개를 추가한다. 필요하면 gsap 타임라인으로 안무.
+- STYLE_OFF(하우스 스타일 이탈: 회색 리포트 룩·작은 라벨 다발·무거운 사진): 그라데이션 숫자·틴트/유리 카드·아이콘 원·칩으로 바꾸고 글자를 키운다.
 - 사용자 코멘트는 그 지시를 따른다.
 ${DESIGN_SYSTEM}
 
