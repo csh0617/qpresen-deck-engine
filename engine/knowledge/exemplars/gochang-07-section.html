@@ -1,0 +1,52 @@
+<!-- EXEMPLAR: 섹션 간지 — 시네마틱 사진 백드롭 + 로마숫자 + 섹션명 + 이 섹션에서 다룰 것 -->
+<!-- 무대 클래스: stage f-common cine no-rail (cine = 시네마틱 다크 무대) -->
+<!-- HTML (엔진 헤더 없음 — <main class="stage"> 안 전체) -->
+<div class="backdrop kb" data-allow-bleed><img data-image="(장면 묘사)" alt="" style="--pos:50% 50%;--view:inset(0 0 0 15%)"><div class="credit">사진: Oleg Alexandrov · CC BY-SA 4.0 (Wikimedia Commons)</div></div>
+  <section class="body">
+    <div class="hero">
+      <div class="eyebrow" data-reveal data-delay="100">SECTION</div>
+      <div class="sec-num" data-reveal="scale" data-delay="150">Ⅱ</div>
+      <h1 class="hero-title" data-reveal data-delay="380">2026 AI의 <em>현재</em></h1>
+      <p class="hero-sub" data-reveal data-delay="600">지난 60일, 세상은 이렇게 바뀌었다</p>
+      <svg class="rule" viewBox="0 0 150 6" aria-hidden="true"><line x1="3" y1="3" x2="147" y2="3" stroke="currentColor" stroke-width="6" stroke-linecap="round" data-draw data-delay="760"/></svg>
+      <div class="chips">
+        <span class="chip" data-reveal="scale" data-delay="900"><i data-icon="sparkles"></i> 모델 연표</span>
+        <span class="chip" data-reveal="scale" data-delay="1000"><i data-icon="bot"></i> 에이전트</span>
+        <span class="chip" data-reveal="scale" data-delay="1100"><i data-icon="map-pin"></i> 한국과 전남광주</span>
+      </div>
+    </div>
+    <div class="secs" style="--p:22%">
+      <span class="s done" data-reveal="fade" data-delay="1300">Ⅰ</span>
+      <span class="s on" data-reveal="fade" data-delay="1360">Ⅱ <b>2026 AI의 현재</b></span>
+      <span class="s" data-reveal="fade" data-delay="1420">Ⅲ</span>
+      <span class="s" data-reveal="fade" data-delay="1480">Ⅳ</span>
+      <span class="s" data-reveal="fade" data-delay="1540">Ⅴ</span>
+      <span class="s" data-reveal="fade" data-delay="1600">Ⅵ</span>
+      <span class="s" data-reveal="fade" data-delay="1660">Ⅶ</span>
+    </div>
+  </section>
+
+<!-- CSS (per-slide) -->
+<style>
+/* section divider — lead layout shared by 07 · 18 · 34 · 46 */
+.body{position:relative}
+.hero{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;max-width:1020px;padding-bottom:36px}
+.hero .eyebrow{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;letter-spacing:.08em;color:var(--f);margin-bottom:18px}
+.hero .eyebrow::before{content:'';width:10px;height:10px;border-radius:3px;background:var(--f)}
+.hero .sec-num{font-size:150px;line-height:1.05;margin-left:-4px;margin-bottom:20px}
+.backdrop img{object-view-box:var(--view,none)}
+.hero .hero-title{font-size:88px}
+.hero .hero-sub{font-size:30px;margin-top:14px}
+.rule{display:block;width:150px;height:6px;color:var(--f);margin:30px 0 28px;overflow:visible}
+.chips{display:flex;flex-wrap:wrap;gap:12px 12px;max-width:1000px}
+.chips .chip{font-size:19px;padding:10px 20px 10px 16px;gap:9px;line-height:1.3}
+.chips .chip .ic{width:22px;height:22px}
+/* section progress (7 sections, current one named) */
+.secs{position:relative;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;flex:none;max-width:1020px}
+.secs::before{content:'';position:absolute;left:18px;right:18px;top:50%;height:3px;margin-top:-1.5px;background:var(--line-2);border-radius:2px}
+.secs::after{content:'';position:absolute;left:18px;top:50%;height:3px;margin-top:-1.5px;width:var(--p,0%);background:var(--f);border-radius:2px}
+.secs .s{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;height:36px;min-width:36px;padding:0 13px;border-radius:999px;background:var(--card);border:1px solid var(--line-2);color:var(--faint);font-size:16px;font-weight:700;letter-spacing:.02em;white-space:nowrap;box-shadow:var(--shadow)}
+.secs .s.done{background:var(--f-100);border-color:transparent;color:var(--f)}
+.secs .s.on{background:var(--f);border-color:transparent;color:#fff;padding:0 18px 0 14px}
+.secs .s.on b{color:#fff;font-weight:700}
+</style>

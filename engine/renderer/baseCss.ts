@@ -644,6 +644,7 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 
 /* custom */
 .a-custom{height:100%;min-height:0;position:relative}
+.stage.a-custom-full>.body{flex:1;min-height:0}
 
 /* print */
 @media print{.deck-nav{display:none}}

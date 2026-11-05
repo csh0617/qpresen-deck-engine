@@ -65,7 +65,7 @@ export function renderSlideDoc(inp: SlideRenderInput): string {
   const head = out.noHead ? '' : `<header class="head" data-reveal data-delay="0"><div class="eyebrow"><span class="no">${pad(n)}</span>${esc(eyebrow)}<span class="ln"></span></div><h1>${rich(s.title)}</h1>${s.sub ? `<p class="sub">${rich(s.sub)}</p>` : ''}</header>`;
   const topbar = out.useTopbar === false ? '' : `<div class="topbar"><div class="lg">${spec.meta.logo ? `<img src="${esc(spec.meta.logo)}" alt="">` : '<i></i>'}${esc(spec.meta.title)}</div><div class="rt">${esc(spec.meta.event || spec.meta.audience || '')}<i></i><b>${esc(spec.meta.date || '')}</b></div></div>`;
   const source = s.source ? `<div class="source">${esc(s.source)}</div>` : '';
-  const cine = !!(s.section && (dir as any)?.darkSections?.includes(s.section) && (s.body as any).type === 'custom');
+  const cine = (s.body as any).type === 'custom' && (!!(s.body as any).cine || !!(s.section && (dir as any)?.darkSections?.includes(s.section)));
   const stageCls = ['stage', fclass(accent), out.stageClass || '', s.dark ? 'dark' : '', cine ? 'cine' : '', theme === 'signature-white' || theme === 'dark-stage' ? 'theme-grad' : ''].filter(Boolean).join(' ');
   const title = `${pad(n)} · ${plain(s.title)}`;
   const deck = { n, total, footer: footerText(spec), sections: inp.sections || [] };

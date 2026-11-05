@@ -42,8 +42,6 @@ export default function DeckStudio() {
   const [direction, setDirection] = useState<any>(null);
   const [planStage, setPlanStage] = useState<'' | 'plan' | 'direct'>('');
   const frameRef = useRef<HTMLIFrameElement>(null);
-  /** Premium mode: these archetypes stay on the deterministic renderer; every other slide is designed individually (one request each). */
-  const STRUCTURAL = ['cover', 'section', 'agenda', 'closing', 'quote', 'image-hero'];
 
   useEffect(() => { callEngine({ action: 'rules' }).then(() => {}).catch(() => {}); callEngine({ action: 'models' }).then(d => setModel(d.model)).catch(() => {}); }, []);
   useEffect(() => { const h = (e: MessageEvent) => { if (e.data?.qpDeck && e.data.kind === 'page') setCur(e.data.value); }; window.addEventListener('message', h); return () => window.removeEventListener('message', h); }, []);
@@ -64,9 +62,8 @@ export default function DeckStudio() {
     if (!jobId || !plan) return; setErr(null); setBusy(true); setStage('fill');
     const ids = plan.slides.map(s => s.id); const batches: string[][] = [];
     if (quality === 'premium') {
-      // rich slides one per request (each is a 60~120s design job); structural slides in batches of 3
-      const rich = plan.slides.filter(s => !STRUCTURAL.includes(s.type)).map(s => s.id); const std = ids.filter(id => !rich.includes(id));
-      rich.forEach(id => batches.push([id])); for (let i = 0; i < std.length; i += 3) batches.push(std.slice(i, i + 3));
+      // premium 2.0: every slide (cover, sections and closing included) is a 60~120s design job → one request each
+      ids.forEach(id => batches.push([id]));
     } else { for (let i = 0; i < ids.length; i += 3) batches.push(ids.slice(i, i + 3)); }
     let done = 0; setProgress({ done: 0, total: ids.length });
     let cursor = 0; const failed: string[] = [];

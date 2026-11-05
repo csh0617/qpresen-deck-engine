@@ -1,0 +1,39 @@
+<!-- EXEMPLAR: 표지 — 시네마틱 사진 백드롭 + 큰 제목 + 발표자 배지 -->
+<!-- 무대 클래스: stage f-brand cine (cine = 시네마틱 다크 무대) -->
+<!-- HTML (엔진 헤더 없음 — <main class="stage"> 안 전체) -->
+<div class="backdrop kb" data-allow-bleed><img data-image="(장면 묘사)" alt="" style="--pos:70% 55%"><div class="credit">사진: Basile Morin · CC BY-SA 4.0 (Wikimedia Commons)</div></div>
+  <section class="body">
+    <div class="speaker" data-reveal="right" data-delay="900"><svg class="ic logo" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#C8102E"/><text x="12" y="15.5" text-anchor="middle" font-size="7.5" font-weight="800" fill="#fff" font-family="Pretendard Variable,Malgun Gothic,Arial,sans-serif">GIST</text></svg><div class="n">정상호 박사<small>광주과학기술원(GIST)</small></div><span class="avatar">정</span></div>
+    <div class="hero">
+      <div class="eyebrow" data-reveal data-delay="100"><i data-icon="sparkles"></i> 고창군농업기술센터 AI 역량강화 교육</div>
+      <h1 class="hero-title" data-reveal data-delay="250">AI와 함께 일하는<br><em>고창 농업</em></h1>
+      <p class="hero-sub" data-reveal data-delay="450">2026년 최신 AI 트렌드, 공무원을 위한 실전 도구,<br>그리고 고창 농업 현장에 바로 적용하는 방법</p>
+      <div class="meta-line" data-reveal data-delay="650">
+        <span><i data-icon="sparkles"></i> <b>2026. 10. 30(금) 14:00</b></span>
+        <span><i data-icon="map-pin"></i> <b>목포 해관1897</b></span>
+        <span><i data-icon="users"></i> 고창군농업기술센터 직원 60명</span>
+      </div>
+      <div class="tags" data-reveal data-delay="800">
+        <span class="chip">#ChatGPT</span><span class="chip">#Claude</span><span class="chip">#NotebookLM</span><span class="chip">#스마트농업</span><span class="chip">#병해충 AI 진단</span><span class="chip">#안전한 활용</span>
+      </div>
+    </div>
+    <div class="agenda">
+      <div class="st" data-reveal data-delay="1000"><b>Ⅰ</b>왜 지금 AI인가</div>
+      <div class="st" data-reveal data-delay="1080"><b>Ⅱ</b>2026 AI의 현재</div>
+      <div class="st" data-reveal data-delay="1160"><b>Ⅲ</b>실전 도구</div>
+      <div class="st" data-reveal data-delay="1240"><b>Ⅳ</b>농업 현장의 AI</div>
+      <div class="st" data-reveal data-delay="1320"><b>Ⅴ</b>고창 적용 시나리오</div>
+      <div class="st" data-reveal data-delay="1400"><b>Ⅵ</b>안전하게 쓰기</div>
+      <div class="st" data-reveal data-delay="1480"><b>Ⅶ</b>정리와 질문</div>
+    </div>
+  </section>
+
+<!-- CSS (per-slide) -->
+<style>
+.stage.cine .agenda .st{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#fff;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 1px 0 rgba(255,255,255,.1) inset}
+.stage.cine .agenda .st b{background:linear-gradient(135deg,var(--f),var(--f-alt))}
+.stage.cine .speaker{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);box-shadow:none}
+.stage.cine .speaker .n{color:#fff}.stage.cine .speaker .n small{color:rgba(255,255,255,.7)}
+.stage.cine .hero .eyebrow{color:#C9D8FF}
+.stage.cine .meta-line{color:rgba(255,255,255,.82)}.stage.cine .meta-line .ic{color:#9DB8FF}
+</style>

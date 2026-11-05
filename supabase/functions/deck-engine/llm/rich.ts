@@ -8,16 +8,22 @@ import { directionBlock } from './direct.ts';
 import type { Brief, Plan, PlanSlide, PipelineOptions } from './pipeline.ts';
 import type { Slide, DeckSpec } from '../renderer/types.ts';
 
-export const RICH_KINDS = ['numbers', 'chart', 'compare', 'process', 'concept', 'demo', 'story', 'list'] as const;
+export const RICH_KINDS = ['numbers', 'chart', 'compare', 'process', 'concept', 'demo', 'story', 'list', 'cover', 'section', 'closing', 'agenda'] as const;
 export type RichKind = typeof RICH_KINDS[number];
-/** Archetypes that stay on the deterministic renderer even in premium mode (structural pages). */
+/** Structural pages: in premium 2.0 they are designed too (full stage, no engine header), with their own exemplars. */
 export const STRUCTURAL_TYPES = new Set(['cover', 'section', 'agenda', 'closing', 'quote', 'image-hero']);
+export const FULL_STAGE_KINDS = new Set(['cover', 'section', 'closing', 'agenda']);
 
-export function isRichTarget(p: { type?: string }): boolean { return !STRUCTURAL_TYPES.has(String(p.type || '')); }
+/** Premium 2.0: every slide is designed (structural pages included). Kept as a function for the callers' sake. */
+export function isRichTarget(_p: { type?: string }): boolean { return true; }
 
 /** Map an archetype (from a standard plan) to a rich kind, when the plan has no explicit kind. */
 export function kindForType(type?: string, hint?: string): RichKind {
   const t = String(type || ''); const h = String(hint || '');
+  if (t === 'cover') return 'cover';
+  if (t === 'section') return 'section';
+  if (t === 'closing') return 'closing';
+  if (t === 'agenda') return 'agenda';
   if (/kpi|big-number/.test(t)) return 'numbers';
   if (/chart|table/.test(t)) return 'chart';
   if (/comparison|matrix|pricing/.test(t)) return 'compare';
@@ -77,6 +83,14 @@ ${ICON_NAMES}
 - 시네마틱 다크 무대: 아트 디렉션이 지정한 섹션은 .stage.cine(어두운 배경, 유리 카드, 흰 글자)으로 렌더된다 — 그 장은 어두운 바탕에 맞게 설계.
 - 라이브러리: gsap 3 전역 사용 가능(gsap.timeline / gsap.to / stagger — 쓰면 자동 포함, 20~50줄의 안무에 권장). THREE(three.js r152) 전역 사용 가능 — 3D가 메시지의 핵심일 때만(부품 구조·공간·흐름), 100줄 이내, 캔버스는 .body 안 컨테이너에 append, STATIC이면 한 프레임만 렌더. 그 외 외부 라이브러리 금지.
 
+[무대 전체 장 — kind가 cover / section / closing / agenda 일 때]
+- META.head="none": 엔진 헤더가 없으므로 제목·부제·메타를 HTML 안에 직접 쓴다. 무대 패딩(위 104 · 좌우 96 · 아래 100px) 안쪽이 .body(1728×876)이고, <div class="backdrop …"> 는 absolute라 무대 전체(1920×1080)를 채운다.
+- 표지(cover): 사진 백드롭(.backdrop.kb.fade-r 또는 cine 무대) + 큰 제목 64~88px(.hero-title, em 강조) + 부제 + 메타 줄(.meta-line: 일시·장소·청중) + 발표자 배지(.speaker) + 키워드 칩 + 오른쪽/아래에 목차 또는 KPI 띠. 참고 슬라이드 ir-01(제품 목업형)·gochang-01(시네마틱형).
+- 간지(section): 로마숫자 거대 타이포(.sec-num) + 섹션명(.hero-title) + 이 섹션에서 다룰 3~4개(칩/목록) + 섹션 진행 표시(.secs). cine 권장. 참고 gochang-07.
+- 마무리(closing): 핵심 메시지 한 문장(60~80px) + 오늘의 숫자 3개 + 다음 행동/연락처(.contact) + '질문·토론' 안내. QR은 엔진이 제공하지 않으므로 넣지 않는다. 참고 ir-20·gochang-60.
+- 목차(agenda): 섹션 3~6개를 번호·제목·한 줄·분량(장수/분)으로, 왼쪽 큰 번호 타이포 + 오른쪽 설명 카드, 또는 세로 스텝. 각 항목 등장 리듬 120ms.
+- 이 장들에도 시그니처(사진·목업·거대 타이포)를 두되 글자 수는 적게. 발표자 이름·소속·행사·일시는 덱 메타에서 가져온다(없으면 생략).
+
 [JS 규칙]
 - 전부 document.addEventListener('deck:ready', function(e){ var STATIC=e.detail.static; … }) 안에 쓴다. 전역 변수 금지(window.DeckFX 등 덱 레이어가 제공한 것은 사용 가능).
 - 자동 데모: 아무것도 누르지 않아도 2~6초 안에 움직임이 보이고, 사용자가 클릭·슬라이더·토글을 만지면 자동 데모를 멈춘다.
@@ -93,7 +107,9 @@ ${ICON_NAMES}
 
 export const RICH_OUTPUT = `[출력 형식 — 정확히 아래 4개 구분선, 그 밖의 설명·코드펜스 금지]
 ===META===
-{"title":"결론형 제목(**강조**)","sub":"근거 한 문장","source":"출처·기준연도(없으면 빈 문자열)","notes":{"t":45,"s":"발표 대본(구어체 존댓말, 80~220자)"},"signature":"이 장의 시그니처 비주얼 한 줄(≤ 40자)"}
+{"title":"결론형 제목(**강조**)","sub":"근거 한 문장","source":"출처·기준연도(없으면 빈 문자열)","notes":{"t":45,"s":"발표 대본(구어체 존댓말, 80~220자)"},"signature":"이 장의 시그니처 비주얼 한 줄(≤ 40자)","head":"engine|none","stage":"light|cine"}
+ - head: engine = 엔진이 상단에 번호·eyebrow·h1 제목·sub를 그린다(콘텐츠 장 기본). none = 표지·간지·마무리·목차처럼 무대 전체를 직접 구성(제목도 HTML 안에 직접).
+ - stage: cine = 시네마틱 다크 무대(토큰 전체가 다크로 반전; 표지·간지·클라이맥스에 권장), light = 기본.
 ===HTML===
 (section.body 안에 들어갈 HTML. <style>·<script> 태그 금지. 외부 리소스·이미지 URL·base64 금지. 아이콘은 <i data-icon="…"></i>)
 ===CSS===
@@ -168,7 +184,8 @@ export function richSlideFromParts(p: PlanSlide, parts: RichParts, model?: strin
   return {
     id: p.id, section: p.section || undefined,
     title: String(m.title || p.title), sub: m.sub != null ? String(m.sub) : p.sub, source: m.source ? String(m.source) : undefined, notes,
-    body: { type: 'custom', bare: true, rich: true, html: parts.html, css: parts.css || undefined, js: parts.js || undefined, kind: (p as any).kind, signature: m.signature || (p as any).signature, description: m.signature ? String(m.signature) : undefined },
+    body: { type: 'custom', bare: true, rich: true, html: parts.html, css: parts.css || undefined, js: parts.js || undefined, kind: (p as any).kind, signature: m.signature || (p as any).signature, description: m.signature ? String(m.signature) : undefined,
+      noHead: m.head ? m.head === 'none' : FULL_STAGE_KINDS.has(String((p as any).kind || '')), cine: m.stage === 'cine' },
     ...(model ? { _model: model } as any : {}),
   } as Slide;
 }
@@ -224,7 +241,7 @@ export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: 
   const b: any = slide.body;
   const { html: htmlNoImg, srcs } = stripImageSrcs(String(b.html || ''));
   const dirMeta: any = specMeta ? { ...specMeta } : {}; const direction = dirMeta.direction; delete dirMeta.direction;
-  const cur = `===META===\n${JSON.stringify({ title: slide.title, sub: slide.sub, source: slide.source, notes: slide.notes, signature: b.signature })}\n===HTML===\n${htmlNoImg}\n===CSS===\n${b.css || ''}\n===JS===\n${b.js || ''}`;
+  const cur = `===META===\n${JSON.stringify({ title: slide.title, sub: slide.sub, source: slide.source, notes: slide.notes, signature: b.signature, head: b.noHead ? 'none' : 'engine', stage: b.cine ? 'cine' : 'light' })}\n===HTML===\n${htmlNoImg}\n===CSS===\n${b.css || ''}\n===JS===\n${b.js || ''}`;
   const fmt = (i: any) => `- ${i.sev || ''} ${i.code || ''} ${i.el || ''}${i.extra != null ? ' (' + JSON.stringify(i.extra).slice(0, 120) + (/OVERFLOW/.test(i.code || '') ? 'px 넘침' : '') + ')' : ''}${i.box ? ' 요소크기=' + i.box[0] + '×' + i.box[1] + 'px' : ''}${i.parent ? ' 부모=' + i.parent : ''}${i.text ? ' 텍스트="' + String(i.text).slice(0, 40) + '"' : ''} ${i.what || ''} ${i.fix ? '→ ' + i.fix : ''}`;
   const user = `[덱 메타] ${JSON.stringify(dirMeta)}${directionBlock(direction, { id: slide.id!, section: slide.section })}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(fmt).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라. (이미지는 <img data-image="…"> 태그를 같은 프롬프트로 유지하면 기존 생성 이미지가 그대로 쓰인다)`;
   const r = await chat(opt.provider, { system: RICH_FIX_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: 0.3, json: false, nudge: '(출력이 잘렸다. 네 구간을 더 간결하게 다시 출력하라.)' });
@@ -234,6 +251,7 @@ export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: 
   parts.html = carryImageSrcs(parts.html, srcs);
   const fixed = richSlideFromParts({ id: slide.id!, section: slide.section, type: 'custom', title: slide.title, sub: slide.sub, t: slide.notes?.t, kind: b.kind } as any, parts, r.model);
   if (!parts.meta?.title) { fixed.title = slide.title; fixed.sub = slide.sub; fixed.source = slide.source; fixed.notes = slide.notes; }
+  const fb: any = fixed.body; if (!parts.meta?.head) fb.noHead = !!b.noHead; if (!parts.meta?.stage) fb.cine = !!b.cine;
   return fixed;
 }
 

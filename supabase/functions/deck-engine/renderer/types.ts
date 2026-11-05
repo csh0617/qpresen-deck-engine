@@ -107,7 +107,7 @@ export type Body =
   | { type: 'checklist'; items: { text: string; done?: boolean; note?: string }[]; groups?: { title: string; items: { text: string; done?: boolean; note?: string }[] }[]; aside?: string | { title?: string; points?: string[]; text?: string } }
   | { type: 'summary'; takeaways: { title: string; desc?: string; icon?: string }[]; cta?: string; nextTitle?: string }
   | { type: 'closing'; heading: string; sub?: string; contact?: { name?: string; org?: string; email?: string; site?: string; phone?: string }; qr?: { url: string; label?: string }; thanks?: string; keywords?: string[] }
-  | { type: 'custom'; html: string; css?: string; js?: string; description?: string; bare?: boolean; rich?: boolean; kind?: string; signature?: string };
+  | { type: 'custom'; html: string; css?: string; js?: string; description?: string; bare?: boolean; rich?: boolean; kind?: string; signature?: string; noHead?: boolean; cine?: boolean };
 
 export type ArchetypeName = Body['type'];
 

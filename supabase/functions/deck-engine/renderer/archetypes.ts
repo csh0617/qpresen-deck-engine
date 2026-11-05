@@ -293,7 +293,7 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
       // `bare`: premium/rich slides — HTML goes straight into <section class="body"> (the author styles .body itself);
       // <i data-icon="name"></i> placeholders become inline Lucide SVGs.
       const html = withIcons(String(b.html || ''));
-      return { html: b.bare ? html : `<div class="a-custom">${html}</div>`, css: b.css, js: b.js };
+      return { html: b.bare ? html : `<div class="a-custom">${html}</div>`, css: b.css, js: b.js, noHead: !!b.noHead, useTopbar: !b.noHead, stageClass: b.noHead ? 'a-custom-full' : '' };
     }
   }
   ctx.warnings.push(`unknown archetype on slide ${ctx.n}`);
