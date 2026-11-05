@@ -3,7 +3,10 @@
 export const FX_CSS = `
 /* ===== FX layer (ported from the reference decks, opt-in) ===== */
 :root{--f-alt:var(--q3);--ease-out:cubic-bezier(.2,.8,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1)}
-/* photo backdrop with Ken Burns + legibility fades: <div class="backdrop kb fade-r"><img src style="--pos:50% 40%"><div class="credit">사진: …</div></div> */
+/* photo backdrop with Ken Burns + legibility fades. Class names say WHICH SIDE FADES TO THE STAGE COLOR (= where the text goes):
+   default/.fade-l = left fades (text left, photo right) · .fade-r = right fades (text right, photo left) · .fade-b = bottom fades · .fade-t = top fades
+   <div class="backdrop kb"><img src style="--pos:50% 40%"><div class="credit">사진: …</div></div> */
+.stage>.head{position:relative;z-index:3}
 .photo{position:relative;overflow:hidden;border-radius:var(--r);background:var(--card-3);min-height:0}
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
 .photo.kb img{animation:kenburns 24s ease-in-out infinite alternate;transform-origin:center}
@@ -17,6 +20,7 @@ export const FX_CSS = `
 .backdrop img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,center)}
 .backdrop.kb img{animation:kenburns 26s ease-in-out infinite alternate}
 .backdrop::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,var(--bg) 36%,color-mix(in srgb,var(--bg) 72%,transparent) 58%,color-mix(in srgb,var(--bg) 10%,transparent) 100%)}
+.backdrop.fade-l::after{background:linear-gradient(90deg,var(--bg) 0%,var(--bg) 36%,color-mix(in srgb,var(--bg) 72%,transparent) 58%,color-mix(in srgb,var(--bg) 10%,transparent) 100%)}
 .backdrop.fade-r::after{background:linear-gradient(270deg,var(--bg) 0%,var(--bg) 36%,color-mix(in srgb,var(--bg) 72%,transparent) 58%,color-mix(in srgb,var(--bg) 10%,transparent) 100%)}
 .backdrop.fade-b::after{background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 15%,transparent) 0%,color-mix(in srgb,var(--bg) 65%,transparent) 45%,var(--bg) 100%)}
 .backdrop.fade-t::after{background:linear-gradient(0deg,color-mix(in srgb,var(--bg) 15%,transparent) 0%,color-mix(in srgb,var(--bg) 65%,transparent) 45%,var(--bg) 100%)}
@@ -65,6 +69,7 @@ html.static [data-reveal]{filter:none!important;rotate:none!important}
 .fx-3d{position:absolute!important;inset:0;z-index:-1;pointer-events:none;opacity:var(--fx-op,.95)}
 .fx-3d canvas{display:block;width:100%;height:100%}
 .stage.cine .backdrop::after{background:linear-gradient(90deg,#070C1C 0%,rgba(7,12,28,.94) 30%,rgba(7,12,28,.58) 58%,rgba(7,12,28,.34) 100%)}
+.stage.cine .backdrop.fade-l::after{background:linear-gradient(90deg,#070C1C 0%,rgba(7,12,28,.94) 30%,rgba(7,12,28,.58) 58%,rgba(7,12,28,.34) 100%)}
 .stage.cine .backdrop.fade-r::after{background:linear-gradient(270deg,#070C1C 0%,rgba(7,12,28,.94) 30%,rgba(7,12,28,.58) 58%,rgba(7,12,28,.34) 100%)}
 .stage.cine .backdrop.fade-b::after{background:linear-gradient(180deg,rgba(7,12,28,.35) 0%,rgba(7,12,28,.78) 55%,#070C1C 100%)}
 .stage.cine .backdrop.fade-t::after{background:linear-gradient(0deg,rgba(7,12,28,.35) 0%,rgba(7,12,28,.78) 55%,#070C1C 100%)}

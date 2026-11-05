@@ -3,7 +3,7 @@ import { themeCss } from './theme.ts';
 import { BASE_CSS } from './baseCss.ts';
 import { BASE_JS } from './baseJs.ts';
 import { renderBody, type Ctx } from './archetypes.ts';
-import { esc, rich, plain, pad, cycleAccent, fclass, artSvg } from './util.ts';
+import { esc, rich, plain, pad, cycleAccent, fclass, artSvg, sanitizeDeckCss } from './util.ts';
 import { GSAP_JS, THREE_JS } from '../assets/libs.ts';
 
 export const FONT_PLACEHOLDER = '__QP_FONT__';
@@ -57,7 +57,7 @@ export function renderSlideDoc(inp: SlideRenderInput): string {
   const out = renderBody(s, ctx);
   if ((s.body as any).type === 'custom') out.html = withImagePlaceholders(out.html, s.id || String(n));
   const dir = spec.meta.direction; const fx = (spec.meta.fx || dir?.fx || []).map(f => 'qfx-' + f).join(' ');
-  const deckCss = dir?.deckCss ? `\n/* deck layer */\n${dir.deckCss}` : '';
+  const deckCss = dir?.deckCss ? `\n/* deck layer */\n${sanitizeDeckCss(dir.deckCss)}` : '';
   const deckJs = dir?.deckJs ? `<script>${dir.deckJs}</script>\n` : '';
   const libs = libsFor((dir?.deckJs || '') + '\n' + (out.js || ''));
   const { sec, idx } = sectionOf(spec, s);

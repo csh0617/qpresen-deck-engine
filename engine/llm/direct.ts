@@ -6,6 +6,7 @@ import { parseRich, sanitizeRich } from './rich.ts';
 import { HOUSE_STYLE } from './house.ts';
 import type { Brief, Plan, PipelineOptions } from './pipeline.ts';
 import type { DeckDirection, Accent } from '../renderer/types.ts';
+import { sanitizeDeckCss } from '../renderer/util.ts';
 
 export interface ImagePlan { id: string; role: 'backdrop' | 'side' | 'mock' | 'illustration'; prompt: string; ratio?: '16:9' | '1:1' | '3:4' | '4:3' }
 export interface Direction extends DeckDirection { images?: ImagePlan[]; darkSections?: string[] }
@@ -32,7 +33,7 @@ export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디�
 ===CSS===
 (덱 레이어 CSS, 2~6KB. 모든 장에 베이스 CSS 다음에 삽입된다.
  - helper 클래스는 반드시 d- 접두사(.d-stamp .d-wire …). 토큰(var(--f) 등)으로 색을 쓴다.
- - 전역 미세 조정은 최대 5개 규칙(예: .head h1 em 그라데이션, .card 그림자 톤, .eyebrow 스타일, .stage.cine 변주). 레이아웃을 깨는 전역 변경 금지(.body/.stage 크기·padding 변경 금지).
+ - 전역 미세 조정은 최대 5개 규칙(예: .head h1 em 그라데이션, .card 그림자 톤, .eyebrow 스타일). .stage/.stage.cine 의 background 는 덮어쓰지 말 것 — 질감은 .stage::after 같은 투명 오버레이로. cine에서는 --ink/--text가 밝은 글자색으로, --bg/--card가 어두운 색으로 반전된다(어두운 면은 var(--bg)·var(--card)로). 레이아웃을 깨는 전역 변경 금지(.body/.stage 크기·padding 변경 금지).
  - @import·url(http…)·웹폰트 금지. @keyframes 이름은 d- 접두사.)
 ===JS===
 (선택. 덱 레이어 JS 0~3KB — 여러 장이 공유할 작은 유틸(예: window.DeckFX = { ripple(el), countUpAll() })을 deck:ready 이벤트 뒤에 노출. 없으면 비워 둔다. gsap 사용 가능(쓰면 자동 포함).)
@@ -74,7 +75,7 @@ export async function directDeck(brief: Brief, plan: Plan, opt: PipelineOptions 
     photoStrategy: ['none', 'backdrops', 'side', 'mixed'].includes(m.photoStrategy) ? m.photoStrategy : 'mixed',
     imageBudget: budget, motion: String(m.motion || ''),
     fx: (Array.isArray(m.fx) && m.fx.length ? m.fx.filter((f: string) => fxAll.includes(f)) : fxAll) as any,
-    deckCss: parts.css.slice(0, 12000) || undefined, deckJs: parts.js.slice(0, 6000) || undefined,
+    deckCss: sanitizeDeckCss(parts.css.slice(0, 12000)) || undefined, deckJs: parts.js.slice(0, 6000) || undefined,
     helpers: Array.isArray(m.helpers) ? m.helpers.map((h: any) => typeof h === 'string' ? h : `${h.class} — ${h.purpose || ''}`).slice(0, 10) : [],
     images: (Array.isArray(m.images) ? m.images : []).filter((x: any) => x && x.id && x.prompt).slice(0, budget).map((x: any) => ({ id: String(x.id), role: ['backdrop', 'side', 'mock', 'illustration'].includes(x.role) ? x.role : 'side', prompt: String(x.prompt), ratio: ['16:9', '1:1', '3:4', '4:3'].includes(x.ratio) ? x.ratio : undefined })),
     darkSections: Array.isArray(m.darkSections) ? m.darkSections.map(String).slice(0, 2) : [],
@@ -85,6 +86,7 @@ export async function directDeck(brief: Brief, plan: Plan, opt: PipelineOptions 
 
 /** Apply a direction to the plan/spec meta: section accents, fx flags, dark (cinematic) sections. */
 export function applyDirection(plan: Plan, dir: Direction): void {
+  if (dir.deckCss) dir.deckCss = sanitizeDeckCss(dir.deckCss);
   plan.meta.direction = dir; plan.meta.fx = dir.fx;
   const acc = dir.palette?.sectionAccents || {};
   (plan.sections || []).forEach(s => { if (acc[s.id]) s.accent = acc[s.id]; });
@@ -98,7 +100,7 @@ export function directionBlock(dir: Direction | undefined, slide: { id: string; 
   const structural = /^(cover|section|closing)$/.test(String(slide.kind || slide.type || ''));
   if (!img && structural && dir.photoStrategy !== 'none') {
     const base = `\n[아트 디렉션 — 이 덱의 시각 언어, 반드시 따른다]\n무드: ${dir.mood}\n컨셉: ${dir.concept}\n모티프: ${(dir.motifs || []).join(' · ')}\n모션: ${dir.motion}\n${dir.palette?.notes ? '타이포: ' + dir.palette.notes + '\n' : ''}${(dir as any).notes ? '지시: ' + (dir as any).notes + '\n' : ''}덱 레이어 helper 클래스(이미 정의됨, 그대로 사용): ${(dir.helpers || []).join(' / ') || '(없음)'}\n`;
-    return base + `이 장(${slide.kind || slide.type})은 무대 전체 구성이다: 주제를 상징하는 사진 백드롭을 넣어라 — <div class="backdrop kb fade-r"><img data-image="(한국어로 구체적인 장면 묘사)" alt="" style="--pos:50% 45%"><div class="credit">AI 생성 이미지</div></div> 를 첫 요소로, 글은 왼쪽(또는 시네마틱 무대 위 흰 글자). 이미지는 엔진이 생성해 채운다.\n`;
+    return base + `이 장(${slide.kind || slide.type})은 무대 전체 구성이다: 주제를 상징하는 사진 백드롭을 넣어라 — <div class="backdrop kb"><img data-image="(한국어로 구체적인 장면 묘사)" alt="" style="--pos:50% 45%"><div class="credit">AI 생성 이미지</div></div> 를 첫 요소로. 기본 백드롭은 왼쪽이 바탕색으로 페이드되므로 글은 왼쪽, 사진은 오른쪽(글을 오른쪽에 두려면 .fade-r). 시네마틱 무대(cine)면 어두운 사진 위 흰 글자. 이미지는 엔진이 생성해 채운다.\n`;
   }
   return `\n[아트 디렉션 — 이 덱의 시각 언어, 반드시 따른다]\n무드: ${dir.mood}\n컨셉: ${dir.concept}\n모티프: ${(dir.motifs || []).join(' · ')}\n모션: ${dir.motion}\n${dir.palette?.notes ? '타이포: ' + dir.palette.notes + '\n' : ''}${(dir as any).notes ? '지시: ' + (dir as any).notes + '\n' : ''}덱 레이어 helper 클래스(이미 정의됨, 그대로 사용): ${(dir.helpers || []).join(' / ') || '(없음)'}\n${dark ? '이 장은 시네마틱 다크 무대다: 엔진이 .stage.cine 을 적용하므로 어두운 바탕 위 밝은 글자·유리 카드로 설계한다(토큰은 자동 반전).\n' : ''}${img ? `이 장은 사진을 쓴다 (role=${img.role}, ratio=${img.ratio || (img.role === 'backdrop' ? '16:9' : '4:3')}): 레이아웃에 <img data-image="${img.prompt.replace(/"/g, "'")}" alt="…" class="…"> 를 넣어라. backdrop이면 <div class="backdrop kb fade-r"><img data-image=… style="--pos:50% 40%"></div> 를 .body 첫 요소로 두고 글은 왼쪽에, side면 오른쪽 열(≥560px)에 .photo 카드로. 이미지는 엔진이 생성해 채운다(지금은 플레이스홀더).\n` : '이 장에는 사진을 넣지 않는다(다이어그램·SVG·숫자로 표현).\n'}`;
 }

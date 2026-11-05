@@ -83,3 +83,13 @@ export function qrPlaceholder(url: string, label?: string): string {
 }
 
 export function clamp(n: number, a: number, b: number): number { return Math.max(a, Math.min(b, n)); }
+
+/** The deck layer may add texture overlays but must not repaint .stage/.stage.cine (the engine paints them; in cine --ink is the light text color). */
+export function sanitizeDeckCss(css: string): string {
+  return (css || '').replace(/([^{}]+)\{([^{}]*)\}/g, (m, sel: string, body: string) => {
+    const targetsStage = sel.split(',').some(x => /^\s*(?:html\s+|body\s+)?\.stage(?:\.[\w-]+)*(?:::?before|::?after)?\s*$/.test(x) && !/::?(before|after)/.test(x));
+    if (!targetsStage) return m;
+    const cleaned = body.split(';').filter(d => !/^\s*background(?:-color|-image)?\s*:/i.test(d)).join(';');
+    return `${sel}{${cleaned}}`;
+  });
+}

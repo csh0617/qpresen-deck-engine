@@ -80,17 +80,17 @@ ${ICON_NAMES}
 - 정적 모드(html.static: 썸네일·인쇄)에서는 모든 reveal이 즉시 완료 상태로 그려진다. JS도 e.detail.static 이면 최종 상태를 즉시 그리고 끝낸다.
 
 - 연쇄 등장: data-after="#앞요소id" data-gap="ms" → 앞 요소의 타이핑/카운트/등장이 끝난 뒤 시작(레퍼런스 덱의 리듬). 긴 장면은 3~4단계로 연쇄.
-- 사진 백드롭: <div class="backdrop kb fade-r"><img data-image="장면 묘사" style="--pos:50% 40%" alt=""><div class="credit">AI 생성 이미지</div></div> — .body 첫 요소로 두면 화면 전체(무대 가장자리까지) 사진 + 왼쪽이 무대 바탕색으로 페이드되어 글자 영역이 확보된다. kb=켄번즈. fade-b/fade-t 변형. 밝은 무대(light)에서는 dim/soft를 쓰지 말 것(글자가 묻힌다) — 사진을 어둡게 누르고 싶으면 META.stage="cine". 아트 디렉션이 이 장에 사진을 허용할 때만.
+- 사진 백드롭: <div class="backdrop kb"><img data-image="장면 묘사" style="--pos:50% 40%" alt=""><div class="credit">AI 생성 이미지</div></div> — .body 첫 요소로 두면 화면 전체(무대 가장자리까지) 사진이 깔리고, 기본(=.fade-l)은 왼쪽 ~45%가 무대 바탕색으로 페이드되어 글자 영역이 된다(글 왼쪽 · 사진 오른쪽). 글을 오른쪽에 두려면 .fade-r(오른쪽이 바탕색 · 사진 왼쪽), 글을 위에 두려면 .fade-b, 아래에 두려면 .fade-t. 규칙: 글과 사진은 반드시 반대편 — 페이드되지 않은 사진 위에 본문 글자를 올리지 말 것(카드/유리 안에 넣는 것은 가능). kb=켄번즈. 밝은 무대(light)에서는 dim/soft를 쓰지 말 것(글자가 묻힌다) — 사진을 어둡게 누르고 싶으면 META.stage="cine". 아트 디렉션이 이 장에 사진을 허용할 때만.
 - 사진 카드: <figure class="photo card"><img data-image="…" alt=""><figcaption class="cap">캡션</figcaption></figure> (side 사진). 이미지는 엔진이 생성·치환한다(src 쓰지 말 것).
 - 앱 화면 목업 키트: <div class="app claude|gpt v2"> 안에 .chrome(브라우저 상단바: .tl 신호등, .url 주소) .app-row > .app-side(사이드바 .it 항목) + .app-main(.app-top, .msg.user/.msg, .composer(.inp, .send)) · 드롭다운 .amenu(.open) · 아티팩트 .art-card · 사이드 패널 .app-panel. 실제 SaaS 화면을 재현할 때.
 - 가이드 클릭 엔진: 목업 루트에 data-guide='[{"at":600,"do":"click","sel":"#btn","call":"여기를 누르면","num":1,"pos":"r"},{"at":1800,"do":"type","sel":"#inp","text":"입력할 문장","speed":22,"call":"질문 입력","num":2},{"at":4200,"do":"show","show":".reply"},{"at":4500,"do":"point","sel":".reply","call":"답이 이렇게","num":3,"pos":"l"}]' 를 주면 커서가 움직이며 번호 콜아웃·링·타이핑을 자동 시연한다. do: click|type|point|show|hide|clear|call, 옵션 open/close(메뉴 .open), step(우측 단계 목록 [data-step] 강조), hold. 정적 모드는 최종 상태+콜아웃만.
 - 덱 전체 효과(아트 디렉션이 켬): 오로라 블롭, 푸터 섹션 레일, 카드 3D 틸트(hover), 블러+회전 등장 — 자동. 카드에 data-notilt 로 틸트 제외.
-- 시네마틱 다크 무대: 아트 디렉션이 지정한 섹션은 .stage.cine(어두운 배경, 유리 카드, 흰 글자)으로 렌더된다 — 그 장은 어두운 바탕에 맞게 설계.
+- 시네마틱 다크 무대: 아트 디렉션이 지정한 섹션은 .stage.cine(어두운 배경, 유리 카드, 흰 글자)으로 렌더된다 — 그 장은 어두운 바탕에 맞게 설계. cine에서는 토큰이 반전된다: --bg/--card/--line은 어두운 색, --ink/--text는 밝은 글자색 (즉 --ink는 '남색'이 아니라 '글자색'). 배경을 어둡게 칠하려고 var(--ink)를 쓰지 말고 var(--bg)·var(--card)를 쓴다. .stage.cine 의 background 는 엔진이 칠하므로 덮어쓰지 말 것.
 - 라이브러리: gsap 3 전역 사용 가능(gsap.timeline / gsap.to / stagger — 쓰면 자동 포함, 20~50줄의 안무에 권장). THREE(three.js r152) 전역 사용 가능 — 3D가 메시지의 핵심일 때만(부품 구조·공간·흐름), 100줄 이내, 캔버스는 .body 안 컨테이너에 append, STATIC이면 한 프레임만 렌더. 그 외 외부 라이브러리 금지.
 
 [무대 전체 장 — kind가 cover / section / closing / agenda 일 때]
 - META.head="none": 엔진 헤더가 없으므로 제목·부제·메타를 HTML 안에 직접 쓴다. 무대 패딩(위 104 · 좌우 96 · 아래 100px) 안쪽이 .body(1728×876)이고, <div class="backdrop …"> 는 absolute라 무대 전체(1920×1080)를 채운다.
-- 표지(cover): 사진 백드롭(.backdrop.kb.fade-r 또는 cine 무대) + 큰 제목 64~88px(.hero-title, em 강조) + 부제 + 메타 줄(.meta-line: 일시·장소·청중) + 발표자 배지(.speaker) + 키워드 칩 + 오른쪽/아래에 목차 또는 KPI 띠. 참고 슬라이드 ir-01(제품 목업형)·gochang-01(시네마틱형).
+- 표지(cover): 사진 백드롭(.backdrop.kb — 글 왼쪽·사진 오른쪽, 또는 cine 무대) + 큰 제목 64~88px(.hero-title, em 강조) + 부제 + 메타 줄(.meta-line: 일시·장소·청중) + 발표자 배지(.speaker) + 키워드 칩 + 오른쪽/아래에 목차 또는 KPI 띠. 참고 슬라이드 ir-01(제품 목업형)·gochang-01(시네마틱형).
 - 간지(section): 로마숫자 거대 타이포(.sec-num) + 섹션명(.hero-title) + 이 섹션에서 다룰 3~4개(칩/목록) + 섹션 진행 표시(.secs). cine 권장. 참고 gochang-07.
 - 마무리(closing): 핵심 메시지 한 문장(60~80px) + 오늘의 숫자 3개 + 다음 행동/연락처(.contact) + '질문·토론' 안내. QR은 엔진이 제공하지 않으므로 넣지 않는다. 참고 ir-20·gochang-60.
 - 목차(agenda): 섹션 3~6개를 번호·제목·한 줄·분량(장수/분)으로, 왼쪽 큰 번호 타이포 + 오른쪽 설명 카드, 또는 세로 스텝. 각 항목 등장 리듬 120ms.
@@ -222,6 +222,8 @@ export const RICH_FIX_SYSTEM = `당신은 Qpresen 프리미엄 덱의 슬라이�
 - 숫자가 비어 보이면(정적 모드) HTML에 최종값을 써 넣는다.
 - MOTION_LOW / 정적으로 보임: 등장 연쇄를 14개 이상으로 늘리고(data-reveal 변형과 data-delay 리듬), 숫자에 data-count, 살아있는 요소(data-cycle·flowline·pulse·bar·kb) 1개와 상호작용(hover/클릭/토글/슬라이더/자동 데모) 1개를 추가한다. 필요하면 gsap 타임라인으로 안무.
 - STYLE_OFF(하우스 스타일 이탈: 회색 리포트 룩·작은 라벨 다발·무거운 사진): 그라데이션 숫자·틴트/유리 카드·아이콘 원·칩으로 바꾸고 글자를 키운다.
+- TEXT_ON_PHOTO(페이드되지 않은 사진 위의 글자): 글과 사진은 반대편이어야 한다. 기본 .backdrop(=.fade-l)은 왼쪽이 바탕색·사진 오른쪽 → 글은 왼쪽 열에, .fade-r는 오른쪽이 바탕색·사진 왼쪽 → 글은 오른쪽 열에. 글이 왼쪽인데 .fade-r가 붙어 있으면 .fade-r를 뺀다. 사진 쪽에 남는 글은 .card/.glass 안에 넣거나 사진 반대편으로 옮기고, 빈 사진 쪽은 사진이 채우는 것이 정상(억지로 채우지 않는다).
+- CINE_BG_LIGHT: cine 무대에서 var(--ink)는 밝은 글자색이다. .stage.cine 의 background 덮어쓰기를 지우고, 어두운 면이 필요하면 var(--bg)·var(--card).
 - 사용자 코멘트는 그 지시를 따른다.
 ${DESIGN_SYSTEM}
 
