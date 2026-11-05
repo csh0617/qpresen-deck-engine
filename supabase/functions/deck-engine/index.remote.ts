@@ -4,15 +4,15 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
-import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/renderer/index.ts';
-import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/pipeline.ts';
-import { fillSlideRich, fixSlideRich, isRichTarget, warmRichCache } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/rich.ts';
-import { directDeck, applyDirection } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/direct.ts';
-import { writeDossier } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/dossier.ts';
-import { reviewSlide } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/pipeline.ts';
-import { generateImages } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/images.ts';
-import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/provider.ts';
-import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/renderer/validate.ts';
+import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/renderer/index.ts';
+import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/llm/pipeline.ts';
+import { fillSlideRich, fixSlideRich, isRichTarget, warmRichCache } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/llm/rich.ts';
+import { directDeck, applyDirection } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/llm/direct.ts';
+import { writeDossier } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/llm/dossier.ts';
+import { reviewSlide } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/llm/pipeline.ts';
+import { generateImages } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/llm/images.ts';
+import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/llm/provider.ts';
+import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eef92fec99eb9b9ccbe887721de064a0b368d2a4/engine/renderer/validate.ts';
 
 const ORIGINS = ['https://qpresen.com', 'https://www.qpresen.com', 'https://readdy.ai', 'http://localhost:5173', 'http://127.0.0.1:5173'];
 const json = (body: unknown, status = 200, origin = '*') => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Cache-Control': 'no-store' } });
@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
       if (!job?.spec) return json({ error: 'JOB_NOT_FOUND' }, 404, allow);
       const spec = job.spec as any; const slide = spec.slides.find((x: any) => x.id === slideId); if (!slide) return json({ error: 'SLIDE_NOT_FOUND' }, 404, allow);
       const dir = spec.meta?.direction; const dirText = dir ? `${dir.mood || ''} / ${dir.concept || ''}` : undefined;
-      const review = await reviewSlide(String(image), slide, { provider: richProvider(prov), log }, { lint: Array.isArray(lint) ? lint : undefined, direction: dirText });
+      const review = await reviewSlide(String(image), slide, { provider: richProvider(prov), log }, { lint: Array.isArray(lint) ? lint : undefined, direction: dirText, motion: body.motion, cine: !!((slide.body as any).cine || (slide.section && (spec.meta as any)?.direction?.darkSections?.includes(slide.section))) });
       await db.from('deck_feedback').insert({ job_id: jobId, user_id: userId, slide_id: slideId, slide_type: slide.body?.type, source: 'vision', rating: typeof review?.score === 'number' ? Math.round(review.score) : null, comment: review?.upgrade || null, data: { review } });
       return json({ review }, 200, allow);
     }
