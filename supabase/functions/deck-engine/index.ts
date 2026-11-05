@@ -181,7 +181,7 @@ Deno.serve(async (req: Request) => {
       const isRich = spec.slides[idx]?.body?.type === 'custom' && spec.slides[idx]?.body?.rich;
       const fixed = isRich ? await fixSlideRich(spec.slides[idx], issueList, { provider: richProvider(prov), log }, spec.meta) : await fixSlide(spec.slides[idx], issueList, { provider: prov, log }, spec.meta);
       spec.slides[idx] = fixed; await touch(jobId, { spec });
-      await db.from('deck_feedback').insert({ job_id: jobId, user_id: userId, slide_id: slideId, slide_type: fixed.body?.type, source: 'author', comment: body.comment || null, data: { issues } });
+      await db.from('deck_feedback').insert({ job_id: jobId, user_id: userId, slide_id: slideId, slide_type: fixed.body?.type, source: body.source === 'lint' ? 'lint' : 'author', comment: body.comment || null, data: { issues: issueList, rich: !!isRich } });
       return json({ slide: fixed }, 200, allow);
     }
 

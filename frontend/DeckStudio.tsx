@@ -38,6 +38,7 @@ export default function DeckStudio() {
   const [comment, setComment] = useState('');
   const [withImages, setWithImages] = useState(true);
   const [quality, setQuality] = useState<'standard' | 'premium'>('standard');
+  const [qa, setQa] = useState<{ stage: 'idle' | 'lint' | 'fix' | 'done'; done?: number; total?: number; fixed?: number; errors?: number; skipped?: boolean }>({ stage: 'idle' });
   const frameRef = useRef<HTMLIFrameElement>(null);
   /** Premium mode: these archetypes stay on the deterministic renderer; every other slide is designed individually (one request each). */
   const STRUCTURAL = ['cover', 'section', 'agenda', 'closing', 'quote', 'image-hero'];
@@ -64,7 +65,31 @@ export default function DeckStudio() {
     const worker = async () => { while (cursor < batches.length) { const b = batches[cursor++]; try { await callEngine({ action: 'fill', jobId, ids: b }); } catch (e) { failed.push(...b); } done += b.length; setProgress({ done, total: ids.length }); } };
     await Promise.all(Array.from({ length: Math.min(quality === 'premium' ? 5 : 4, batches.length) }, worker));
     if (failed.length) { for (const id of failed) { try { await callEngine({ action: 'fill', jobId, ids: [id] }); } catch { /* fallback handled by renderer */ } } }
-    try { setStage('render'); setProgress({ done: 0, total: 0 }); const d = await callEngine({ action: 'render', jobId, images: withImages, maxImages: 4 }); setResult(d); setStage('done'); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
+    try { setStage('render'); setProgress({ done: 0, total: 0 }); const d = await callEngine({ action: 'render', jobId, images: withImages, maxImages: 4 }); setResult(d); setStage('done'); setBusy(false); await qaLoop(d); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
+  }
+  /** Wait until the preview player (same-origin srcdoc) exposes QPDeck.lintAll. */
+  async function waitPlayer(ms = 12000): Promise<any> {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) { const w: any = frameRef.current?.contentWindow; if (w?.QPDeck?.lintAll) return w; await new Promise(r => setTimeout(r, 300)); }
+    return null;
+  }
+  /** Automatic QA: every slide self-checks its layout (overflow, clipping, overlap, tiny text) inside the player;
+      slides with errors are sent back to the model once, then the deck is re-rendered. */
+  async function qaLoop(d: any) {
+    try {
+      await new Promise(r => setTimeout(r, 600));
+      const w = await waitPlayer(); if (!w) { setQa({ stage: 'done', skipped: true }); return; }
+      setQa({ stage: 'lint', done: 0, total: d.pageCount });
+      const res: any[] = await w.QPDeck.lintAll((n: number, N: number) => setQa({ stage: 'lint', done: n, total: N }));
+      const bad = res.filter(r => (r.issues || []).some((i: any) => i.sev === 'error' && !/LINT_|NO_LINT/.test(i.code))).slice(0, 6);
+      if (!bad.length) { setQa({ stage: 'done', fixed: 0, errors: 0 }); return; }
+      setQa({ stage: 'fix', done: 0, total: bad.length }); setBusy(true);
+      let k = 0;
+      await Promise.all(bad.map(async r => { const s = d.spec?.slides?.[r.n - 1]; if (!s) return; try { await callEngine({ action: 'fix', jobId, slideId: s.id, source: 'lint', issues: (r.issues || []).filter((i: any) => i.sev !== 'nit').slice(0, 10) }); } catch { /* keep the original slide */ } k++; setQa({ stage: 'fix', done: k, total: bad.length }); }));
+      const d2 = await callEngine({ action: 'render', jobId, register: false, images: withImages, maxImages: 4 });
+      setResult({ ...d2, fileId: d.fileId });
+      setQa({ stage: 'done', fixed: bad.length, errors: bad.length });
+    } catch (e: any) { setQa({ stage: 'done', skipped: true }); } finally { setBusy(false); }
   }
   async function doFeedback(rating: number) {
     if (!result) return; const s = result.spec?.slides?.[cur - 1]; try { await callEngine({ action: 'feedback', jobId, slideId: s?.id, slideType: s?.body?.type, rating, comment }); setComment(''); } catch (e: any) { setErr(e.message); }
@@ -125,7 +150,10 @@ export default function DeckStudio() {
           )}
           {result && (
             <div className="bg-white rounded-2xl border p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2"><h2 className="font-bold">결과 — {result.pageCount}장 · {(result.bytes / 1048576).toFixed(1)}MB {result.fileId && <span className="text-green-700 text-sm font-normal">· 내 자료에 저장됨</span>}{result.images && <span className="text-gray-400 text-sm font-normal"> · 이미지 {result.images.generated}장</span>}</h2>
+              <div className="flex items-center justify-between flex-wrap gap-2"><h2 className="font-bold">결과 — {result.pageCount}장 · {(result.bytes / 1048576).toFixed(1)}MB {result.fileId && <span className="text-green-700 text-sm font-normal">· 내 자료에 저장됨</span>}{result.images && <span className="text-gray-400 text-sm font-normal"> · 이미지 {result.images.generated}장</span>}
+                {qa.stage === 'lint' && <span className="text-indigo-600 text-sm font-normal"> · 자동 검수 중 {qa.done}/{qa.total}</span>}
+                {qa.stage === 'fix' && <span className="text-amber-600 text-sm font-normal"> · 레이아웃 오류 {qa.total}장 자동 수정 중 ({qa.done}/{qa.total})</span>}
+                {qa.stage === 'done' && !qa.skipped && <span className="text-gray-500 text-sm font-normal"> · 자동 검수 완료{qa.fixed ? ` (${qa.fixed}장 수정)` : ' (문제 없음)'}</span>}</h2>
                 <div className="flex gap-2"><button onClick={() => download('player')} className="px-3 py-2 rounded-lg border text-sm">오프라인 HTML</button><button onClick={() => download('qpresen')} className="px-3 py-2 rounded-lg border text-sm">Qpresen용 HTML</button>{result.fileId ? <a href="/dashboard" className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">발표하기 →</a> : <button onClick={uploadViaDashboard} className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">내 자료에 올리기</button>}</div></div>
               <div className="aspect-video rounded-xl overflow-hidden border bg-black"><iframe ref={frameRef} title="deck" className="w-full h-full" srcDoc={srcdoc} allow="fullscreen" /></div>
               <div className="flex items-center gap-2 flex-wrap text-sm"><span className="text-gray-500">현재 {cur}/{result.pageCount}장 · {result.titles?.[cur - 1]}</span>

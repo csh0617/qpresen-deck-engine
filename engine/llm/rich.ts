@@ -43,12 +43,17 @@ export const DESIGN_SYSTEM = `[무대 규격]
 요소에 class="f-azure | f-violet | f-teal | f-amber | f-rose | f-navy | f-ok | f-danger" 를 주면 그 하위의 --f / --f-100 / --f-ink 가 바뀐다(카드별 색 구분).
 다크 테마에서도 토큰이 자동 반전된다. 고정색(#fff 등)은 그라데이션·solid 면 위의 흰 글자에만 쓴다.
 
-[컴포넌트 클래스 — 베이스 CSS가 제공한다. 그대로 쓰면 덱 전체의 일관성이 생긴다]
-.card(흰 카드: 테두리·그림자·radius) 변형 .card.tint(--f-100 바탕) .card.solid(--f 바탕·흰 글자) .card.edge(왼쪽 색 띠) .card.glass(유리) .card.lift(hover 상승) .gborder(그라데이션 테두리) .card-title(카드 제목 줄)
-.k-eyebrow(작은 대문자 라벨) .k-title .k-body .k-small · .mega(초대형 숫자) .big .num(숫자 글꼴) .num-g / .gtext(그라데이션 글자)
-.icon-circle(원형 아이콘 배경 48px, 하위 .ic 24px) .ic-sq(사각 52px; .ic-sq.lg 64px; .ic-sq.g 그라데이션) · .chip .pill(.pill.g 그라데이션, .pill.o 아웃라인) .tag .label .kpi .delta(.up/.down)
-.bullets>li(불릿) .bar>i(가로 막대, data-bar) .grid-2 .grid-3 .grid-4 .tbl(표) .callout(결론 박스) .band(가로 띠) .note .avatar .divider
-.seg>button(.on)(세그먼트 토글, .seg.g) input.rng(슬라이더, --p 로 채움 표시) .toggle(.on) .btn(.btn.ghost) .kbd .tap(탭 효과 원)
+[컴포넌트 클래스 — 베이스 CSS가 제공한다. 정확한 뜻대로만 쓸 것(다른 뜻으로 쓰면 스타일이 꼬인다)]
+.card(흰 카드: --card 바탕·테두리·그림자·radius 24px·padding 28px 30px) 변형 .card.tint(--f-50 연한 바탕) .card.solid(--f-ink 바탕·흰 글자) .card.flat(그림자 없음) .card.glass(유리) .card.lift(hover 상승) .card.dark(짙은 남색) · .gborder(그라데이션 테두리 카드) · .card-title(카드 제목 줄)
+숫자: .mega(120px) .big(64px) — 둘 다 --ink 색 굵은 숫자. 그라데이션 글자는 .gtext / .num-g. ※ .num 은 숫자 값이 아니라 '번호 원 배지'(44px 원, 흰 글자)다 — 값 표시에 쓰지 말 것.
+아이콘 틀: .icon-circle(56px 원, --f-100 바탕 --f 아이콘) .ic-sq(52px 사각, .ic-sq.lg 64px, .ic-sq.g 그라데이션) .avatar(64px 원, 그라데이션, 이니셜)
+라벨류: .k-eyebrow(15px 대문자 자간 라벨, --f-ink) .label(17px 굵은 --f-ink) .tag(15px, --card-3 바탕 --muted 글자) .pill(16px 둥근 알약, --f-100 바탕 --f-ink 글자; .pill.g 그라데이션 흰 글자, .pill.o 아웃라인) .delta(.up 녹색 / .down 빨강 / .flat 회색 작은 알약) .note(16px --faint — 중요한 글엔 쓰지 말 것) .legend(15px --muted 가로 범례)
+※ .chip 은 어두운 바탕용 반투명 흰 칩이다. 밝은 카드 위에서는 .pill 이나 .tag 를 쓴다.
+박스류: .callout(--f-50 바탕 21px 결론 박스, flex) .band(가로 띠, 21px) .meta-bar(가로 메타 줄 19px) .kpi(세로 flex 묶음) .bullets>li(21px 불릿, 점은 --f) .tbl(표: th --card-3 바탕, td 18px) .divider / .hair(1px 선)
+막대: <div class="bar" data-bar="42"><i></i></div> (높이 10px 트랙, 안의 i가 --f 색으로 42%까지 참)
+그리드: .grid-2 .grid-3 .grid-4 .grid-5 .grid-6 (gap 24px, 세로 꽉 채움)
+컨트롤: .seg>button(.on)(세그먼트 토글; .seg.g) input.rng(슬라이더; style="--p:62%" 로 채움 표시) .toggle(.on) .btn(.btn.ghost) .kbd .tap(탭 효과 원)
+※ 예약된 이름(베이스가 전역으로 정의) — 다른 뜻으로 재사용 금지: num, chip, bar, grid, label, note, legend, img, art, source, float, pulse, caret, orb, wm, hair, kbd, seg, tap, toggle, btn, avatar, band, callout, delta, tag, pill, kpi, k-title, k-small, k-body. 새 클래스는 이 목록과 겹치지 않는 이름으로(예: .mapbox, .tile5, .x-gauge).
 아이콘: <i data-icon="이름"></i> 가 24px 선형 SVG 아이콘으로 치환된다(크기는 부모의 .ic{width;height} 규칙으로). 이모지 금지. 이름은 다음 중에서만:
 ${ICON_NAMES}
 
@@ -176,7 +181,8 @@ export async function fillSlideRich(brief: Brief, plan: Plan, slide: PlanSlide, 
 }
 
 export const RICH_FIX_SYSTEM = `당신은 Qpresen 프리미엄 덱의 슬라이드 수정자다. 린트·검수에서 지적된 문제를 해결하도록 한 장의 HTML/CSS/JS를 최소한으로 고친다. 레이아웃 컨셉과 내용은 유지한다.
-- OVERFLOW/OUTSIDE_STAGE: 박스(1728×~680px)를 넘친 것 — 글자 수 축소, 항목 수 축소, 행 높이 min-height:0/overflow:hidden, 글자 크기 1~2px 축소 순으로.
+- OVERFLOW_X(가로 넘침): 부모 폭이 좁은 것이 원인이면(부모 < 300px인데 카드·제목이 들어감) 그리드 열 폭을 바꿔 그 영역을 넓힌다(열 교체·2열→1열·사이드 패널 축소). 말줄임(text-overflow:ellipsis)·nowrap으로 잘라 숨기는 것은 해결이 아니다 — 글자가 다 보여야 한다. 짧은 라벨이면 줄바꿈 허용(white-space:normal; word-break:keep-all).
+- OVERFLOW_Y(세로 넘침)/OUTSIDE_STAGE: 박스(1728×~680px)를 넘친 것 — 항목 수 축소, 글자 수 축소, 행 높이 min-height:0 + flex:1 로 분배, padding·gap 축소, 글자 크기 1~2px 축소 순으로.
 - SMALL_FONT: 14px 미만 글자를 키운다(캡션 15px 이상). LOW_CONTRAST: --muted/--faint 대신 --text/--ink, 면 위 글자는 -ink 토큰.
 - OVERLAP: 겹치는 요소의 간격·그리드 정의를 고친다. EMPTY/SPARSE: 내용을 보강하거나 요소를 키워 여백을 채운다. DENSE: 여백·간격을 늘리고 덜 중요한 요소를 뺀다.
 - 숫자가 비어 보이면(정적 모드) HTML에 최종값을 써 넣는다.
@@ -189,7 +195,8 @@ ${RICH_OUTPUT}
 export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: string; what?: string; extra?: any; el?: string; fix?: string }[], opt: RichOptions, specMeta?: DeckSpec['meta']): Promise<Slide> {
   const b: any = slide.body;
   const cur = `===META===\n${JSON.stringify({ title: slide.title, sub: slide.sub, source: slide.source, notes: slide.notes, signature: b.signature })}\n===HTML===\n${b.html}\n===CSS===\n${b.css || ''}\n===JS===\n${b.js || ''}`;
-  const user = `[덱 메타] ${JSON.stringify(specMeta || {})}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(i => `- ${i.sev || ''} ${i.code || ''} ${i.el || ''} ${i.extra != null ? '(' + JSON.stringify(i.extra).slice(0, 200) + ')' : ''} ${i.what || ''} ${i.fix ? '→ ' + i.fix : ''}`).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라.`;
+  const fmt = (i: any) => `- ${i.sev || ''} ${i.code || ''} ${i.el || ''}${i.extra != null ? ' (' + JSON.stringify(i.extra).slice(0, 120) + (/OVERFLOW/.test(i.code || '') ? 'px 넘침' : '') + ')' : ''}${i.box ? ' 요소크기=' + i.box[0] + '×' + i.box[1] + 'px' : ''}${i.parent ? ' 부모=' + i.parent : ''}${i.text ? ' 텍스트="' + String(i.text).slice(0, 40) + '"' : ''} ${i.what || ''} ${i.fix ? '→ ' + i.fix : ''}`;
+  const user = `[덱 메타] ${JSON.stringify(specMeta || {})}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(fmt).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라.`;
   const r = await chat(opt.provider, { system: RICH_FIX_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: 0.3, json: false, nudge: '(출력이 잘렸다. 네 구간을 더 간결하게 다시 출력하라.)' });
   opt.log?.(`[rich-fix ${slide.id}] ${r.model} ${r.ms}ms${r.truncated ? ' TRUNCATED' : ''}`);
   const { parts } = sanitizeRich(parseRich(r.text));
