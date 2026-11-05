@@ -4,10 +4,10 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
-import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/main/engine/renderer/index.ts';
-import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/main/engine/llm/pipeline.ts';
-import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/main/engine/llm/provider.ts';
-import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/main/engine/renderer/validate.ts';
+import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/renderer/index.ts';
+import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/llm/pipeline.ts';
+import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/llm/provider.ts';
+import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/renderer/validate.ts';
 
 const ORIGINS = ['https://qpresen.com', 'https://www.qpresen.com', 'https://readdy.ai', 'http://localhost:5173', 'http://127.0.0.1:5173'];
 const json = (body: unknown, status = 200, origin = '*') => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Cache-Control': 'no-store' } });
