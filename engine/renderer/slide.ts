@@ -53,7 +53,7 @@ export function renderSlideDoc(inp: SlideRenderInput): string {
 <meta name="qp-standalone-part" content="1">
 <meta name="qp-deck-engine" content="1.0">
 <title>${esc(title)}</title>
-<script>document.documentElement.classList.add('js');if(/[?&]static=1/.test(location.search)||(function(){try{return window.parent!==window&&window.parent.QPDeck&&window.parent.QPDeck.isStatic}catch(e){return false}})())document.documentElement.classList.add('static');try{if(localStorage.getItem('deck-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<script>document.documentElement.classList.add('js');if(/[?&]static=1/.test(location.search)||document.documentElement.hasAttribute('data-static')||(function(){try{return window.parent!==window&&window.parent.QPDeck&&window.parent.QPDeck.isStatic}catch(e){return false}})())document.documentElement.classList.add('static');try{if(localStorage.getItem('deck-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
 ${FONT_PLACEHOLDER}
 <style>${themeCss(theme, spec.meta.brand)}
 ${BASE_CSS}

@@ -1,0 +1,11 @@
+import { createRequire } from 'node:module'; const { chromium } = createRequire(import.meta.url)('playwright');
+import { resolve } from 'node:path';
+const browser = await chromium.launch(); const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+page.on('pageerror', e => console.log('pageerror', e.message));
+await page.goto('file://' + resolve(process.argv[2]));
+await page.waitForTimeout(800);
+const t0 = Date.now();
+const res = await page.evaluate(() => window.QPDeck.lintAll());
+console.log('lintAll ms', Date.now() - t0);
+for (const r of res) console.log(r.n, r.title, 'errors', r.issues.filter(i => i.sev === 'error').length, 'warn', r.issues.filter(i => i.sev === 'warn').length, 'occ', r.occupancy, r.issues.filter(i => i.sev === 'error').map(i => i.code + ':' + (i.el || '') + ':' + (i.extra ?? '')).join(' | '));
+await browser.close();

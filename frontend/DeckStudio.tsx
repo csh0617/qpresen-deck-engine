@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'; // ← Readdy 프로젝트의 supaba
 type Purpose = 'lecture' | 'ir' | 'report' | 'seminar' | 'proposal' | 'product' | 'keynote';
 type Theme = 'signature-white' | 'editorial-navy' | 'vivid-photo' | 'dark-stage';
 interface Brief { topic: string; purpose: Purpose; audience: string; durationMin: number; slideCount?: number; tone: 'formal' | 'friendly' | 'bold' | 'academic'; theme?: Theme; presenter?: { name: string; org?: string }; event?: string; date?: string; place?: string; materials?: string; extra?: string }
-interface PlanSlide { id: string; section?: string | null; type: string; title: string; sub?: string; intent?: string; t?: number }
+interface PlanSlide { id: string; section?: string | null; type: string; title: string; sub?: string; intent?: string; t?: number; kind?: string; signature?: string }
 interface Plan { meta: any; sections: { id: string; label: string; numeral?: string }[]; slides: PlanSlide[] }
 
 const FN = 'deck-engine';
@@ -37,7 +37,10 @@ export default function DeckStudio() {
   const [cur, setCur] = useState(1);
   const [comment, setComment] = useState('');
   const [withImages, setWithImages] = useState(true);
+  const [quality, setQuality] = useState<'standard' | 'premium'>('standard');
   const frameRef = useRef<HTMLIFrameElement>(null);
+  /** Premium mode: these archetypes stay on the deterministic renderer; every other slide is designed individually (one request each). */
+  const STRUCTURAL = ['cover', 'section', 'agenda', 'closing', 'quote', 'image-hero'];
 
   useEffect(() => { callEngine({ action: 'rules' }).then(() => {}).catch(() => {}); callEngine({ action: 'models' }).then(d => setModel(d.model)).catch(() => {}); }, []);
   useEffect(() => { const h = (e: MessageEvent) => { if (e.data?.qpDeck && e.data.kind === 'page') setCur(e.data.value); }; window.addEventListener('message', h); return () => window.removeEventListener('message', h); }, []);
@@ -46,15 +49,20 @@ export default function DeckStudio() {
 
   async function doPlan() {
     setErr(null); setBusy(true);
-    try { const d = await callEngine({ action: 'plan', brief }); setJobId(d.jobId); setPlan(d.plan); setStage('plan'); } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
+    try { const d = await callEngine({ action: 'plan', brief: { ...brief, quality }, quality }); setJobId(d.jobId); setPlan(d.plan); setStage('plan'); } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
   }
   async function doFill() {
     if (!jobId || !plan) return; setErr(null); setBusy(true); setStage('fill');
-    const ids = plan.slides.map(s => s.id); const batches: string[][] = []; for (let i = 0; i < ids.length; i += 3) batches.push(ids.slice(i, i + 3));
+    const ids = plan.slides.map(s => s.id); const batches: string[][] = [];
+    if (quality === 'premium') {
+      // rich slides one per request (each is a 60~120s design job); structural slides in batches of 3
+      const rich = plan.slides.filter(s => !STRUCTURAL.includes(s.type)).map(s => s.id); const std = ids.filter(id => !rich.includes(id));
+      rich.forEach(id => batches.push([id])); for (let i = 0; i < std.length; i += 3) batches.push(std.slice(i, i + 3));
+    } else { for (let i = 0; i < ids.length; i += 3) batches.push(ids.slice(i, i + 3)); }
     let done = 0; setProgress({ done: 0, total: ids.length });
     let cursor = 0; const failed: string[] = [];
     const worker = async () => { while (cursor < batches.length) { const b = batches[cursor++]; try { await callEngine({ action: 'fill', jobId, ids: b }); } catch (e) { failed.push(...b); } done += b.length; setProgress({ done, total: ids.length }); } };
-    await Promise.all(Array.from({ length: Math.min(4, batches.length) }, worker));
+    await Promise.all(Array.from({ length: Math.min(quality === 'premium' ? 5 : 4, batches.length) }, worker));
     if (failed.length) { for (const id of failed) { try { await callEngine({ action: 'fill', jobId, ids: [id] }); } catch { /* fallback handled by renderer */ } } }
     try { setStage('render'); setProgress({ done: 0, total: 0 }); const d = await callEngine({ action: 'render', jobId, images: withImages, maxImages: 4 }); setResult(d); setStage('done'); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
   }
@@ -98,6 +106,7 @@ export default function DeckStudio() {
           </div>
           <label className="block text-sm"><span className="text-gray-600">참고 자료 (텍스트 붙여넣기 — 수치·사실은 여기서만 사용)</span><textarea className="mt-1 w-full border rounded-lg p-2 h-28" value={brief.materials} onChange={e => setBrief({ ...brief, materials: e.target.value })} /></label>
           <label className="block text-sm"><span className="text-gray-600">추가 지시</span><input className="mt-1 w-full border rounded-lg p-2" value={brief.extra} onChange={e => setBrief({ ...brief, extra: e.target.value })} placeholder="예: 사례 3개 꼭 포함, 마지막에 Q&A" /></label>
+          <label className="block text-sm"><span className="text-gray-600">품질</span><select className="mt-1 w-full border rounded-lg p-2" value={quality} onChange={e => setQuality(e.target.value as any)}><option value="standard">표준 — 템플릿 기반, 약 1분</option><option value="premium">프리미엄 — 장마다 맞춤 설계(최상위 모델), 3~6분</option></select>{quality === 'premium' && <p className="mt-1 text-xs text-gray-500">레퍼런스 덱처럼 장마다 고유한 레이아웃·인터랙션(차트·슬라이더·시연)을 직접 설계합니다. 비용은 표준의 약 10배입니다.</p>}</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={withImages} onChange={e => setWithImages(e.target.checked)} /><span className="text-gray-700">AI 이미지 생성 (표지·히어로 등 최대 4장, 약 15초 추가)</span></label>
           <button disabled={busy || !brief.topic.trim()} onClick={doPlan} className="w-full rounded-xl bg-[#4F5BFF] text-white font-bold py-3 disabled:opacity-40">{busy && stage === 'brief' ? '구조 설계 중…' : '2. 덱 구조 설계'}</button>
         </section>
@@ -109,9 +118,9 @@ export default function DeckStudio() {
               <div className="flex items-center justify-between mb-3"><h2 className="font-bold">덱 구조 — {plan.meta?.title} <span className="text-gray-400 font-normal text-sm">({plan.slides.length}장 · {plan.meta?.theme})</span></h2>
                 <div className="flex gap-2"><button disabled={busy} onClick={doPlan} className="px-3 py-2 rounded-lg border text-sm">다시 설계</button><button disabled={busy || stage !== 'plan'} onClick={doFill} className="px-4 py-2 rounded-lg bg-[#4F5BFF] text-white text-sm font-bold disabled:opacity-40">3. 슬라이드 작성 + 렌더</button></div></div>
               <ol className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                {plan.slides.map((s, i) => <li key={s.id} className="flex gap-2 items-start border rounded-lg px-3 py-2"><span className="text-gray-400 w-6 text-right">{i + 1}</span><span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs whitespace-nowrap">{TYPE_LABEL[s.type] || s.type}</span><span className="font-medium">{s.title.replace(/\*\*/g, '')}</span></li>)}
+                {plan.slides.map((s, i) => <li key={s.id} className="flex gap-2 items-start border rounded-lg px-3 py-2"><span className="text-gray-400 w-6 text-right">{i + 1}</span><span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs whitespace-nowrap">{TYPE_LABEL[s.type] || s.type}</span><span className="font-medium">{s.title.replace(/\*\*/g, '')}{s.signature && <span className="block text-xs text-gray-400 font-normal">✦ {s.signature}</span>}</span></li>)}
               </ol>
-              {(stage === 'fill' || stage === 'render') && <div className="mt-4"><div className="flex justify-between text-xs text-gray-500 mb-1"><span>{stage === 'fill' ? '슬라이드 작성 중' : withImages ? 'AI 이미지 생성 + 렌더링 중 (15~25초)' : '렌더링 중'}</span><span>{progress.total ? `${progress.done}/${progress.total}` : ''}</span></div><div className="h-2 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-[#1A8CFF] to-[#9B4DFF] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 5}%` }} /></div></div>}
+              {(stage === 'fill' || stage === 'render') && <div className="mt-4"><div className="flex justify-between text-xs text-gray-500 mb-1"><span>{stage === 'fill' ? (quality === 'premium' ? '프리미엄 설계 중 — 장마다 맞춤 HTML 작성 (장당 1~2분, 5장 병렬)' : '슬라이드 작성 중') : withImages ? 'AI 이미지 생성 + 렌더링 중 (15~25초)' : '렌더링 중'}</span><span>{progress.total ? `${progress.done}/${progress.total}` : ''}</span></div><div className="h-2 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-[#1A8CFF] to-[#9B4DFF] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 5}%` }} /></div></div>}
             </div>
           )}
           {result && (

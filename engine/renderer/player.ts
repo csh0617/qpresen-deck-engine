@@ -131,7 +131,14 @@ body.notes #notes{display:flex}
     else if(k==='Escape'){ toggleOv(false); document.getElementById('help').classList.remove('on'); document.getElementById('black').classList.remove('on'); }
     else if(k==='?') document.getElementById('help').classList.toggle('on');
   }
-  window.QPDeck={go:go,fullscreen:fullscreen,isStatic:isStatic,key:key,setTheme:function(t){theme=t;try{localStorage.setItem('deck-theme',t)}catch(e){}},current:function(){return cur},total:N};
+  /* QA: render slide n in a hidden static frame and run its self-check (window.QPLint). lintAll(onProgress) → [{n,title,issues,stats,occupancy}] */
+  function lint(n){ return new Promise(function(resolve){ var f=document.createElement('iframe'); f.setAttribute('aria-hidden','true'); f.style.cssText='position:fixed;left:-4000px;top:0;width:1920px;height:1080px;border:0;opacity:0;pointer-events:none'; document.body.appendChild(f);
+    var done=false; function finish(r){ if(done) return; done=true; try{f.remove()}catch(e){} resolve(r); }
+    f.onload=function(){ setTimeout(function(){ var r; try{ r=f.contentWindow.QPLint?f.contentWindow.QPLint():{issues:[{sev:'error',code:'NO_LINT'}]}; }catch(e){ r={issues:[{sev:'error',code:'LINT_FAILED',extra:String(e&&e.message)}]}; } r.n=n; r.title=D.titles[n-1]; finish(r); },900); };
+    setTimeout(function(){ finish({n:n,title:D.titles[n-1],issues:[{sev:'error',code:'LINT_TIMEOUT'}]}); },15000);
+    f.srcdoc=src(n).replace(/<html /,'<html data-static="1" '); }); }
+  function lintAll(onProgress){ var out=[]; var i=0; function next(){ if(i>=N) return Promise.resolve(out); var n=++i; return lint(n).then(function(r){ out.push(r); if(onProgress) try{onProgress(n,N,r)}catch(e){} return next(); }); } return next(); }
+  window.QPDeck={go:go,fullscreen:fullscreen,isStatic:isStatic,key:key,setTheme:function(t){theme=t;try{localStorage.setItem('deck-theme',t)}catch(e){}},current:function(){return cur},total:N,lint:lint,lintAll:lintAll,reload:function(){ var n=cur; cur=0; go(n); }};
   var g=document.getElementById('ovg'), html='';
   (D.sections.length?D.sections:[['전체',1,N]]).forEach(function(s){
     html+='<h3>'+s[0]+'</h3><div class="grid">';

@@ -1,4 +1,6 @@
 /* Qpresen Deck Engine — per-slide runtime (inlined into every slide) */
+import { LINT_JS } from './lintJs.ts';
+
 export const BASE_JS = `
 (function(){
   var H=document.documentElement;
@@ -140,4 +142,7 @@ export const BASE_JS = `
   }
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',ready); } else { ready(); }
 })();
+
+/* self-check hook for the studio / player QA loop: window.QPLint() → { issues, stats, occupancy } */
+window.QPLint=function(){ return ${LINT_JS}; };
 `;

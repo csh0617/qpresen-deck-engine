@@ -32,6 +32,8 @@ export const DESIGN_SYSTEM = `[무대 규격]
 - .body 기본값: display:flex; flex-direction:column; flex:1; min-height:0. CSS에서 .body{display:grid;grid-template-columns:…;grid-template-rows:minmax(0,1fr) auto;gap:…;min-height:0} 처럼 직접 바꿔 써도 된다(권장).
 - 그리드/플렉스 자식에는 min-height:0; min-width:0 을 넣어 넘침을 막는다. 높이는 1fr / flex:1 로 나누고 고정 px 높이는 작은 요소에만 쓴다. 긴 텍스트 요소에는 overflow:hidden 을 걸어 둔다.
 - 글자 크기 하한: 본문 17px, 캡션·태그 15px(절대 최소 14px). 카드 제목 22~28px, 큰 숫자 46~72px, 결론 문장 22~27px. h1 제목은 엔진이 58px로 그린다.
+- 열 폭: 카드가 들어가는 열은 420px 이상, 카드 2열 영역은 760px 이상. 한글 단어가 세로로 쪼개질 만큼 좁은 칸을 만들지 않는다(라벨에 word-break:keep-all). 내용이 많은 쪽에 더 넓은 열을 준다.
+- 숫자·값은 HTML에 최종값을 적어 둔다(data-count 요소의 텍스트 = 최종값, JS가 갱신하는 값도 초기 표기값 필수). 정적 모드(썸네일·인쇄)에서 빈칸이 보이면 안 된다.
 
 [디자인 토큰 — 색은 반드시 var()로 쓴다]
 --ink(제목 글자) --text(본문) --muted(보조) --faint(아주 연함) --line / --line-2(테두리) --bg --card / --card-2 / --card-3(면 단계)
@@ -176,7 +178,8 @@ export async function fillSlideRich(brief: Brief, plan: Plan, slide: PlanSlide, 
 export const RICH_FIX_SYSTEM = `당신은 Qpresen 프리미엄 덱의 슬라이드 수정자다. 린트·검수에서 지적된 문제를 해결하도록 한 장의 HTML/CSS/JS를 최소한으로 고친다. 레이아웃 컨셉과 내용은 유지한다.
 - OVERFLOW/OUTSIDE_STAGE: 박스(1728×~680px)를 넘친 것 — 글자 수 축소, 항목 수 축소, 행 높이 min-height:0/overflow:hidden, 글자 크기 1~2px 축소 순으로.
 - SMALL_FONT: 14px 미만 글자를 키운다(캡션 15px 이상). LOW_CONTRAST: --muted/--faint 대신 --text/--ink, 면 위 글자는 -ink 토큰.
-- OVERLAP: 겹치는 요소의 간격·그리드 정의를 고친다. EMPTY/SPARSE: 내용을 보강하거나 요소를 키워 여백을 채운다.
+- OVERLAP: 겹치는 요소의 간격·그리드 정의를 고친다. EMPTY/SPARSE: 내용을 보강하거나 요소를 키워 여백을 채운다. DENSE: 여백·간격을 늘리고 덜 중요한 요소를 뺀다.
+- 숫자가 비어 보이면(정적 모드) HTML에 최종값을 써 넣는다.
 - 사용자 코멘트는 그 지시를 따른다.
 ${DESIGN_SYSTEM}
 

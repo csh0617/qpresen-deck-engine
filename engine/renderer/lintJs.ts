@@ -1,0 +1,39 @@
+/* In-page layout/typography/contrast checker. Runs inside a rendered slide document (window.QPLint) and in engine/qa/lint.js (Playwright).
+   Single source of truth — keep the template literal below unchanged in meaning when editing. */
+export const LINT_JS = `(() => {
+  const stage = document.querySelector('.stage'); if (!stage) return { fatal: 'no .stage' };
+  const s = parseFloat(getComputedStyle(stage).getPropertyValue('--s')) || 1;
+  const sr = stage.getBoundingClientRect();
+  const issues = []; const stats = { textNodes: 0, minFont: 999, overflow: 0, outside: 0, overlap: 0, lowContrast: 0 };
+  const vis = el => { const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const all = Array.from(stage.querySelectorAll('*')).filter(el => !['SCRIPT','STYLE','SVG','PATH','CIRCLE','RECT','LINE','G','DEFS','TEXT','TSPAN','POLYGON','POLYLINE','ELLIPSE','USE','CLIPPATH','MARKER','LINEARGRADIENT','RADIALGRADIENT','STOP','FILTER','FEGAUSSIANBLUR','FOREIGNOBJECT','MPATH','ANIMATEMOTION','CANVAS','BR'].includes(el.tagName.toUpperCase()));
+  // 1) outside stage
+  for (const el of all) { if (!vis(el)) continue; if (el.closest('.amb,.deck-nav,.deck-foot,.ph,.art,.qmark')) continue; const r = el.getBoundingClientRect(); const pad = 2; if (r.left < sr.left - pad || r.right > sr.right + pad || r.top < sr.top - pad || r.bottom > sr.bottom + pad) { stats.outside++; if (stats.outside <= 5) issues.push({ sev: 'error', code: 'OUTSIDE_STAGE', el: desc(el), box: [Math.round((r.left - sr.left)/s), Math.round((r.top - sr.top)/s), Math.round(r.width/s), Math.round(r.height/s)] }); } }
+  // 2) overflow (scrollable content clipped) & text clipping
+  for (const el of all) { if (!vis(el)) continue; if (el.hasAttribute('data-allow-scroll') || el.closest('[data-allow-scroll],.amb,.ph,.art,.dev')) continue; const cs = getComputedStyle(el); if (el.scrollHeight - el.clientHeight > 4 && el.clientHeight > 0 && (cs.overflowY === 'hidden' || cs.overflowY === 'auto' || cs.overflowY === 'scroll' || el.classList.contains('stage'))) { stats.overflow++; if (stats.overflow <= 6) issues.push({ sev: 'error', code: 'OVERFLOW_Y', el: desc(el), extra: Math.round((el.scrollHeight - el.clientHeight)/s) }); } if (el.scrollWidth - el.clientWidth > 4 && el.clientWidth > 0 && (cs.overflowX === 'hidden' || cs.whiteSpace === 'nowrap' || cs.textOverflow === 'ellipsis')) { stats.overflow++; if (stats.overflow <= 6) issues.push({ sev: 'error', code: 'OVERFLOW_X', el: desc(el), extra: Math.round((el.scrollWidth - el.clientWidth)/s) }); } }
+  // 3) min font size (text-bearing elements)
+  const walker = document.createTreeWalker(stage, NodeFilter.SHOW_TEXT);
+  let tn; while ((tn = walker.nextNode())) { if (!tn.textContent.trim()) continue; const el = tn.parentElement; if (!el || !vis(el) || el.closest('svg,.deck-foot,.source,.topbar,.art .lab,.no,.bd,.num,.hs,.url,.tag,.ghost,.bar')) continue; stats.textNodes++; const fs = parseFloat(getComputedStyle(el).fontSize) / s; if (fs < stats.minFont) stats.minFont = fs; if (fs < 14) issues.push({ sev: fs < 12.5 ? 'error' : 'warn', code: 'SMALL_FONT', el: desc(el), extra: Math.round(fs*10)/10, text: tn.textContent.trim().slice(0, 30) }); }
+  // 4) sibling overlap among cards/blocks
+  const blocks = all.filter(el => vis(el) && /\\b(card|it|st|pl|mb|fn|ly|fl|co|w)\\b/.test(el.className) && !el.closest('svg'));
+  const byParent = new Map(); blocks.forEach(b => { const p = b.parentElement; if (!byParent.has(p)) byParent.set(p, []); byParent.get(p).push(b); });
+  for (const [, arr] of byParent) { for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) { const a = arr[i].getBoundingClientRect(), b = arr[j].getBoundingClientRect(); const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); if (ox > 6 && oy > 6) { stats.overlap++; if (stats.overlap <= 4) issues.push({ sev: 'error', code: 'OVERLAP', el: desc(arr[i]) + ' × ' + desc(arr[j]), extra: Math.round(Math.min(ox, oy)/s) }); } } }
+  // 5) contrast (approx): text color vs nearest opaque background
+  function parse(c) { let m = c.match(/rgba?\\(([^)]+)\\)/); if (m) { const p = m[1].split(/[\\s,\\/]+/).map(parseFloat); return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 }; } m = c.match(/color\\(srgb\\s+([\\d.]+)\\s+([\\d.]+)\\s+([\\d.]+)(?:\\s*\\/\\s*([\\d.]+))?\\)/); if (m) return { r: +m[1] * 255, g: +m[2] * 255, b: +m[3] * 255, a: m[4] != null ? +m[4] : 1 }; return null; }
+  function lum(c) { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); }
+  function bgOf(el) { let e = el; while (e && e !== document.body) { const cs = getComputedStyle(e); const bg = parse(cs.backgroundColor); if (bg && bg.a > 0.9) return bg; if (cs.backgroundImage && cs.backgroundImage !== 'none' && !/gradient\\(.*transparent/.test(cs.backgroundImage)) return null; e = e.parentElement; } return { r: 255, g: 255, b: 255, a: 1 }; }
+  const seen = new Set();
+  const walker2 = document.createTreeWalker(stage, NodeFilter.SHOW_TEXT);
+  while ((tn = walker2.nextNode())) { const t = tn.textContent.trim(); if (t.length < 2) continue; const el = tn.parentElement; if (!el || !vis(el) || seen.has(el) || el.closest('svg,.ph,.art,.amb,.topbar,.deck-foot,.ghost,.numeral,.qmark,.dev,.a-cover-photo,.a-hero')) continue; seen.add(el); const cs = getComputedStyle(el); const fg = parse(cs.color); const bg = bgOf(el); if (!fg || !bg) continue; const l1 = lum(fg), l2 = lum(bg); const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05); const fs = parseFloat(cs.fontSize) / s; const big = fs >= 24 || (fs >= 18.5 && parseInt(cs.fontWeight) >= 700); const need = big ? 3 : 4; if (ratio < need) { stats.lowContrast++; if (stats.lowContrast <= 5) issues.push({ sev: 'warn', code: 'LOW_CONTRAST', el: desc(el), extra: Math.round(ratio * 10) / 10, text: t.slice(0, 30) }); } }
+  // 6) body occupancy
+  const body = stage.querySelector('.body'); let occupancy = null;
+  if (body) { const br = body.getBoundingClientRect(); let area = 0; const kids = Array.from(body.querySelectorAll('.card,.it,.st,.pl,.mb,.fn,.ly,.fl,.img,.art,.svgbox,.ch,.plane,.dev,.tb,.wrap,.n,.q,li,.stat,.icons,.cv,.layers,.funnel,.flow,blockquote,.hero,.side,.tx,.ct,h2')).filter(vis); const boxes = kids.map(k => k.getBoundingClientRect()); // union approx via grid sampling
+    const gx = 48, gy = 27; let hit = 0; for (let i = 0; i < gx; i++) for (let j = 0; j < gy; j++) { const x = br.left + (i + .5) * br.width / gx, y = br.top + (j + .5) * br.height / gy; if (boxes.some(b => x >= b.left && x <= b.right && y >= b.top && y <= b.bottom)) hit++; } occupancy = Math.round(hit / (gx * gy) * 100); if (occupancy < 35) issues.push({ sev: 'warn', code: 'SPARSE', extra: occupancy }); if (occupancy > 96) issues.push({ sev: 'warn', code: 'DENSE', extra: occupancy }); }
+  // 7) images
+  for (const img of stage.querySelectorAll('img')) { if (!img.complete || img.naturalWidth === 0) issues.push({ sev: 'error', code: 'BROKEN_IMAGE', el: desc(img) }); }
+  // 8) hidden reveals after done
+  const notIn = Array.from(stage.querySelectorAll('[data-reveal]')).filter(el => !el.classList.contains('in') && !document.documentElement.classList.contains('reveal-done'));
+  if (notIn.length) issues.push({ sev: 'warn', code: 'REVEAL_PENDING', extra: notIn.length });
+  return { issues, stats, occupancy, scale: s, title: document.title };
+  function desc(el) { return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : ''); }
+})()`;
