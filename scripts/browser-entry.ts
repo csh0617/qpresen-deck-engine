@@ -3,3 +3,4 @@ export { planDeck, fillSlides, buildSpec, fixSlide, reviewSlide, distillRules } 
 export { chat, extractJson, listModels } from '../engine/llm/provider.ts';
 export { validateSpec } from '../engine/renderer/validate.ts';
 export * as prompts from '../engine/llm/prompts.ts';
+export { generateImages, imageTargets, buildImagePrompt } from '../engine/llm/images.ts';

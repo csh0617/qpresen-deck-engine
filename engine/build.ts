@@ -7,13 +7,14 @@ import { execSync } from 'node:child_process';
 import { buildSpec, fixSlide, reviewSlide, type Brief, type Rule } from './llm/pipeline.ts';
 import type { ProviderConfig } from './llm/provider.ts';
 import { renderDeck } from './renderer/index.ts';
+import { generateImages } from './llm/images.ts';
 import { FONT_BASE64 } from './assets/font.ts';
 import { qrSvg } from './qr.ts';
 
 const [, , briefPath, outDir = 'out/build', ...flags] = process.argv;
 if (!briefPath) { console.error('usage: tsx engine/build.ts brief.json outdir'); process.exit(1); }
 const maxFix = parseInt((flags.find(f => f.startsWith('--max-fix=')) || '--max-fix=2').slice(10), 10);
-const doFix = !flags.includes('--no-fix'); const doReview = flags.includes('--review');
+const doFix = !flags.includes('--no-fix'); const doReview = flags.includes('--review'); const doImages = flags.includes('--images');
 
 const provider: ProviderConfig = {
   kind: (process.env.LLM_KIND as any) || 'openai', apiKey: process.env.LLM_API_KEY || process.env.BIZROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || '',
@@ -46,6 +47,7 @@ function lint(): any[] {
   const { spec, plan, warnings } = await buildSpec(brief, { provider, rules, log, onProgress: e => log(`[${e.stage}] ${e.done ?? ''}/${e.total ?? ''} ${e.msg ?? ''}`) });
   writeFileSync(join(outDir, 'plan.json'), JSON.stringify(plan, null, 2));
   warnings.forEach(w => log('validate: ' + w));
+  if (doImages) { const r = await generateImages(spec as any, provider, { max: 4, log }); log(`[images] generated ${r.generated}, failed ${r.failed.length}`); }
   let res = render(spec, 'v1');
   log(`[render v1] ${spec.slides.length} slides, ${(res.html.length / 1048576).toFixed(2)}MB`);
   let report = lint();

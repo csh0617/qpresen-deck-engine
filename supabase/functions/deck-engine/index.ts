@@ -6,6 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
 import { renderDeck, qpresenBundle, firstSlidePayload } from './renderer/index.ts';
 import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from './llm/pipeline.ts';
+import { generateImages } from './llm/images.ts';
 import { listModels, type ProviderConfig } from './llm/provider.ts';
 import { validateSpec } from './renderer/validate.ts';
 
@@ -104,6 +105,12 @@ Deno.serve(async (req: Request) => {
       // order slides by plan, drop missing
       if (plan) { const map = new Map<string, any>((spec.slides || []).map((s: any) => [s.id, s])); spec.slides = plan.slides.map(p => map.get(p.id)).filter(Boolean); }
       const { spec: valid, warnings } = validateSpec(spec);
+      // image stage: real pictures for cover/hero/section slides (idempotent — cached in the job spec as data URLs)
+      let images: { generated: number; failed: string[] } | null = null;
+      if (body.images !== false && prov.apiKey) {
+        if (jobId) await touch(jobId, { status: 'imaging' });
+        images = await generateImages(valid, prov, { max: Math.max(0, Math.min(6, Number(body.maxImages ?? 4))), quality: body.imageQuality || 'low', log, onProgress: (e: { done: number; total: number }) => { if (jobId) touch(jobId, { progress: { stage: 'images', done: e.done, total: e.total } }); } });
+      }
       // Qpresen-native bundle (slides concatenated with slide-title/SLIDE BREAK markers, CDN font) is what gets stored & registered;
       // the offline single-file player (embedded font) is returned for download when requested.
       const wantPlayer = body.includeHtml !== false;
@@ -122,7 +129,7 @@ Deno.serve(async (req: Request) => {
       }
       if (jobId) await touch(jobId, { status: 'done', spec: valid, storage_path: path, page_count: res.parts.length, file_id: fileId, lint: { warnings } });
       const includeHtml = wantPlayer && res.html.length < 9_000_000;
-      return json({ jobId, fileId, path, signedUrl, pageCount: res.parts.length, titles: res.titles, sections: res.sections, warnings, bytes: bytes.length, html: includeHtml ? res.html : undefined, qpresenHtml: bytes.length < 6_000_000 ? bundle : undefined, spec: valid }, 200, allow);
+      return json({ jobId, fileId, path, signedUrl, pageCount: res.parts.length, titles: res.titles, sections: res.sections, warnings, images, bytes: bytes.length, html: includeHtml ? res.html : undefined, qpresenHtml: bytes.length < 6_000_000 ? bundle : undefined, spec: valid }, 200, allow);
     }
 
     if (action === 'status') {
