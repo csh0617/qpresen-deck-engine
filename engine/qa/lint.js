@@ -38,7 +38,7 @@ const CHECK_JS = (() => { const src = readFileSync(new URL('../renderer/lintJs.t
     errs.forEach(e => res.issues.push({ sev: 'error', code: 'JS', el: e }));
     netErrs.forEach(e => res.issues.push({ sev: 'warn', code: 'RESOURCE', el: e }));
     const errors = res.issues.filter(i => i.sev === 'error').length, warns = res.issues.filter(i => i.sev === 'warn').length;
-    report.push({ n, file: f, title: res.title, errors, warns, occupancy: res.occupancy, minFont: res.stats && res.stats.minFont, issues: res.issues });
+    report.push({ n, file: f, title: res.title, errors, warns, occupancy: res.occupancy, minFont: res.stats && res.stats.minFont, motion: res.motion, issues: res.issues });
     console.log(`${String(n).padStart(2, '0')} ${errors ? '✖' : warns ? '△' : '✓'} err=${errors} warn=${warns} occ=${res.occupancy ?? '-'}% minFont=${res.stats && res.stats.minFont !== undefined ? Math.round(res.stats.minFont) : '-'}  ${(res.title || '').slice(0, 50)}`);
     res.issues.slice(0, 8).forEach(i => console.log(`     ${i.sev === 'error' ? '!!' : ' ~'} ${i.code} ${i.el || ''} ${i.extra != null ? '(' + i.extra + ')' : ''} ${i.text ? '"' + i.text + '"' : ''}`));
     await page.close();
