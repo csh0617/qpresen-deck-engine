@@ -15,15 +15,16 @@ Storage 공개 버킷 `deck-assets` 생성 후 `engine/assets/PretendardVariable
 없으면 jsDelivr의 전체 Pretendard Variable(2MB)로 자동 대체 → 덱 파일이 2.5MB 커짐.
 
 ## 3. Edge Function `deck-engine`
-### 방법 A — 원격 import (가벼움, 권장)
-`supabase/functions/deck-engine/index.ts` 상단의 상대 import 4줄을 GitHub 주소로 바꾼다:
+### 방법 A — 원격 import (가벼움, 권장 · 현재 운영 방식)
+배포된 함수의 `index.ts`는 **한 줄**이다:
 ```ts
-import { renderDeck } from 'https://cdn.jsdelivr.net/gh/csh0617/qpresen-deck-engine@<commit>/engine/renderer/index.ts';
-import { validateSpec } from 'https://cdn.jsdelivr.net/gh/csh0617/qpresen-deck-engine@<commit>/engine/renderer/validate.ts';
-import { planDeck, fillSlides, buildSpec, fixSlide, distillRules } from 'https://cdn.jsdelivr.net/gh/csh0617/qpresen-deck-engine@<commit>/engine/llm/pipeline.ts';
-import { listModels } from 'https://cdn.jsdelivr.net/gh/csh0617/qpresen-deck-engine@<commit>/engine/llm/provider.ts';
+import 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/<entry-commit>/supabase/functions/deck-engine/index.remote.ts';
 ```
-그리고 `index.ts` 한 파일만 배포. 엔진을 고치면 커밋 SHA만 바꿔 재배포(15초).
+`index.remote.ts`는 엔진 파일들을 **커밋 SHA로 고정된** raw URL로 import 한다(불변 URL → 번들러 캐시로 옛 코드가 섞일 일이 없다).
+릴리스 절차는 `bash scripts/release.sh "메시지"` 한 번: 엔진 커밋 → `index.remote.ts`를 그 SHA로 재생성·커밋 → push → 대시보드에 붙여넣을 한 줄을 출력.
+대시보드(Edge Functions → deck-engine → Code)에서 그 한 줄로 바꾸고 **Deploy updates**.
+
+비밀(Secrets): `DECK_LLM_API_KEY`(BizRouter 키, 우선) 또는 `BIZROUTER_API_KEY`. 선택: `LLM_MODEL`(기본 anthropic/claude-sonnet-5.5), `LLM_FALLBACKS`.
 
 ### 방법 B — 동봉 배포
 `scripts/sync-function.sh` → `supabase functions deploy deck-engine --no-verify-jwt` (16개 파일, 257KB)

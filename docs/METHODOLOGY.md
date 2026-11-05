@@ -160,8 +160,19 @@ POST deck-engine { action: "build", brief }                      → { jobId }  
 | R3 | 원형 프로세스·팀 카드가 작아 보임 | 원 176px·아이콘 76px·연결선, 팀 아바타 136px·최소 높이 400 |
 | R3 | 플레이어에서 H/F 키가 슬라이드 iframe에 갇힘 | 슬라이드→부모 키 전달 규약에 h/f 추가 |
 | 린트 | `color-mix()` 계산색을 대비 검사가 못 읽어 1:1로 오탐 | `color(srgb …)` 파서 추가; 사진 오버레이·장식 요소는 대비 검사 제외 |
+| R4(실모델) | 질문 장: 장식 "?"가 본문 밖에서 작은 글자로 렌더, 보기 칩이 작아 23% 점유 | `.qmark`를 `.a-question` 안으로(상대 위치), 질문 84px, 보기 2×2 카드(170px) |
+| R4(실모델) | 큰 숫자 장이 왼쪽 45%만 쓰고 우측 공백 | compare 없으면 중앙 정렬 + 300px 그라디언트 숫자 + 문맥 카드 |
+| R4(실모델) | 3장 카드가 중간 띠(≈170px)만 차지, 상·하 공백 | 열 수별 타이포 스케일(3열: 제목 30/본문 21/포인트 20, 최소 높이 420) |
+| R4(실모델) | amber 섹션의 `--f-ink`(색 혼합)가 탁한 갈색 → 결과 바·제목 강조가 지저분 | 색 혼합 대신 **텍스트 안전 잉크 토큰**(`--amber-ink` 등 대비 ≥4.5:1) 도입, 결과 바는 잉크 네이비 |
+| R4(실모델) | 비교(vs) 장의 verdict가 컨테이너 밖에 나가 스타일 누락 | `.a-compare.wrap`으로 감싸 콜아웃으로 렌더 |
+| R4(실모델) | 체크리스트 aside를 모델이 객체({title,points})로 줘서 "[object Object]" | validate에서 객체/배열 허용, 제목+번호 목록 카드로 렌더 |
+| R4(실모델) | 목업 장 우측 보조 패널이 작고, 타임라인·프로세스 글자가 작음 | 보조 패널 타이포 +20%, 채팅 말풍선 21px, 셰브론 360px 중앙 정렬, 타임라인 카드 290px |
+| R4(기술) | Claude 5.5 계열이 BizRouter에서 **숨은 사고 토큰**을 수천 개 소모(플랜 83초, haiku는 12000토큰 소진 후 잘림) | OpenAI 호환 호출에 `thinking` 끄기(haiku/opus: `{type:'disabled'}`, sonnet/fable: `{type:'between_tools'}`; 400이면 다른 변형으로 재시도). 플랜 21초·채우기 13초 |
+| R4(기술) | `finish_reason=length`로 잘린 JSON | 잘림 감지 → 토큰 2배+compact 재요청, 그래도 실패하면 열린 괄호를 닫는 복구 파서 |
+| R4(기술) | `reasoning:{enabled:false}`(OpenRouter식)는 BizRouter에서 무시됨 | 네이티브 `thinking` 파라미터만 유효 — 프롬프트에 compact JSON 지시 추가(토큰 30%↓) |
 
 ### 다음 라운드 후보(backlog)
+- `image.prompt` → BizRouter 이미지 모델(gemini-3-pro-image / gpt-image-2)로 표지·히어로·간지 이미지 생성 (가장 큰 체감 품질 향상 후보)
 - 실제 썸네일을 Edge 경로에서도 생성(클라이언트 캡처 또는 워커)
 - `image.prompt` → 이미지 생성 API 연동(현재는 테마 아트로 대체)
 - 비전 리뷰(`reviewSlide`) 결과를 `fix` 패스에 자동 연결(현재는 로컬 build.ts에서만)
