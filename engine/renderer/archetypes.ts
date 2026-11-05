@@ -265,7 +265,9 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
     case 'checklist': {
       const li = (items: { text: string; done?: boolean; note?: string }[], off = 0) => `<ul>${items.map((it, i) => `<li class="${it.done ? 'done' : ''}" ${rv(i + off, 'right', 80)}><span class="bx">${it.done ? ic('check') : ''}</span><div>${rich(it.text)}${it.note ? `<small>${rich(it.note)}</small>` : ''}</div></li>`).join('')}</ul>`;
       const groups = b.groups && b.groups.length ? `<div class="groups">${b.groups.map((g, gi) => `<div class="grp ${fclass(cycleAccent(gi))}"><h3 ${rv(gi * 4, 'fade')}>${rich(g.title)}</h3>${li(g.items, gi * 4 + 1)}</div>`).join('')}</div>` : li(b.items || []);
-      return { html: `<div class="a-check ${b.aside ? 'aside' : ''} ${b.groups && b.groups.length === 2 ? 'g2' : ''}">${groups}${b.aside ? `<div class="as" ${rv(6, 'right')}>${rich(b.aside)}</div>` : ''}</div>` };
+      const asideHtml = !b.aside ? '' : typeof b.aside === 'string' ? `<div class="as" ${rv(6, 'right')}>${rich(b.aside)}</div>`
+        : `<div class="as" ${rv(6, 'right')}>${b.aside.title ? `<h3>${rich(b.aside.title)}</h3>` : ''}${b.aside.text ? `<p>${rich(b.aside.text)}</p>` : ''}${b.aside.points && b.aside.points.length ? `<ul>${b.aside.points.map((p, i) => `<li><span class="num">${i + 1}</span><span>${rich(p)}</span></li>`).join('')}</ul>` : ''}</div>`;
+      return { html: `<div class="a-check ${b.aside ? 'aside' : ''} ${b.groups && b.groups.length === 2 ? 'g2' : ''}">${groups}${asideHtml}</div>` };
     }
     case 'summary': {
       const n = b.takeaways.length;

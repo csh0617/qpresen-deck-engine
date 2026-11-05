@@ -34,7 +34,7 @@ function coerceSlide(s: any, warnings: string[], where: string) {
     if (b.type === 'cards' || b.type === 'agenda') b.items = toObj(b.items, b.type === 'agenda' ? 'label' : 'title');
     if (b.type === 'kpi-grid') b.items = b.items.map((x: any) => typeof x === 'string' ? { value: x, label: '' } : (x.title && !x.label ? { ...x, label: x.title } : x));
     if (b.type === 'timeline') b.items = b.items.map((x: any) => typeof x === 'string' ? { date: '', title: x } : ({ ...x, date: String(x.date ?? x.year ?? x.when ?? ''), title: x.title ?? x.label ?? '' }));
-    if (b.type === 'checklist') b.items = toObj(b.items, 'text');
+    if (b.type === 'checklist') { b.items = toObj(b.items, 'text'); if (Array.isArray(b.aside)) b.aside = { points: b.aside.map(String) }; if (b.aside && typeof b.aside === 'object' && !b.aside.points && !b.aside.title && !b.aside.text) b.aside = JSON.stringify(b.aside); }
   }
   if (Array.isArray(b.steps)) b.steps = toObj(b.steps, 'title');
   if (Array.isArray(b.takeaways)) b.takeaways = toObj(b.takeaways, 'title');

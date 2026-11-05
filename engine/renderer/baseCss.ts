@@ -580,7 +580,9 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 .a-check li.done .bx{background:var(--f-ink);border-color:var(--f-ink)}.a-check li.done .bx .ic{width:18px;height:18px}
 .a-check li.done{color:var(--ink)}
 .a-check li small{display:block;font-size:17px;color:var(--muted);margin-top:4px}
-.a-check .as{padding:30px 32px;border-radius:var(--r);background:var(--f-50);border:1px solid color-mix(in srgb,var(--f) 25%,var(--line));font-size:22px;line-height:1.6;color:var(--ink);align-self:center}
+.a-check .as{padding:34px 36px;border-radius:var(--r);background:var(--f-50);border:1px solid color-mix(in srgb,var(--f) 25%,var(--line));font-size:22px;line-height:1.6;color:var(--ink);align-self:center}
+.a-check .as h3{font-size:26px;font-weight:800;color:var(--ink);margin-bottom:14px;letter-spacing:-.02em}.a-check .as p{font-size:20px;color:var(--text);line-height:1.55}
+.a-check .as ul{display:flex;flex-direction:column;gap:12px}.a-check .as li{display:flex;gap:14px;align-items:center;font-size:21px;font-weight:600;color:var(--ink)}.a-check .as li .num{width:36px;height:36px;font-size:15px}
 
 /* summary */
 .a-summary{height:100%;display:flex;flex-direction:column;gap:26px;justify-content:center}

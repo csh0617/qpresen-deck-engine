@@ -56,7 +56,7 @@ export const PLAN_SYSTEM = `당신은 Qpresen Deck Engine의 "덱 플래너"다.
 - proposal(제안/기획): cover → 배경·필요성(kpi-grid/bullets-visual) → 목표(big-number) → 추진체계(diagram) → 세부과제(cards) → 일정(timeline) → 예산(table/chart) → 기대효과(kpi-grid) → closing
 - product(제품 소개): cover → 문제(question/bullets-visual) → 솔루션(diagram) → 기능(cards/mockup) → 효과(kpi-grid/chart) → 가격(pricing) → 도입 절차(process) → closing
 
-[장수 가이드] 발표시간(분) × (lecture 1.0 / ir 0.8 / seminar 1.2 / report 0.9 / proposal 0.9 / product 0.8). 사용자가 장수를 지정하면 그 값을 따른다. 10장 미만이면 섹션 간지를 생략한다.
+[장수 가이드] 발표시간(분) × (lecture 1.0 / ir 0.8 / seminar 1.2 / report 0.9 / proposal 0.9 / product 0.8). 사용자가 장수를 지정하면 그 값을 따른다. 섹션 간지(section)는 10장 미만이면 0장, 10~16장이면 최대 1장, 그 이상은 5~12장마다 1장.
 
 ${ARCHETYPE_CATALOG}
 
