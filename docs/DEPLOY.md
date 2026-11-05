@@ -43,14 +43,12 @@ POST /functions/v1/deck-engine   Authorization: Bearer <user JWT>
 `render`는 Storage `pdfs/<uid>/deck-engine/<jobId>.html`에 저장하고 `pdf_files`에 `file_type='html'` 행을 만든다(register=false면 생략).
 **주의**: Qpresen 뷰어가 업로드 HTML을 분할하는 방식과 100% 같은지 확인되기 전까지는, 프런트에서 `html`을 `File`로 만들어 **기존 업로드 경로**로 올리는 것이 가장 안전하다(DeckStudio의 download 함수 참고).
 
-## 4. 프런트 (Readdy)
-1. `frontend/DeckStudio.tsx`를 `src/pages/dashboard/slide-generator/` (또는 새 라우트 `/dashboard/deck-studio`)에 추가
-2. `import { supabase } from '../lib/supabase'` 경로를 프로젝트에 맞게 수정
-3. router/config.tsx에 라우트 등록, 대시보드 메뉴에 "AI 슬라이드 스튜디오" 링크 추가
-4. (선택) 결과 `html`을 기존 HTML 업로드 핸들러에 `new File([html], name+'.html', {type:'text/html'})`로 넘기는 버튼 추가
-
-Readdy AI에게 줄 지시문 예시:
-> `frontend/DeckStudio.tsx` 파일을 그대로 추가하고 `/dashboard/slide-generator` 라우트를 이 컴포넌트로 교체해줘. supabase import 경로만 프로젝트 것으로 맞추고, 나머지 코드는 수정하지 마.
+## 4. 프런트 (Readdy) — 완료 2026-11-05
+Readdy 채팅에 `frontend/DeckStudio.tsx`를 첨부하고 `Readdy_지시문.txt`를 보내면 된다. 적용 결과(Version 2160):
+- `src/pages/dashboard/deck-studio/page.tsx` (첨부본 그대로, import 경로만 `@/lib/supabase`)
+- `src/router/config.tsx`에 `/dashboard/deck-studio` 라우트, 대시보드 사이드바에 'AI 슬라이드 스튜디오(신)' 메뉴
+- 실제 qpresen.com 반영은 Readdy **Publish** 필요(미발행 버전들이 함께 나가므로 운영자가 결정).
+- 스튜디오 미리보기(iframe srcdoc)에서는 `history.replaceState`가 금지되므로 플레이어는 해시 갱신 실패를 무시한다(엔진 b53437d+).
 
 ## 5. 운영 루프
 - 주 1회 `{action:"distill"}` 호출(관리자) → 새 규칙 확인 후 부적절한 것은 `deck_rules.active=false`
