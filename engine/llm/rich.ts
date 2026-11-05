@@ -37,6 +37,8 @@ export function kindForType(type?: string, hint?: string): RichKind {
 
 export const DESIGN_SYSTEM = `${HOUSE_STYLE}
 
+[출력 예산] HTML·CSS·JS 합계 14KB 안에서(참고 덱 장당 평균 12KB). 장식 규칙을 늘리기보다 장치 하나를 정확하게 — 생성 시간 한도(약 120초)가 있다.
+
 [무대 규격]
 - 엔진이 <main class="stage f-{accent}"> 안에 상단 바와 <header class="head">(eyebrow + h1 제목 + p.sub)를 그려 준다. 당신은 <section class="body"> 안에 들어갈 내용만 쓴다.
 - .body 박스: 가로 1728px × 세로 약 680px (sub가 없으면 약 730px). 모든 내용은 이 박스 안에 들어가야 하고 넘치면 안 된다. 스크롤 금지, 박스 밖 절대 배치 금지.
