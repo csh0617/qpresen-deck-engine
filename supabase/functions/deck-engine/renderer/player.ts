@@ -112,7 +112,7 @@ body.notes #notes{display:flex}
   function go(n){
     if(n==='index'){ toggleOv(true); return; }
     n=Number(n); if(!(n>=1&&n<=N)||n===cur) return;
-    cur=n; toggleOv(false); ui(); if(location.hash!=='#s'+pad(n)) history.replaceState(null,'','#s'+pad(n));
+    cur=n; toggleOv(false); ui(); try{ if(location.hash!=='#s'+pad(n)) history.replaceState(null,'','#s'+pad(n)); }catch(e){} /* srcdoc/about:blank embeds forbid history updates */
     var token=++loading, b=back;
     b.onload=function(){ if(token!==loading) return; b.classList.add('on'); front.classList.remove('on'); back=front; front=b; try{b.contentWindow.focus()}catch(e){} setTimeout(function(){ if(token===loading){ back.removeAttribute('srcdoc'); back.onload=null; } },700); };
     b.srcdoc=src(n);
@@ -158,7 +158,7 @@ body.notes #notes{display:flex}
     else key(k);
   });
   window.addEventListener('hashchange',function(){ var m=location.hash.match(/^#s(\\d{2,3})$/); if(m) go(+m[1]); });
-  var m=location.hash.match(/^#s(\\d{2,3})$/); var ds=parseInt(document.documentElement.getAttribute('data-start')||'',10); go(m?+m[1]:(ds>0?ds:1)); poke();
+  var m=null; try{ m=location.hash.match(/^#s(\\d{2,3})$/); }catch(e){} var ds=parseInt(document.documentElement.getAttribute('data-start')||'',10); go(m?+m[1]:(ds>0?ds:1)); poke();
   setTimeout(function(){ document.getElementById('hint').classList.add('off'); },6000);
 })();
 </script>
