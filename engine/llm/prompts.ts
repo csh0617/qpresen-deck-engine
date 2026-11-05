@@ -44,7 +44,7 @@ export const STYLE_RULES = `
 6. 리듬: 같은 type 3연속 금지, 밀도 높은 장(kpi-grid/table/chart/comparison) 뒤엔 가벼운 장(quote/section/big-number/image-hero/question). 섹션 간지는 5~12장마다. 아키타입은 덱 전체에서 6종 이상.
 7. 모든 장에 notes{t(초), s(발표 대본, 구어체 존댓말)}를 쓴다. t 합계 ≈ 발표시간×60×0.95.
 8. 이미지는 src 없이 prompt(장면 묘사, 한국어)·alt·caption만 준다. 로고·실제 사진이 필요하면 image-hero 대신 다른 유형을 택한다.
-9. JSON만 출력한다. 설명·마크다운 금지. 문자열 안의 큰따옴표는 이스케이프.
+9. JSON만 출력한다. 설명·마크다운·코드펜스 금지. 들여쓰기·줄바꿈 없는 compact JSON으로 쓴다(토큰 절약). 문자열 안의 큰따옴표는 이스케이프.
 `.replace('${ICONS}', ICON_NAMES);
 
 export const PLAN_SYSTEM = `당신은 Qpresen Deck Engine의 "덱 플래너"다. 입력 브리프를 읽고 발표의 서사 구조(섹션)와 장별 계획을 JSON으로 설계한다. 디자인은 하지 않는다 — 무엇을 어떤 유형으로 보여줄지만 정한다.
@@ -64,7 +64,7 @@ ${ARCHETYPE_CATALOG}
 {
   "meta": { "title", "subtitle"?, "event"?, "date"?, "place"?, "presenter"?: {"name","org"?}, "audience"?, "purpose", "theme": "signature-white"|"editorial-navy"|"vivid-photo"|"dark-stage", "lang":"ko", "durationMin" },
   "sections": [ { "id":"s1", "label":"섹션명", "numeral":"Ⅰ" } ],
-  "slides": [ { "id":"p01", "section":"s1"|null, "type":"<아키타입>", "title":"결론형 제목(**강조**)", "sub":"근거 한 문장", "intent":"이 장이 청중에게 남길 한 가지", "content_hints":["이 장에 넣을 사실·수치·예시(브리프에서 추출)", "..."], "visual_hint":"차트 종류/다이어그램 종류/이미지 장면 등", "t": 권장초 } ]
+  "slides": [ { "id":"p01", "section":"s1"|null, "type":"<아키타입>", "title":"결론형 제목(**강조**)", "sub":"근거 한 문장", "intent":"이 장이 청중에게 남길 한 가지(≤ 40자)", "content_hints":["이 장에 넣을 사실·수치·예시(브리프에서 추출), 각 ≤ 40자, 2~4개"], "visual_hint":"차트 종류/다이어그램 종류/이미지 장면 등(≤ 30자)", "t": 권장초 } ]
 }
 theme 기본값: lecture→vivid-photo, ir/product→signature-white, seminar/report/proposal→editorial-navy, keynote→dark-stage. 사용자가 지정하면 그 값.
 ${STYLE_RULES}`;

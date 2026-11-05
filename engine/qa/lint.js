@@ -22,7 +22,7 @@ const CHECK_JS = `(() => {
   const vis = el => { const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const all = Array.from(stage.querySelectorAll('*')).filter(el => !['SCRIPT','STYLE','SVG','PATH','CIRCLE','RECT','LINE','G','DEFS','TEXT','TSPAN','POLYGON','POLYLINE','ELLIPSE','USE','CLIPPATH','MARKER','LINEARGRADIENT','RADIALGRADIENT','STOP','FILTER','FEGAUSSIANBLUR','FOREIGNOBJECT','MPATH','ANIMATEMOTION','CANVAS','BR'].includes(el.tagName.toUpperCase()));
   // 1) outside stage
-  for (const el of all) { if (!vis(el)) continue; if (el.closest('.amb,.deck-nav,.deck-foot,.ph,.art')) continue; const r = el.getBoundingClientRect(); const pad = 2; if (r.left < sr.left - pad || r.right > sr.right + pad || r.top < sr.top - pad || r.bottom > sr.bottom + pad) { stats.outside++; if (stats.outside <= 5) issues.push({ sev: 'error', code: 'OUTSIDE_STAGE', el: desc(el), box: [Math.round((r.left - sr.left)/s), Math.round((r.top - sr.top)/s), Math.round(r.width/s), Math.round(r.height/s)] }); } }
+  for (const el of all) { if (!vis(el)) continue; if (el.closest('.amb,.deck-nav,.deck-foot,.ph,.art,.qmark')) continue; const r = el.getBoundingClientRect(); const pad = 2; if (r.left < sr.left - pad || r.right > sr.right + pad || r.top < sr.top - pad || r.bottom > sr.bottom + pad) { stats.outside++; if (stats.outside <= 5) issues.push({ sev: 'error', code: 'OUTSIDE_STAGE', el: desc(el), box: [Math.round((r.left - sr.left)/s), Math.round((r.top - sr.top)/s), Math.round(r.width/s), Math.round(r.height/s)] }); } }
   // 2) overflow (scrollable content clipped) & text clipping
   for (const el of all) { if (!vis(el)) continue; if (el.hasAttribute('data-allow-scroll') || el.closest('[data-allow-scroll],.amb,.ph,.art,.dev')) continue; const cs = getComputedStyle(el); if (el.scrollHeight - el.clientHeight > 4 && el.clientHeight > 0 && (cs.overflowY === 'hidden' || cs.overflowY === 'auto' || cs.overflowY === 'scroll' || el.classList.contains('stage'))) { stats.overflow++; if (stats.overflow <= 6) issues.push({ sev: 'error', code: 'OVERFLOW_Y', el: desc(el), extra: Math.round((el.scrollHeight - el.clientHeight)/s) }); } if (el.scrollWidth - el.clientWidth > 4 && el.clientWidth > 0 && (cs.overflowX === 'hidden' || cs.whiteSpace === 'nowrap' || cs.textOverflow === 'ellipsis')) { stats.overflow++; if (stats.overflow <= 6) issues.push({ sev: 'error', code: 'OVERFLOW_X', el: desc(el), extra: Math.round((el.scrollWidth - el.clientWidth)/s) }); } }
   // 3) min font size (text-bearing elements)
@@ -58,9 +58,9 @@ const CHECK_JS = `(() => {
   const report = []; const shots = [];
   for (const f of files) {
     const n = parseInt(f.match(/\d+/)[0], 10); if (only && !only.includes(n)) continue;
-    const page = await ctx.newPage(); const errs = [];
+    const page = await ctx.newPage(); const errs = []; const netErrs = [];
     page.on('pageerror', e => errs.push('pageerror: ' + String(e.message).slice(0, 160)));
-    page.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text().slice(0, 160)); });
+    page.on('console', m => { if (m.type() !== 'error') return; const t = m.text(); if (/Failed to load resource/.test(t)) { netErrs.push('resource: ' + t.slice(0, 120)); return; } errs.push('console: ' + t.slice(0, 160)); });
     const url = 'file://' + resolve(join(partsDir, f)) + (useStatic ? '?static=1' : '');
     let res = { issues: [], stats: {} };
     try {
@@ -72,6 +72,7 @@ const CHECK_JS = `(() => {
       shots.push({ n, shot, title: res.title });
     } catch (e) { errs.push('nav: ' + String(e.message).slice(0, 160)); }
     errs.forEach(e => res.issues.push({ sev: 'error', code: 'JS', el: e }));
+    netErrs.forEach(e => res.issues.push({ sev: 'warn', code: 'RESOURCE', el: e }));
     const errors = res.issues.filter(i => i.sev === 'error').length, warns = res.issues.filter(i => i.sev === 'warn').length;
     report.push({ n, file: f, title: res.title, errors, warns, occupancy: res.occupancy, minFont: res.stats && res.stats.minFont, issues: res.issues });
     console.log(`${String(n).padStart(2, '0')} ${errors ? '✖' : warns ? '△' : '✓'} err=${errors} warn=${warns} occ=${res.occupancy ?? '-'}% minFont=${res.stats && res.stats.minFont !== undefined ? Math.round(res.stats.minFont) : '-'}  ${(res.title || '').slice(0, 50)}`);

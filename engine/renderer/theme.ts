@@ -21,6 +21,8 @@ const base = {
   ok: '#12A150', 'ok-100': '#DAF5E4', 'ok-50': '#F0FBF4',
   danger: '#D93025', 'danger-100': '#FDE8E6', 'danger-50': '#FEF4F3',
   gold: '#C98A00', 'gold-100': '#FFF1C9',
+  // text-safe accent inks (≥4.5:1 on white): used for emphasis text, numerals, solid fills
+  'azure-ink': '#0B63C9', 'violet-ink': '#6B3BE0', 'teal-ink': '#0B7F72', 'amber-ink': '#B35A00', 'rose-ink': '#C41E3A', 'navy-ink': '#14244D', 'ok-ink': '#0E7A3E', 'danger-ink': '#B8261C', 'gold-ink': '#8F6200',
 };
 const baseDark = {
   azure: '#5AAEFF', 'azure-100': '#12305A', 'azure-50': '#0E2546',
@@ -32,6 +34,7 @@ const baseDark = {
   ok: '#4ADE80', 'ok-100': '#0F3B2E', 'ok-50': '#0B2E25',
   danger: '#FF7B72', 'danger-100': '#4A1A17', 'danger-50': '#3A1412',
   gold: '#FFD24D', 'gold-100': '#4A3A08',
+  'azure-ink': '#8CC7FF', 'violet-ink': '#CDB4FF', 'teal-ink': '#7FE8D8', 'amber-ink': '#FFC978', 'rose-ink': '#FF9AAB', 'navy-ink': '#D9E3F7', 'ok-ink': '#7FEAA6', 'danger-ink': '#FFA099', 'gold-ink': '#FFE08A',
 };
 
 export const THEMES: Record<ThemeName, ThemeTokens> = {
@@ -98,6 +101,7 @@ export function themeCss(name: ThemeName, brand?: string): string {
     dark = { ...dark, brand: `color-mix(in srgb,${brand} 70%,#fff)`, 'brand-600': `color-mix(in srgb,${brand} 55%,#fff)`, 'brand-700': `color-mix(in srgb,${brand} 40%,#fff)`, 'brand-100': `color-mix(in srgb,${brand} 35%,#0A1022)`, 'brand-50': `color-mix(in srgb,${brand} 22%,#0A1022)` };
   }
   const grad = brand && /^#[0-9a-fA-F]{6}$/.test(brand) ? `linear-gradient(115deg,${brand},color-mix(in srgb,${brand} 55%,#8B5CF6))` : t.gradient;
+  light = { ...light, 'brand-ink': light['brand-ink'] || light['brand-600'] }; dark = { ...dark, 'brand-ink': dark['brand-ink'] || dark['brand'] };
   return `:root{${vars(light)};--qg:${grad};--r:${t.radius.r};--r-sm:${t.radius.sm};--r-xs:${t.radius.xs};--font:${t.font};--ease:cubic-bezier(.16,1,.3,1);--stage-w:1920px;--stage-h:1080px;--f:var(--brand);--f-100:var(--brand-100);--f-50:var(--brand-50)}
 html[data-theme=dark]{${vars(dark)}}`;
 }

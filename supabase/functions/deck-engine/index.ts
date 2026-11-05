@@ -1,6 +1,6 @@
 /* Qpresen Deck Engine — Supabase Edge Function
    actions: models | plan | fill | render | build | status | feedback | rules | distill
-   env: BIZROUTER_API_KEY (or ANTHROPIC_API_KEY), LLM_KIND=openai|anthropic, LLM_BASE_URL, LLM_MODEL, LLM_FALLBACKS */
+   env: DECK_LLM_API_KEY (preferred) or BIZROUTER_API_KEY / ANTHROPIC_API_KEY, LLM_KIND=openai|anthropic, LLM_BASE_URL, LLM_MODEL, LLM_FALLBACKS */
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
@@ -14,7 +14,8 @@ const json = (body: unknown, status = 200, origin = '*') => new Response(JSON.st
 
 function provider(): ProviderConfig {
   const kind = (Deno.env.get('LLM_KIND') || 'openai') as 'openai' | 'anthropic';
-  const apiKey = kind === 'anthropic' ? (Deno.env.get('ANTHROPIC_API_KEY') || '') : (Deno.env.get('BIZROUTER_API_KEY') || '');
+  // DECK_LLM_API_KEY (deck-engine specific) takes precedence over the shared BIZROUTER_API_KEY / ANTHROPIC_API_KEY
+  const apiKey = Deno.env.get('DECK_LLM_API_KEY') || (kind === 'anthropic' ? (Deno.env.get('ANTHROPIC_API_KEY') || '') : (Deno.env.get('BIZROUTER_API_KEY') || ''));
   return { kind, apiKey, baseUrl: Deno.env.get('LLM_BASE_URL') || (kind === 'anthropic' ? 'https://api.anthropic.com' : 'https://bizrouter.ai/api/v1'), model: Deno.env.get('LLM_MODEL') || (kind === 'anthropic' ? 'claude-sonnet-5-5' : 'anthropic/claude-sonnet-5.5'), fallbackModels: (Deno.env.get('LLM_FALLBACKS') || (kind === 'anthropic' ? '' : 'anthropic/claude-opus-5.5,anthropic/claude-haiku-5.5')).split(',').map(s => s.trim()).filter(Boolean), timeoutMs: 120000, maxRetries: 1 };
 }
 function qrSvg(text: string): string {

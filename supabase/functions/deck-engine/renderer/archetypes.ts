@@ -143,8 +143,8 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
     }
     case 'question': {
       const opts = (b.options || []).map((o, i) => `<li ${rv(i + 2, 'right')}><span class="num">${String.fromCharCode(65 + i)}</span>${rich(o)}</li>`).join('');
-      const right = opts ? `<ul class="opts">${opts}</ul>` : b.image ? `<div ${rv(2, 'scale')}>${imageHtml(b.image, '', seed)}</div>` : '';
-      return { noHead: true, html: `<div class="qmark">?</div><div class="a-question ${right ? '' : 'solo'}" ${right ? '' : 'style="grid-template-columns:1fr"'}><div><div class="k-eyebrow" ${rv(0)}>${esc(s.eyebrow || 'QUESTION')}</div><div class="q" style="margin-top:20px" ${rv(1, '', 90, 300)}>${rich(b.question || s.title)}</div>${b.hint ? `<p class="hint" ${rv(2)}>${rich(b.hint)}</p>` : ''}</div>${right}</div>` };
+      const right = opts ? `<ul class="opts n${(b.options || []).length}">${opts}</ul>` : b.image ? `<div ${rv(2, 'scale')}>${imageHtml(b.image, '', seed)}</div>` : '';
+      return { noHead: true, html: `<div class="a-question ${right ? '' : 'solo'}" ${right ? '' : 'style="grid-template-columns:1fr"'}><div class="qmark" aria-hidden="true">?</div><div style="position:relative;z-index:1"><div class="k-eyebrow" ${rv(0)}>${esc(s.eyebrow || 'QUESTION')}</div><div class="q" style="margin-top:20px" ${rv(1, '', 90, 300)}>${rich(b.question || s.title)}</div>${b.hint ? `<p class="hint" ${rv(2)}>${rich(b.hint)}</p>` : ''}</div>${right}</div>` };
     }
     case 'kpi-grid': {
       const n = b.items.length; const cols = b.columns || (n <= 3 ? n : n === 4 ? 4 : n <= 6 ? 3 : 4);
@@ -171,7 +171,7 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
       if (cols === 2 && b.rows.length <= 6 && b.rows.every(r => r.cells.every(c => c.length <= 40)) && !b.rows.some(r => !r.label)) {
         // vs layout
         const col = (ci: number) => `<div class="col ${b.columns[ci].highlight ? 'hl' : ''} ${fclass(b.columns[ci].accent || (ci ? 'teal' : 'brand'))}" ${rv(ci * 3, ci ? 'right' : 'left', 100, 250)}><h3>${rich(b.columns[ci].label)}</h3>${b.columns[ci].sub ? `<div class="k-small">${esc(b.columns[ci].sub)}</div>` : ''}<ul>${b.rows.map(r => `<li><b>${esc(r.label)}</b><span>${rich(r.cells[ci] || '')}</span></li>`).join('')}</ul></div>`;
-        return { html: `<div class="a-compare vs">${col(0)}<div class="mid" ${rv(2, 'scale')}><span>VS</span></div>${col(1)}</div>${b.verdict ? `<div class="verdict" style="margin-top:22px" ${rv(5, 'up')}>${ic('check-circle', 'ic')}<span>${rich(b.verdict)}</span></div>` : ''}` };
+        return { html: `<div class="a-compare wrap"><div class="a-compare vs">${col(0)}<div class="mid" ${rv(2, 'scale')}><span>VS</span></div>${col(1)}</div>${b.verdict ? `<div class="verdict" ${rv(5, 'up')}>${ic('check-circle', 'ic')}<span>${rich(b.verdict)}</span></div>` : ''}</div>` };
       }
       const cells: string[] = [];
       cells.push(`<div class="hd rl"></div>`);
