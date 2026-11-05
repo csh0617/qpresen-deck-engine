@@ -75,7 +75,7 @@ ${ICON_NAMES}
 - 정적 모드(html.static: 썸네일·인쇄)에서는 모든 reveal이 즉시 완료 상태로 그려진다. JS도 e.detail.static 이면 최종 상태를 즉시 그리고 끝낸다.
 
 - 연쇄 등장: data-after="#앞요소id" data-gap="ms" → 앞 요소의 타이핑/카운트/등장이 끝난 뒤 시작(레퍼런스 덱의 리듬). 긴 장면은 3~4단계로 연쇄.
-- 사진 백드롭: <div class="backdrop kb fade-r"><img data-image="장면 묘사" style="--pos:50% 40%" alt=""><div class="credit">AI 생성 이미지</div></div> — .body 첫 요소로 두면 화면 전체 사진 + 왼쪽 페이드(글자 영역 확보). kb=켄번즈. fade-b/fade-t/soft/dim 변형. 아트 디렉션이 이 장에 사진을 허용할 때만.
+- 사진 백드롭: <div class="backdrop kb fade-r"><img data-image="장면 묘사" style="--pos:50% 40%" alt=""><div class="credit">AI 생성 이미지</div></div> — .body 첫 요소로 두면 화면 전체(무대 가장자리까지) 사진 + 왼쪽이 무대 바탕색으로 페이드되어 글자 영역이 확보된다. kb=켄번즈. fade-b/fade-t 변형. 밝은 무대(light)에서는 dim/soft를 쓰지 말 것(글자가 묻힌다) — 사진을 어둡게 누르고 싶으면 META.stage="cine". 아트 디렉션이 이 장에 사진을 허용할 때만.
 - 사진 카드: <figure class="photo card"><img data-image="…" alt=""><figcaption class="cap">캡션</figcaption></figure> (side 사진). 이미지는 엔진이 생성·치환한다(src 쓰지 말 것).
 - 앱 화면 목업 키트: <div class="app claude|gpt v2"> 안에 .chrome(브라우저 상단바: .tl 신호등, .url 주소) .app-row > .app-side(사이드바 .it 항목) + .app-main(.app-top, .msg.user/.msg, .composer(.inp, .send)) · 드롭다운 .amenu(.open) · 아티팩트 .art-card · 사이드 패널 .app-panel. 실제 SaaS 화면을 재현할 때.
 - 가이드 클릭 엔진: 목업 루트에 data-guide='[{"at":600,"do":"click","sel":"#btn","call":"여기를 누르면","num":1,"pos":"r"},{"at":1800,"do":"type","sel":"#inp","text":"입력할 문장","speed":22,"call":"질문 입력","num":2},{"at":4200,"do":"show","show":".reply"},{"at":4500,"do":"point","sel":".reply","call":"답이 이렇게","num":3,"pos":"l"}]' 를 주면 커서가 움직이며 번호 콜아웃·링·타이핑을 자동 시연한다. do: click|type|point|show|hide|clear|call, 옵션 open/close(메뉴 .open), step(우측 단계 목록 [data-step] 강조), hold. 정적 모드는 최종 상태+콜아웃만.
