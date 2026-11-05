@@ -36,6 +36,7 @@ export default function DeckStudio() {
   const [model, setModel] = useState<string>('');
   const [cur, setCur] = useState(1);
   const [comment, setComment] = useState('');
+  const [withImages, setWithImages] = useState(true);
   const frameRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => { callEngine({ action: 'rules' }).then(() => {}).catch(() => {}); callEngine({ action: 'models' }).then(d => setModel(d.model)).catch(() => {}); }, []);
@@ -55,7 +56,7 @@ export default function DeckStudio() {
     const worker = async () => { while (cursor < batches.length) { const b = batches[cursor++]; try { await callEngine({ action: 'fill', jobId, ids: b }); } catch (e) { failed.push(...b); } done += b.length; setProgress({ done, total: ids.length }); } };
     await Promise.all(Array.from({ length: Math.min(4, batches.length) }, worker));
     if (failed.length) { for (const id of failed) { try { await callEngine({ action: 'fill', jobId, ids: [id] }); } catch { /* fallback handled by renderer */ } } }
-    try { setStage('render'); const d = await callEngine({ action: 'render', jobId }); setResult(d); setStage('done'); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
+    try { setStage('render'); setProgress({ done: 0, total: 0 }); const d = await callEngine({ action: 'render', jobId, images: withImages, maxImages: 4 }); setResult(d); setStage('done'); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
   }
   async function doFeedback(rating: number) {
     if (!result) return; const s = result.spec?.slides?.[cur - 1]; try { await callEngine({ action: 'feedback', jobId, slideId: s?.id, slideType: s?.body?.type, rating, comment }); setComment(''); } catch (e: any) { setErr(e.message); }
@@ -97,6 +98,7 @@ export default function DeckStudio() {
           </div>
           <label className="block text-sm"><span className="text-gray-600">참고 자료 (텍스트 붙여넣기 — 수치·사실은 여기서만 사용)</span><textarea className="mt-1 w-full border rounded-lg p-2 h-28" value={brief.materials} onChange={e => setBrief({ ...brief, materials: e.target.value })} /></label>
           <label className="block text-sm"><span className="text-gray-600">추가 지시</span><input className="mt-1 w-full border rounded-lg p-2" value={brief.extra} onChange={e => setBrief({ ...brief, extra: e.target.value })} placeholder="예: 사례 3개 꼭 포함, 마지막에 Q&A" /></label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={withImages} onChange={e => setWithImages(e.target.checked)} /><span className="text-gray-700">AI 이미지 생성 (표지·히어로 등 최대 4장, 약 15초 추가)</span></label>
           <button disabled={busy || !brief.topic.trim()} onClick={doPlan} className="w-full rounded-xl bg-[#4F5BFF] text-white font-bold py-3 disabled:opacity-40">{busy && stage === 'brief' ? '구조 설계 중…' : '2. 덱 구조 설계'}</button>
         </section>
 
@@ -109,12 +111,12 @@ export default function DeckStudio() {
               <ol className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 {plan.slides.map((s, i) => <li key={s.id} className="flex gap-2 items-start border rounded-lg px-3 py-2"><span className="text-gray-400 w-6 text-right">{i + 1}</span><span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs whitespace-nowrap">{TYPE_LABEL[s.type] || s.type}</span><span className="font-medium">{s.title.replace(/\*\*/g, '')}</span></li>)}
               </ol>
-              {(stage === 'fill' || stage === 'render') && <div className="mt-4"><div className="flex justify-between text-xs text-gray-500 mb-1"><span>{stage === 'fill' ? '슬라이드 작성 중' : '렌더링 중'}</span><span>{progress.done}/{progress.total}</span></div><div className="h-2 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-[#1A8CFF] to-[#9B4DFF] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 5}%` }} /></div></div>}
+              {(stage === 'fill' || stage === 'render') && <div className="mt-4"><div className="flex justify-between text-xs text-gray-500 mb-1"><span>{stage === 'fill' ? '슬라이드 작성 중' : withImages ? 'AI 이미지 생성 + 렌더링 중 (15~25초)' : '렌더링 중'}</span><span>{progress.total ? `${progress.done}/${progress.total}` : ''}</span></div><div className="h-2 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-[#1A8CFF] to-[#9B4DFF] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 5}%` }} /></div></div>}
             </div>
           )}
           {result && (
             <div className="bg-white rounded-2xl border p-5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2"><h2 className="font-bold">결과 — {result.pageCount}장 · {(result.bytes / 1048576).toFixed(1)}MB {result.fileId && <span className="text-green-700 text-sm font-normal">· 내 자료에 저장됨</span>}</h2>
+              <div className="flex items-center justify-between flex-wrap gap-2"><h2 className="font-bold">결과 — {result.pageCount}장 · {(result.bytes / 1048576).toFixed(1)}MB {result.fileId && <span className="text-green-700 text-sm font-normal">· 내 자료에 저장됨</span>}{result.images && <span className="text-gray-400 text-sm font-normal"> · 이미지 {result.images.generated}장</span>}</h2>
                 <div className="flex gap-2"><button onClick={() => download('player')} className="px-3 py-2 rounded-lg border text-sm">오프라인 HTML</button><button onClick={() => download('qpresen')} className="px-3 py-2 rounded-lg border text-sm">Qpresen용 HTML</button>{result.fileId ? <a href="/dashboard" className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">발표하기 →</a> : <button onClick={uploadViaDashboard} className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">내 자료에 올리기</button>}</div></div>
               <div className="aspect-video rounded-xl overflow-hidden border bg-black"><iframe ref={frameRef} title="deck" className="w-full h-full" srcDoc={srcdoc} allow="fullscreen" /></div>
               <div className="flex items-center gap-2 flex-wrap text-sm"><span className="text-gray-500">현재 {cur}/{result.pageCount}장 · {result.titles?.[cur - 1]}</span>
