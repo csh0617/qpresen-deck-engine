@@ -78,13 +78,26 @@ Deno.serve(async (req: Request) => {
       if (!job?.plan) return json({ error: 'JOB_NOT_FOUND' }, 404, allow);
       const rules = await loadRules();
       const slides = await fillSlides(job.brief as Brief, job.plan as Plan, ids.slice(0, 6), { provider: prov, rules, log });
-      // merge into job.spec.slides by id
-      const spec = (job.spec as any) || { meta: (job.plan as Plan).meta, sections: (job.plan as Plan).sections, slides: [] };
-      const map = new Map<string, any>((spec.slides || []).map((s: any) => [s.id, s]));
-      slides.forEach(s => map.set(s.id!, s));
-      spec.slides = (job.plan as Plan).slides.map(p => map.get(p.id)).filter(Boolean);
-      const done = spec.slides.length; const total = (job.plan as Plan).slides.length;
-      await touch(jobId, { spec, progress: { done, total }, status: done >= total ? 'rendering' : 'filling' });
+      // Merge into job.spec.slides by id — fill batches run concurrently, so use optimistic concurrency:
+      // re-read, merge, and write only if the row's revision stamp is unchanged; retry otherwise.
+      const plan = job.plan as Plan; const total = plan.slides.length;
+      let done = 0;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const { data: cur } = await db.from('deck_jobs').select('spec,progress').eq('id', jobId).single();
+        const spec = (cur?.spec as any) || { meta: plan.meta, sections: plan.sections, slides: [] };
+        const prevRev = (cur?.progress as any)?.rev ?? null;
+        const map = new Map<string, any>((spec.slides || []).map((s: any) => [s.id, s]));
+        slides.forEach(s => map.set(s.id!, s));
+        spec.slides = plan.slides.map(p => map.get(p.id)).filter(Boolean);
+        done = spec.slides.length;
+        const rev = crypto.randomUUID();
+        let q = db.from('deck_jobs').update({ spec, progress: { done, total, rev }, status: done >= total ? 'rendering' : 'filling', updated_at: new Date().toISOString() }).eq('id', jobId).eq('user_id', userId);
+        q = prevRev ? q.eq('progress->>rev', prevRev) : q.is('progress->>rev', null);
+        const { data: upd, error } = await q.select('id');
+        if (error) { log('fill merge error: ' + error.message); break; }
+        if (upd && upd.length) break; // committed
+        await new Promise(r => setTimeout(r, 60 + Math.random() * 140)); // lost the race → retry with fresh state
+      }
       return json({ slides, progress: { done, total } }, 200, allow);
     }
 
