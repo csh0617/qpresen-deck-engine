@@ -5,7 +5,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
 import { renderDeck, qpresenBundle, firstSlidePayload } from './renderer/index.ts';
-import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from './llm/pipeline.ts';
+import { planDeck, planOutline, planDetails, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from './llm/pipeline.ts';
 import { fillSlideRich, fixSlideRich, isRichTarget, warmRichCache } from './llm/rich.ts';
 import { directDeck, applyDirection } from './llm/direct.ts';
 import { writeDossier } from './llm/dossier.ts';
@@ -75,24 +75,55 @@ Deno.serve(async (req: Request) => {
     if (action === 'rules') { return json({ rules: await loadRules() }, 200, allow); }
 
     if (action === 'plan') {
-      const brief = body.brief as Brief; if (!brief?.topic) return json({ error: 'TOPIC_REQUIRED' }, 400, allow);
+      // phases (large decks, > ~24 slides): 'dossier' → 'outline' → 'detail'(ids) — one LLM call per request so each stays under the 150s wall clock.
+      // single-shot (default): dossier + plan in one request (fine up to ~24 slides). A jobId may be passed to reuse a job created by the 'dossier' phase.
+      const phase = String(body.phase || '');
+      const rules = await loadRules();
+      let brief = body.brief as Brief; let jobId: string | null = body.jobId || null;
+      if (jobId) { const { data: job } = await db.from('deck_jobs').select('brief,plan,status').eq('id', jobId).eq('user_id', userId).single(); if (!job) return json({ error: 'JOB_NOT_FOUND' }, 404, allow); brief = (job.brief as Brief) || brief; (body as any).__job = job; }
+      if (!brief?.topic) return json({ error: 'TOPIC_REQUIRED' }, 400, allow);
       const premium = body.quality === 'premium' || body.quality === 'studio' || (brief as any).quality === 'premium' || (brief as any).quality === 'studio';
       if (premium) (brief as any).quality = 'premium';
       const planProv = premium ? premiumPlanProvider(prov) : prov;
-      const rules = await loadRules();
-      const { data: job, error } = await db.from('deck_jobs').insert({ user_id: userId, status: 'planning', brief, model: planProv.model }).select('id').single();
-      if (error) return json({ error: 'DB:' + error.message }, 500, allow);
+      const dossierHeader = '[자료집 — 모델이 정리한 공개 사실·수치(출처·연도 명시, 추정 표기)]';
+      const needDossier = premium && body.dossier !== false && String(brief.materials || '').length < 1500;
+      if (!jobId) { const { data: job, error } = await db.from('deck_jobs').insert({ user_id: userId, status: 'planning', brief, model: planProv.model }).select('id').single(); if (error) return json({ error: 'DB:' + error.message }, 500, allow); jobId = job.id; }
       try {
-        // premium: thin briefs get a research dossier first (facts, figures, named examples) so slides are concrete, not generic
-        let dossier: string | undefined;
-        if (premium && body.dossier !== false && String(brief.materials || '').length < 1500) {
-          try { dossier = await writeDossier(brief, { provider: planProv, log }); brief.materials = `[자료집 — 모델이 정리한 공개 사실·수치(출처·연도 명시, 추정 표기)]\n${dossier}\n\n${brief.materials || ''}`.trim(); (brief as any).dossier = true; await touch(job.id, { brief }); } catch (e: any) { log('[dossier] failed: ' + e.message); }
+        if (phase === 'dossier') {
+          let dossier = false;
+          if (needDossier) { try { const d = await writeDossier(brief, { provider: planProv, log }); brief.materials = `${dossierHeader}\n${d}`; dossier = true; } catch (e: any) { log('[dossier] failed: ' + e.message); } }
+          await touch(jobId!, { brief });
+          return json({ jobId, dossier }, 200, allow);
+        }
+        if (phase === 'outline') {
+          const plan = await planOutline(brief, { provider: planProv, rules, log, premium });
+          (plan.meta as any).quality = premium ? 'premium' : 'standard';
+          await touch(jobId!, { status: 'planning', plan, progress: { done: 0, total: plan.slides.length, stage: 'plan' } });
+          return json({ jobId, plan, outline: true, pending: plan.slides.map(s => s.id) }, 200, allow);
+        }
+        if (phase === 'detail') {
+          const job = (body as any).__job; const plan = job?.plan as Plan | undefined; if (!plan?.slides?.length) return json({ error: 'OUTLINE_NOT_READY' }, 409, allow);
+          const ids: string[] = Array.isArray(body.ids) ? body.ids.map(String) : [];
+          const detailed = await planDetails(brief, plan, ids, { provider: planProv, rules, log, premium });
+          // merge into the stored plan (re-read to avoid clobbering parallel detail requests)
+          const { data: cur } = await db.from('deck_jobs').select('plan').eq('id', jobId!).eq('user_id', userId).single();
+          const merged = (cur?.plan as Plan) || plan; const byId = new Map<string, any>(detailed.map((d: any) => [d.id, d]));
+          merged.slides = merged.slides.map((s: any) => byId.get(s.id) || s);
+          const remaining = merged.slides.filter(s => !s.content_hints || !s.content_hints.length).map(s => s.id);
+          if (!remaining.length) { delete (merged as any).outlineOnly; }
+          await touch(jobId!, { plan: merged, status: remaining.length ? 'planning' : (premium ? 'directing' : 'filling'), progress: { done: merged.slides.length - remaining.length, total: merged.slides.length, stage: 'plan' } });
+          return json({ jobId, plan: merged, done: detailed.map((d: any) => d.id), pending: remaining }, 200, allow);
+        }
+        // single-shot: thin premium briefs get a research dossier first (facts, figures, named examples) so slides are concrete, not generic
+        let dossier = false;
+        if (needDossier && !String(brief.materials || '').startsWith(dossierHeader)) {
+          try { const d = await writeDossier(brief, { provider: planProv, log }); brief.materials = `${dossierHeader}\n${d}`; dossier = true; await touch(jobId!, { brief }); } catch (e: any) { log('[dossier] failed: ' + e.message); }
         }
         const plan = await planDeck(brief, { provider: planProv, rules, log, premium });
         (plan.meta as any).quality = premium ? 'premium' : 'standard';
-        await touch(job.id, { status: premium ? 'directing' : 'filling', plan, progress: { done: 0, total: plan.slides.length } });
-        return json({ jobId: job.id, plan, dossier: !!dossier }, 200, allow);
-      } catch (e: any) { await touch(job.id, { status: 'failed', error: String(e.message) }); throw e; }
+        await touch(jobId!, { status: premium ? 'directing' : 'filling', plan, progress: { done: 0, total: plan.slides.length } });
+        return json({ jobId, plan, dossier }, 200, allow);
+      } catch (e: any) { await touch(jobId!, { status: 'failed', error: String(e.message) }); throw e; }
     }
 
     if (action === 'direct') {

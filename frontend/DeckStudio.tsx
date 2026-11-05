@@ -15,7 +15,13 @@ async function callEngine(body: Record<string, unknown>) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('로그인이 필요합니다');
   const { data, error } = await supabase.functions.invoke(FN, { body, headers: { Authorization: `Bearer ${session.access_token}` } });
-  if (error) throw new Error(error.message || '엔진 호출 실패');
+  if (error) {
+    const status = (error as any)?.context?.status as number | undefined;
+    let detail = ''; try { detail = await (error as any)?.context?.clone?.()?.text?.(); } catch { /* ignore */ }
+    let j: any = null; try { j = detail ? JSON.parse(detail) : null; } catch { /* ignore */ }
+    if (status === 504 || /non-2xx/i.test(error.message || '') && !j?.error) throw new Error(`엔진 응답 시간 초과(한 요청 150초 한도) — ${String(body.action)} 단계가 너무 오래 걸렸습니다. 장수를 줄이거나(프리미엄 25장 이하 권장) 잠시 후 다시 시도해 주세요.`);
+    throw new Error(j?.error ? `엔진 오류: ${j.error}` : (error.message || '엔진 호출 실패'));
+  }
   if (data?.error) throw new Error(data.error);
   return data;
 }
@@ -51,7 +57,22 @@ export default function DeckStudio() {
   async function doPlan() {
     setErr(null); setBusy(true); setDirection(null); setPlanStage('plan');
     try {
-      const d = await callEngine({ action: 'plan', brief: { ...brief, quality }, quality }); setJobId(d.jobId); setPlan(d.plan); setStage('plan');
+      const fullBrief = { ...brief, quality };
+      const expected = brief.slideCount || slideCountGuide;
+      let d: any;
+      if (expected > 24) {
+        // large deck: one LLM call per request (dossier → outline → details by chunk) so nothing hits the 150s wall clock
+        setPlanStage('dossier'); const d0 = await callEngine({ action: 'plan', phase: 'dossier', brief: fullBrief, quality });
+        setPlanStage('outline'); const d1 = await callEngine({ action: 'plan', phase: 'outline', jobId: d0.jobId, quality }); setJobId(d1.jobId); setPlan(d1.plan);
+        const ids: string[] = d1.plan.slides.map((s: any) => s.id); const chunks: string[][] = []; for (let i = 0; i < ids.length; i += 8) chunks.push(ids.slice(i, i + 8));
+        setPlanStage('detail'); let last: any = d1; let cursor = 0;
+        const worker = async () => { while (cursor < chunks.length) { const c = chunks[cursor++]; last = await callEngine({ action: 'plan', phase: 'detail', jobId: d1.jobId, ids: c, quality }); setPlan(last.plan); } };
+        await Promise.all([worker(), worker(), worker()]);
+        d = { jobId: d1.jobId, plan: last.plan };
+      } else {
+        d = await callEngine({ action: 'plan', brief: fullBrief, quality });
+      }
+      setJobId(d.jobId); setPlan(d.plan); setStage('plan');
       if (quality === 'premium') { // deck-level art direction (design layer, section colours, photo plan) before any slide is designed
         setPlanStage('direct');
         try { const dd = await callEngine({ action: 'direct', jobId: d.jobId, imageBudget: withImages ? 6 : 0 }); setDirection(dd.direction); } catch (e: any) { setErr('아트 디렉션 실패(기본 디자인으로 진행): ' + e.message); }
@@ -171,9 +192,9 @@ export default function DeckStudio() {
           </div>
           <label className="block text-sm"><span className="text-gray-600">참고 자료 (텍스트 붙여넣기 — 수치·사실은 여기서만 사용)</span><textarea className="mt-1 w-full border rounded-lg p-2 h-28" value={brief.materials} onChange={e => setBrief({ ...brief, materials: e.target.value })} /></label>
           <label className="block text-sm"><span className="text-gray-600">추가 지시</span><input className="mt-1 w-full border rounded-lg p-2" value={brief.extra} onChange={e => setBrief({ ...brief, extra: e.target.value })} placeholder="예: 사례 3개 꼭 포함, 마지막에 Q&A" /></label>
-          <label className="block text-sm"><span className="text-gray-600">품질</span><select className="mt-1 w-full border rounded-lg p-2" value={quality} onChange={e => setQuality(e.target.value as any)}><option value="standard">표준 — 템플릿 기반, 약 1분</option><option value="premium">프리미엄 — 자료집 → 아트 디렉션 → 장별 맞춤 설계 → 디자인 디렉터 검수, 8~12분</option></select>{quality === 'premium' && <p className="mt-1 text-xs text-gray-500">레퍼런스 덱처럼 덱 전용 디자인 레이어를 먼저 만들고, 최상위 모델이 장마다 고유한 레이아웃·인터랙션(차트·슬라이더·시연·사진)을 설계한 뒤, 스크린샷을 디자인 디렉터(비전 모델)가 검수해 고칩니다. 비용은 표준의 20~30배(덱당 2~3만 원)입니다.</p>}</label>
+          <label className="block text-sm"><span className="text-gray-600">품질</span><select className="mt-1 w-full border rounded-lg p-2" value={quality} onChange={e => setQuality(e.target.value as any)}><option value="standard">표준 — 템플릿 기반, 약 1분</option><option value="premium">프리미엄 — 자료집 → 아트 디렉션 → 장별 맞춤 설계 → 디자인 디렉터 검수, 8~12분</option></select>{quality === 'premium' && <div className="mt-1 text-[11px] text-gray-500">프리미엄은 장마다 설계합니다 — {brief.slideCount || slideCountGuide}장 기준 약 {Math.round((brief.slideCount || slideCountGuide) * 0.9)}~{Math.round((brief.slideCount || slideCountGuide) * 1.3)}분{(brief.slideCount || slideCountGuide) > 30 ? ' · 30장 이하를 권장합니다(60분 발표도 25~30장이면 충분)' : ''}</div>}{quality === 'premium' && <p className="mt-1 text-xs text-gray-500">레퍼런스 덱처럼 덱 전용 디자인 레이어를 먼저 만들고, 최상위 모델이 장마다 고유한 레이아웃·인터랙션(차트·슬라이더·시연·사진)을 설계한 뒤, 스크린샷을 디자인 디렉터(비전 모델)가 검수해 고칩니다. 비용은 표준의 20~30배(20장 기준 덱당 2~3만 원, 장수에 비례)입니다.</p>}</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={withImages} onChange={e => setWithImages(e.target.checked)} /><span className="text-gray-700">AI 이미지 생성 (표지·히어로 등 최대 4장, 약 15초 추가)</span></label>
-          <button disabled={busy || !brief.topic.trim()} onClick={doPlan} className="w-full rounded-xl bg-[#4F5BFF] text-white font-bold py-3 disabled:opacity-40">{busy && planStage === 'plan' ? (quality === 'premium' ? '자료집 + 구조 설계 중… (1~2분)' : '구조 설계 중…') : busy && planStage === 'direct' ? '아트 디렉션 설계 중… (약 1분)' : '2. 덱 구조 설계'}</button>
+          <button disabled={busy || !brief.topic.trim()} onClick={doPlan} className="w-full rounded-xl bg-[#4F5BFF] text-white font-bold py-3 disabled:opacity-40">{busy && planStage === 'plan' ? (quality === 'premium' ? '자료집 + 구조 설계 중… (1~2분)' : '구조 설계 중…') : busy && planStage === 'dossier' ? '자료집 작성 중… (약 1분)' : busy && planStage === 'outline' ? '덱 개요 설계 중… (약 1분)' : busy && planStage === 'detail' ? '장별 상세 계획 중… (1~2분)' : busy && planStage === 'direct' ? '아트 디렉션 설계 중… (약 1분)' : '2. 덱 구조 설계'}</button>
         </section>
 
         {/* ---- Plan / progress / result ---- */}

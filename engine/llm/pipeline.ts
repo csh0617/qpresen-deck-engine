@@ -69,6 +69,43 @@ export async function planDeck(brief: Brief, opt: PipelineOptions): Promise<Plan
   return plan;
 }
 
+/** Large decks (> ~24 slides) cannot be planned in one LLM call inside a 150s request: phase 1 writes the outline (sections + slide stubs), phase 2 fills details per chunk of slides (parallel requests). */
+export const PLAN_OUTLINE_ADDON = `
+[대형 덱 — 1단계: 개요만]
+이 덱은 장수가 많아 두 단계로 설계한다. 지금은 meta, sections, 그리고 slides 의 각 항목에 id · section · type · title · intent (프리미엄이면 kind · signature 까지) 만 쓴다. sub · content_hints · visual_hint 는 쓰지 않는다(2단계에서 채운다). 제목은 결론형(**강조**)으로 완성해서 쓴다.`;
+
+export const PLAN_DETAIL_SYSTEM = `당신은 Qpresen Deck Engine의 "덱 플래너"다. 이미 확정된 덱 개요(섹션·장 제목·유형)의 일부 장에 대해 상세 계획만 채운다. 디자인은 하지 않는다.
+각 장에 대해: "sub"(근거 한 문장), "content_hints"(이 장에 넣을 사실·수치·예시 4~6개, 각 ≤ 40자 — 자료가 있으면 자료의 수치·고유명사·예시를, 없으면 널리 알려진 공개 사실·수치(기관·연도 명시, 불확실하면 '약'·'추정')), "visual_hint"(차트/다이어그램/이미지 장면 ≤ 30자). 프리미엄 덱이면 "signature"(시그니처 비주얼·인터랙션 한 줄 ≤ 40자, 앞뒤 장과 겹치지 않게)도 채운다. id · title · type · kind 는 바꾸지 않는다.
+출력 JSON: { "slides": [ { "id", "sub", "content_hints": [], "visual_hint", "signature"? } ] } — 요청받은 장만, 요청 순서대로. JSON만 출력.`;
+
+export async function planOutline(brief: Brief, opt: PipelineOptions): Promise<Plan> {
+  opt.onProgress?.({ stage: 'plan', msg: '덱 개요 설계 중' });
+  const system = PLAN_SYSTEM + (opt.premium ? PLAN_PREMIUM_ADDON : '') + PLAN_OUTLINE_ADDON + rulesBlock(opt.rules || [], 'plan');
+  const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: briefText(brief) + '\n\n위 브리프로 덱 플랜 JSON(1단계: 개요)을 작성하라.' }], maxTokens: 9000, temperature: 0.5 });
+  opt.log?.(`[plan:outline] ${r.model} ${r.ms}ms`);
+  const plan = extractJson<Plan>(r.text);
+  if (!plan.slides?.length) throw new Error('plan has no slides');
+  plan.slides.forEach((s, i) => { if (!s.id) s.id = 'p' + String(i + 1).padStart(2, '0'); });
+  plan.sections = plan.sections || [];
+  if (brief.theme) plan.meta.theme = brief.theme;
+  if (brief.brand) (plan.meta as any).brand = brief.brand;
+  if (brief.presenter && !plan.meta.presenter) plan.meta.presenter = brief.presenter;
+  (plan as any).outlineOnly = true;
+  return plan;
+}
+
+export async function planDetails(brief: Brief, plan: Plan, ids: string[], opt: PipelineOptions): Promise<PlanSlide[]> {
+  const targets = plan.slides.filter(s => ids.includes(s.id));
+  if (!targets.length) return [];
+  const outline = plan.slides.map(s => ({ id: s.id, section: s.section, type: s.type, kind: (s as any).kind, title: s.title }));
+  const user = `${briefText(brief)}\n\n[덱 개요]\n${JSON.stringify({ meta: plan.meta, sections: plan.sections, outline })}\n\n[이번에 상세를 채울 장]\n${JSON.stringify(targets.map(t => ({ id: t.id, section: t.section, type: t.type, kind: (t as any).kind, title: t.title, intent: t.intent })))}${opt.premium ? '\n(프리미엄 덱: signature 포함)' : ''}`;
+  const r = await chat(opt.provider, { system: PLAN_DETAIL_SYSTEM + rulesBlock(opt.rules || [], 'plan'), messages: [{ role: 'user', content: user }], maxTokens: Math.min(9000, 700 * targets.length + 800), temperature: 0.5 });
+  opt.log?.(`[plan:detail ${ids.join(',')}] ${r.model} ${r.ms}ms`);
+  const out = extractJson<{ slides: Partial<PlanSlide>[] }>(r.text);
+  const got = (out.slides || []).filter(Boolean);
+  return targets.map(t => { const d: any = got.find(x => x.id === t.id) || {}; const m: any = { ...t }; if (d.sub) m.sub = String(d.sub); if (Array.isArray(d.content_hints)) m.content_hints = d.content_hints.map(String).slice(0, 6); if (d.visual_hint) m.visual_hint = String(d.visual_hint); if (d.signature) m.signature = String(d.signature); return m as PlanSlide; });
+}
+
 export async function fillSlides(brief: Brief, plan: Plan, ids: string[], opt: PipelineOptions): Promise<Slide[]> {
   const system = FILL_SYSTEM + rulesBlock(opt.rules || [], 'fill');
   const planText = JSON.stringify({ meta: plan.meta, sections: plan.sections, outline: plan.slides.map(s => ({ id: s.id, section: s.section, type: s.type, title: s.title })) });
