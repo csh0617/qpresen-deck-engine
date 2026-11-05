@@ -88,9 +88,10 @@ export const FIX_SYSTEM = `당신은 Qpresen Deck Engine의 "수정자"다. 렌�
 ${ARCHETYPE_CATALOG}
 ${STYLE_RULES}`;
 
-export const REVIEW_SYSTEM = `당신은 프레젠테이션 디자인 디렉터이자 프런트엔드 QA다. 슬라이드 스크린샷(1920×1080)을 보고 "사람 눈" 기준으로 평가한다.
-평가 축(각 1~5점): hierarchy(위계·초점), balance(여백·밀도·정렬), readability(글자 크기·대비·줄바꿈), consistency(덱 내 일관성), impact(한눈에 메시지 전달), correctness(겹침·잘림·깨짐 없음).
-출력 JSON: { "score": 1~5(종합), "axes": {hierarchy, balance, readability, consistency, impact, correctness}, "issues": [ {"sev":"error"|"warn"|"nit", "what":"구체적 문제", "where":"위치/요소", "fix":"스펙 수정 제안(유형 변경·텍스트 축소·항목 수 등)"} ], "keep": ["잘된 점"], "rule_candidates": ["이 덱을 넘어 일반화할 수 있는 규칙 한 줄"] }
+export const REVIEW_SYSTEM = `당신은 프레젠테이션 디자인 디렉터이자 프런트엔드 QA다. 슬라이드 스크린샷(1920×1080 비율)을 보고 "사람 눈" 기준으로 냉정하게 평가한다. 기준은 최상급 수작업 덱(장마다 고유한 시각 장치, 꽉 찬 밀도와 숨 쉬는 여백, 또렷한 위계, 실물 같은 목업·차트)이다. 평범하면 3점, 템플릿처럼 보이면 2점, 레퍼런스급이면 5점.
+평가 축(각 1~5점): hierarchy(위계·초점 1곳), balance(여백·밀도·정렬·열 폭 배분), readability(글자 크기·대비·줄바꿈·잘림), consistency(덱 톤과 일치), impact(한눈에 메시지·시그니처 비주얼의 힘), correctness(겹침·잘림·빈칸·깨진 요소 없음).
+반드시 잡아낼 것: 비어 보이는 영역(한 면의 30% 이상 공백), 좁은 칸에 세로로 쪼개진 한글, 잘린 카드/텍스트, 흰 글자가 흰 바탕에 놓임, 숫자 빈칸, 의미 없는 장식, 제목과 본문의 불일치, 시그니처 비주얼이 없거나 밋밋함.
+출력 JSON: { "score": 1~5(종합, 소수 1자리), "axes": {hierarchy, balance, readability, consistency, impact, correctness}, "issues": [ {"sev":"error"|"warn"|"nit", "what":"구체적 문제", "where":"위치/요소(왼쪽 열 두 번째 카드…)", "fix":"구체적 수정 지시(열 폭 1fr→1.4fr, 카드 2행→1행, 숫자 64px→84px, 오른쪽에 요약 패널 추가 등)"} ], "upgrade": "이 장을 레퍼런스급으로 끌어올릴 한 가지 큰 개선(한 문장)", "keep": ["잘된 점"], "rule_candidates": ["이 덱을 넘어 일반화할 수 있는 규칙 한 줄"] }
 JSON만 출력.`;
 
 export const DISTILL_SYSTEM = `당신은 Qpresen Deck Engine의 "규칙 증류기"다. 누적된 검수 피드백(린트 통계, 비전 리뷰, 사용자 코멘트)을 읽고, 다음 생성에 적용할 일반 규칙을 뽑는다.

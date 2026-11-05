@@ -127,8 +127,12 @@ export async function fixSlide(slide: Slide, issues: { code?: string; sev?: stri
   fixed.id = slide.id; return fixed;
 }
 
-export async function reviewSlide(pngBase64: string, slide: Slide, opt: PipelineOptions): Promise<any> {
-  const r = await chat(opt.provider, { system: REVIEW_SYSTEM, messages: [{ role: 'user', content: [{ type: 'text', text: `슬라이드 ${slide.id} (${(slide.body as any).type}) "${slide.title}" 스크린샷을 평가하라.` }, { type: 'image', mime: 'image/jpeg', base64: pngBase64 }] }], maxTokens: 2000, temperature: 0.2 });
+export async function reviewSlide(image: string, slide: Slide, opt: PipelineOptions, extra?: { lint?: any[]; direction?: string; mime?: string }): Promise<any> {
+  const m = image.match(/^data:(image\/[a-z]+);base64,(.*)$/s); const mime = m ? m[1] : (extra?.mime || 'image/jpeg'); const b64 = m ? m[2] : image;
+  const b: any = slide.body;
+  const ctx = `슬라이드 ${slide.id} (${b.type}${b.kind ? '/' + b.kind : ''}) "${slide.title}"${b.signature ? ' — 시그니처: ' + b.signature : ''}${extra?.direction ? '\n[아트 디렉션] ' + extra.direction : ''}${extra?.lint?.length ? '\n[자동 린트가 찾은 문제] ' + JSON.stringify(extra.lint).slice(0, 1200) : ''}\n이 스크린샷(정적 모드: 애니메이션 완료 상태)을 평가하라.`;
+  const r = await chat(opt.provider, { system: REVIEW_SYSTEM, messages: [{ role: 'user', content: [{ type: 'text', text: ctx }, { type: 'image', mime, base64: b64 }] }], maxTokens: 2500, temperature: 0.2 });
+  opt.log?.(`[review ${slide.id}] ${r.model} ${r.ms}ms cost=${r.usage?.cost ?? '?'}`);
   return extractJson(r.text);
 }
 

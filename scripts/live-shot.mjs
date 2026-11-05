@@ -1,0 +1,10 @@
+import { createRequire } from 'node:module'; const { chromium } = createRequire(import.meta.url)('playwright');
+import { resolve } from 'node:path';
+const [,, file, out, waitMs = '2500'] = process.argv;
+const browser = await chromium.launch(); const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+page.on('pageerror', e => console.log('pageerror', e.message)); page.on('console', m => { if (m.type() === 'error') console.log('console.error', m.text().slice(0, 200)); });
+await page.goto('file://' + resolve(file)); await page.waitForTimeout(Number(waitMs));
+await page.mouse.move(700, 600); await page.waitForTimeout(300);
+await page.screenshot({ path: out, type: 'jpeg', quality: 80 });
+const info = await page.evaluate(() => ({ aurora: !!document.querySelector('.fx-aurora'), rail: !!document.querySelector('.sec-rail'), tilt: document.querySelectorAll('.tilt').length, cls: document.documentElement.className }));
+console.log(JSON.stringify(info)); await browser.close();

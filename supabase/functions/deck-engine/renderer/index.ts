@@ -35,11 +35,6 @@ export function renderDeck(specIn: DeckSpec, opts: RenderDeckOptions = {}): Rend
   const { spec, warnings } = validateSpec(specIn);
   const N = spec.slides.length;
   const pages: string[] = []; const titles: string[] = []; const notes: Notes[] = [];
-  for (let i = 0; i < N; i++) {
-    pages.push(renderSlideDoc({ spec, index: i, qr: opts.qr, warnings }));
-    titles.push(plain(spec.slides[i].title));
-    notes.push(spec.slides[i].notes || { s: '' });
-  }
   // sections → [label, start, end]
   const sections: [string, number, number][] = [];
   const secs = spec.sections || [];
@@ -53,6 +48,11 @@ export function renderDeck(specIn: DeckSpec, opts: RenderDeckOptions = {}): Rend
     const lead = orphans.filter(n => n < sections[0][1]); const tail = orphans.filter(n => n > sections[sections.length - 1][2]);
     if (lead.length) sections.unshift(['시작', Math.min(...lead), Math.max(...lead)]);
     if (tail.length) sections.push(['마무리', Math.min(...tail), Math.max(...tail)]);
+  }
+  for (let i = 0; i < N; i++) {
+    pages.push(renderSlideDoc({ spec, index: i, qr: opts.qr, warnings, sections }));
+    titles.push(plain(spec.slides[i].title));
+    notes.push(spec.slides[i].notes || { s: '' });
   }
   const font = fontCss(opts.fontBase64);
   const html = opts.partsOnly ? '' : renderPlayer({ spec, pages, titles, notes, sections, fontCss: font, thumbs: opts.thumbs });

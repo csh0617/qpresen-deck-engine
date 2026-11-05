@@ -1,5 +1,6 @@
 /* Qpresen Deck Engine — per-slide runtime (inlined into every slide) */
 import { LINT_JS } from './lintJs.ts';
+import { FX_JS } from './fxJs.ts';
 
 export const BASE_JS = `
 (function(){
@@ -86,6 +87,15 @@ export const BASE_JS = `
       if(el.hasAttribute('data-bar')){ el.style.setProperty('--w', el.getAttribute('data-bar')+'%'); }
       el.style.setProperty('--d', delay+'ms'); el.__delay=delay;
     });
+    /* chain reveals: data-after="#sel" data-gap="ms" → start after that element finished (typing/counting/entering) */
+    els.forEach(function(el){
+      var sel=el.getAttribute('data-after'); if(!sel) return; var t; try{ t=document.querySelector(sel); }catch(e){ t=null; } if(!t) return;
+      var base=(t.__delay!=null?t.__delay:0), est=600;
+      if(t.hasAttribute('data-type')){ var txt=t.getAttribute('data-type-text')||t.textContent||''; est=txt.length*parseInt(t.getAttribute('data-speed')||'26',10)+200; }
+      else if(t.hasAttribute('data-count')){ est=parseInt(t.getAttribute('data-duration')||'1400',10)+150; }
+      var d2=base+est+parseInt(el.getAttribute('data-gap')||'0',10);
+      el.style.setProperty('--d', d2+'ms'); el.__delay=d2;
+    });
     if(IS_STATIC){ els.forEach(function(el){ el.classList.add('in'); if(el.hasAttribute('data-type')) runType(el); }); H.classList.add('reveal-done'); return; }
     function flip(){ els.forEach(function(el){ el.classList.add('in'); if(el.hasAttribute('data-count')){ setTimeout(function(){runCounter(el)}, el.__delay+150); } if(el.hasAttribute('data-type')){ setTimeout(function(){runType(el)}, el.__delay); } }); }
     var flipped=false; function once(){ if(flipped) return; flipped=true; flip(); }
@@ -137,12 +147,14 @@ export const BASE_JS = `
       var cs=getComputedStyle(document.documentElement); function rgb(v){ var m=v.trim().match(/#([0-9a-f]{6})/i); if(!m) return null; var h=m[1]; return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
       particles(cv,{n:parseInt(cv.getAttribute('data-particles')||'60',10),link:parseInt(cv.getAttribute('data-link')||'170',10),alpha:parseFloat(cv.getAttribute('data-alpha')||'1'),seed:parseInt(cv.getAttribute('data-seed')||'7',10),c1:rgb(cs.getPropertyValue('--azure'))||[26,140,255],c2:rgb(cs.getPropertyValue('--violet'))||[155,77,255]});
     });
+    window.__QP_READY=true;
     document.dispatchEvent(new CustomEvent('deck:ready',{detail:{static:IS_STATIC}}));
     try{ parent.postMessage({qpDeck:true,kind:'loaded',value:D.n},'*'); }catch(e){}
   }
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',ready); } else { ready(); }
 })();
 
+${FX_JS}
 /* self-check hook for the studio / player QA loop: window.QPLint() → { issues, stats, occupancy } */
 window.QPLint=function(){ return ${LINT_JS}; };
 `;

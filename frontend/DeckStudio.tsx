@@ -38,7 +38,9 @@ export default function DeckStudio() {
   const [comment, setComment] = useState('');
   const [withImages, setWithImages] = useState(true);
   const [quality, setQuality] = useState<'standard' | 'premium'>('standard');
-  const [qa, setQa] = useState<{ stage: 'idle' | 'lint' | 'fix' | 'done'; done?: number; total?: number; fixed?: number; errors?: number; skipped?: boolean }>({ stage: 'idle' });
+  const [qa, setQa] = useState<{ stage: 'idle' | 'lint' | 'fix' | 'review' | 'done'; done?: number; total?: number; fixed?: number; errors?: number; skipped?: boolean; avg?: number; round?: number }>({ stage: 'idle' });
+  const [direction, setDirection] = useState<any>(null);
+  const [planStage, setPlanStage] = useState<'' | 'plan' | 'direct'>('');
   const frameRef = useRef<HTMLIFrameElement>(null);
   /** Premium mode: these archetypes stay on the deterministic renderer; every other slide is designed individually (one request each). */
   const STRUCTURAL = ['cover', 'section', 'agenda', 'closing', 'quote', 'image-hero'];
@@ -49,8 +51,14 @@ export default function DeckStudio() {
   const slideCountGuide = useMemo(() => Math.round(brief.durationMin * ({ lecture: 1, ir: 0.8, seminar: 1.2, report: 0.9, proposal: 0.9, product: 0.8, keynote: 0.7 } as any)[brief.purpose]), [brief]);
 
   async function doPlan() {
-    setErr(null); setBusy(true);
-    try { const d = await callEngine({ action: 'plan', brief: { ...brief, quality }, quality }); setJobId(d.jobId); setPlan(d.plan); setStage('plan'); } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
+    setErr(null); setBusy(true); setDirection(null); setPlanStage('plan');
+    try {
+      const d = await callEngine({ action: 'plan', brief: { ...brief, quality }, quality }); setJobId(d.jobId); setPlan(d.plan); setStage('plan');
+      if (quality === 'premium') { // deck-level art direction (design layer, section colours, photo plan) before any slide is designed
+        setPlanStage('direct');
+        try { const dd = await callEngine({ action: 'direct', jobId: d.jobId, imageBudget: withImages ? 6 : 0 }); setDirection(dd.direction); } catch (e: any) { setErr('아트 디렉션 실패(기본 디자인으로 진행): ' + e.message); }
+      }
+    } catch (e: any) { setErr(e.message); } finally { setBusy(false); setPlanStage(''); }
   }
   async function doFill() {
     if (!jobId || !plan) return; setErr(null); setBusy(true); setStage('fill');
@@ -66,7 +74,7 @@ export default function DeckStudio() {
     await Promise.all(Array.from({ length: Math.min(quality === 'premium' ? 5 : 4, batches.length) }, worker));
     if (failed.length) { // retry once more each (premium: a second design attempt), then ask for a standard-template version of that slide
       for (const id of failed) { try { await callEngine({ action: 'fill', jobId, ids: [id] }); } catch { try { await callEngine({ action: 'fill', jobId, ids: [id], mode: 'standard' }); } catch { /* renderer drops missing slides */ } } } }
-    try { setStage('render'); setProgress({ done: 0, total: 0 }); const d = await callEngine({ action: 'render', jobId, images: withImages, maxImages: 4 }); setResult(d); setStage('done'); setBusy(false); await qaLoop(d); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
+    try { setStage('render'); setProgress({ done: 0, total: 0 }); const d = await callEngine({ action: 'render', jobId, images: withImages, maxImages: quality === 'premium' ? 10 : 4 }); setResult(d); setStage('done'); setBusy(false); await qaLoop(d); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
   }
   /** Wait until the preview player (same-origin srcdoc) exposes QPDeck.lintAll. */
   async function waitPlayer(ms = 12000): Promise<any> {
@@ -76,20 +84,53 @@ export default function DeckStudio() {
   }
   /** Automatic QA: every slide self-checks its layout (overflow, clipping, overlap, tiny text) inside the player;
       slides with errors are sent back to the model once, then the deck is re-rendered. */
+  async function rerender(fileId: string | null) {
+    const d2 = await callEngine({ action: 'render', jobId, register: false, images: withImages, maxImages: quality === 'premium' ? 10 : 4 });
+    setResult({ ...d2, fileId }); await new Promise(r => setTimeout(r, 600)); return d2;
+  }
+  /** Automatic QA.
+      Round 1 (all qualities): every slide self-checks its layout inside the player (overflow, clipping, overlap, tiny text); error slides are fixed once.
+      Round 2 (premium): each slide is rasterized in the player and judged by the design director (vision model) — slides scoring below 4
+      or with real issues are revised with the director's instructions; then one more layout check. */
   async function qaLoop(d: any) {
     try {
       await new Promise(r => setTimeout(r, 600));
-      const w = await waitPlayer(); if (!w) { setQa({ stage: 'done', skipped: true }); return; }
-      setQa({ stage: 'lint', done: 0, total: d.pageCount });
-      const res: any[] = await w.QPDeck.lintAll((n: number, N: number) => setQa({ stage: 'lint', done: n, total: N }));
-      const bad = res.filter(r => (r.issues || []).some((i: any) => i.sev === 'error' && !/LINT_|NO_LINT/.test(i.code))).slice(0, 6);
-      if (!bad.length) { setQa({ stage: 'done', fixed: 0, errors: 0 }); return; }
-      setQa({ stage: 'fix', done: 0, total: bad.length }); setBusy(true);
-      let k = 0;
-      await Promise.all(bad.map(async r => { const s = d.spec?.slides?.[r.n - 1]; if (!s) return; try { await callEngine({ action: 'fix', jobId, slideId: s.id, source: 'lint', issues: (r.issues || []).filter((i: any) => i.sev !== 'nit').slice(0, 10) }); } catch { /* keep the original slide */ } k++; setQa({ stage: 'fix', done: k, total: bad.length }); }));
-      const d2 = await callEngine({ action: 'render', jobId, register: false, images: withImages, maxImages: 4 });
-      setResult({ ...d2, fileId: d.fileId });
-      setQa({ stage: 'done', fixed: bad.length, errors: bad.length });
+      let w = await waitPlayer(); if (!w) { setQa({ stage: 'done', skipped: true }); return; }
+      let cur = d; let fixedTotal = 0;
+      const lintRound = async (round: number) => {
+        setQa({ stage: 'lint', done: 0, total: cur.pageCount, round });
+        const res: any[] = await w.QPDeck.lintAll((n: number, N: number) => setQa({ stage: 'lint', done: n, total: N, round }));
+        const bad = res.filter(r => (r.issues || []).some((i: any) => i.sev === 'error' && !/LINT_|NO_LINT/.test(i.code))).slice(0, 8);
+        if (!bad.length) return res;
+        setQa({ stage: 'fix', done: 0, total: bad.length, round }); setBusy(true); let k = 0;
+        await Promise.all(bad.map(async r => { const s = cur.spec?.slides?.[r.n - 1]; if (!s) return; try { await callEngine({ action: 'fix', jobId, slideId: s.id, source: 'lint', issues: (r.issues || []).filter((i: any) => i.sev !== 'nit').slice(0, 10) }); fixedTotal++; } catch { /* keep */ } k++; setQa({ stage: 'fix', done: k, total: bad.length, round }); }));
+        cur = await rerender(d.fileId); w = await waitPlayer(); return res;
+      };
+      const lintRes = await lintRound(1);
+      if (quality === 'premium' && w) {
+        // vision round: snapshot → design-director review → revise when needed
+        const N = cur.pageCount; const scores: number[] = []; const toFix: { slideId: string; issues: any[] }[] = []; let done = 0;
+        setQa({ stage: 'review', done: 0, total: N, round: 2 });
+        const queue = Array.from({ length: N }, (_, i) => i + 1); const runner = async () => { while (queue.length) { const n = queue.shift()!; const s = cur.spec?.slides?.[n - 1]; if (!s) continue;
+          try { const snap = await w.QPDeck.snapshot(n, { width: 1280, quality: 0.8 }); const lintIssues = ((lintRes || []).find((r: any) => r.n === n)?.issues || []).filter((i: any) => i.sev !== 'nit').slice(0, 6);
+            const rv = (await callEngine({ action: 'review', jobId, slideId: s.id, image: snap.image, lint: lintIssues })).review || {};
+            const score = Number(rv.score) || 0; scores.push(score);
+            const issues = (rv.issues || []).filter((i: any) => i.sev === 'error' || i.sev === 'warn').slice(0, 8);
+            if (score < 4 || issues.some((i: any) => i.sev === 'error')) toFix.push({ slideId: s.id, issues: [...issues, ...(rv.upgrade ? [{ sev: 'warn', code: 'UPGRADE', what: rv.upgrade, fix: rv.upgrade }] : [])] });
+          } catch { /* review is best-effort */ }
+          done++; setQa({ stage: 'review', done, total: N, round: 2, avg: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10 : undefined }); } };
+        await Promise.all([runner(), runner(), runner()]);
+        const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10 : undefined;
+        if (toFix.length) {
+          setQa({ stage: 'fix', done: 0, total: toFix.length, round: 2, avg }); setBusy(true); let k = 0;
+          const fq = [...toFix]; const fixer = async () => { while (fq.length) { const f = fq.shift()!; try { await callEngine({ action: 'fix', jobId, slideId: f.slideId, source: 'vision', issues: f.issues }); fixedTotal++; } catch { /* keep */ } k++; setQa({ stage: 'fix', done: k, total: toFix.length, round: 2, avg }); } };
+          await Promise.all([fixer(), fixer(), fixer(), fixer()]);
+          cur = await rerender(d.fileId); w = await waitPlayer();
+          if (w) await lintRound(3);
+        }
+        setQa({ stage: 'done', fixed: fixedTotal, errors: toFix.length, avg }); return;
+      }
+      setQa({ stage: 'done', fixed: fixedTotal, errors: fixedTotal });
     } catch (e: any) { setQa({ stage: 'done', skipped: true }); } finally { setBusy(false); }
   }
   async function doFeedback(rating: number) {
@@ -132,9 +173,9 @@ export default function DeckStudio() {
           </div>
           <label className="block text-sm"><span className="text-gray-600">참고 자료 (텍스트 붙여넣기 — 수치·사실은 여기서만 사용)</span><textarea className="mt-1 w-full border rounded-lg p-2 h-28" value={brief.materials} onChange={e => setBrief({ ...brief, materials: e.target.value })} /></label>
           <label className="block text-sm"><span className="text-gray-600">추가 지시</span><input className="mt-1 w-full border rounded-lg p-2" value={brief.extra} onChange={e => setBrief({ ...brief, extra: e.target.value })} placeholder="예: 사례 3개 꼭 포함, 마지막에 Q&A" /></label>
-          <label className="block text-sm"><span className="text-gray-600">품질</span><select className="mt-1 w-full border rounded-lg p-2" value={quality} onChange={e => setQuality(e.target.value as any)}><option value="standard">표준 — 템플릿 기반, 약 1분</option><option value="premium">프리미엄 — 장마다 맞춤 설계(최상위 모델), 3~6분</option></select>{quality === 'premium' && <p className="mt-1 text-xs text-gray-500">레퍼런스 덱처럼 장마다 고유한 레이아웃·인터랙션(차트·슬라이더·시연)을 직접 설계합니다. 비용은 표준의 약 10배입니다.</p>}</label>
+          <label className="block text-sm"><span className="text-gray-600">품질</span><select className="mt-1 w-full border rounded-lg p-2" value={quality} onChange={e => setQuality(e.target.value as any)}><option value="standard">표준 — 템플릿 기반, 약 1분</option><option value="premium">프리미엄 — 자료집 → 아트 디렉션 → 장별 맞춤 설계 → 디자인 디렉터 검수, 8~12분</option></select>{quality === 'premium' && <p className="mt-1 text-xs text-gray-500">레퍼런스 덱처럼 덱 전용 디자인 레이어를 먼저 만들고, 최상위 모델이 장마다 고유한 레이아웃·인터랙션(차트·슬라이더·시연·사진)을 설계한 뒤, 스크린샷을 디자인 디렉터(비전 모델)가 검수해 고칩니다. 비용은 표준의 20~30배(덱당 2~3만 원)입니다.</p>}</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={withImages} onChange={e => setWithImages(e.target.checked)} /><span className="text-gray-700">AI 이미지 생성 (표지·히어로 등 최대 4장, 약 15초 추가)</span></label>
-          <button disabled={busy || !brief.topic.trim()} onClick={doPlan} className="w-full rounded-xl bg-[#4F5BFF] text-white font-bold py-3 disabled:opacity-40">{busy && stage === 'brief' ? '구조 설계 중…' : '2. 덱 구조 설계'}</button>
+          <button disabled={busy || !brief.topic.trim()} onClick={doPlan} className="w-full rounded-xl bg-[#4F5BFF] text-white font-bold py-3 disabled:opacity-40">{busy && planStage === 'plan' ? (quality === 'premium' ? '자료집 + 구조 설계 중… (1~2분)' : '구조 설계 중…') : busy && planStage === 'direct' ? '아트 디렉션 설계 중… (약 1분)' : '2. 덱 구조 설계'}</button>
         </section>
 
         {/* ---- Plan / progress / result ---- */}
@@ -143,18 +184,20 @@ export default function DeckStudio() {
             <div className="bg-white rounded-2xl border p-5">
               <div className="flex items-center justify-between mb-3"><h2 className="font-bold">덱 구조 — {plan.meta?.title} <span className="text-gray-400 font-normal text-sm">({plan.slides.length}장 · {plan.meta?.theme})</span></h2>
                 <div className="flex gap-2"><button disabled={busy} onClick={doPlan} className="px-3 py-2 rounded-lg border text-sm">다시 설계</button><button disabled={busy || stage !== 'plan'} onClick={doFill} className="px-4 py-2 rounded-lg bg-[#4F5BFF] text-white text-sm font-bold disabled:opacity-40">3. 슬라이드 작성 + 렌더</button></div></div>
+              {direction && <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 text-sm"><div className="font-bold text-indigo-900">아트 디렉션 — {direction.mood}</div><p className="text-gray-700 mt-1">{direction.concept}</p><div className="text-xs text-gray-500 mt-1">모티프: {(direction.motifs || []).join(' · ')} · 효과: {(direction.fx || []).join(', ') || '없음'} · 사진 {(direction.images || []).length}장 · 덱 레이어 CSS {Math.round((direction.deckCssBytes || 0) / 1024)}KB</div></div>}
               <ol className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 {plan.slides.map((s, i) => <li key={s.id} className="flex gap-2 items-start border rounded-lg px-3 py-2"><span className="text-gray-400 w-6 text-right">{i + 1}</span><span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs whitespace-nowrap">{TYPE_LABEL[s.type] || s.type}</span><span className="font-medium">{s.title.replace(/\*\*/g, '')}{s.signature && <span className="block text-xs text-gray-400 font-normal">✦ {s.signature}</span>}</span></li>)}
               </ol>
-              {(stage === 'fill' || stage === 'render') && <div className="mt-4"><div className="flex justify-between text-xs text-gray-500 mb-1"><span>{stage === 'fill' ? (quality === 'premium' ? '프리미엄 설계 중 — 장마다 맞춤 HTML 작성 (장당 1~2분, 5장 병렬)' : '슬라이드 작성 중') : withImages ? 'AI 이미지 생성 + 렌더링 중 (15~25초)' : '렌더링 중'}</span><span>{progress.total ? `${progress.done}/${progress.total}` : ''}</span></div><div className="h-2 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-[#1A8CFF] to-[#9B4DFF] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 5}%` }} /></div></div>}
+              {(stage === 'fill' || stage === 'render') && <div className="mt-4"><div className="flex justify-between text-xs text-gray-500 mb-1"><span>{stage === 'fill' ? (quality === 'premium' ? '프리미엄 설계 중 — 장마다 맞춤 HTML 작성 (장당 1~2분, 5장 병렬)' : '슬라이드 작성 중') : withImages ? (quality === 'premium' ? 'AI 이미지 생성(최대 10장) + 렌더링 중 (30~60초)' : 'AI 이미지 생성 + 렌더링 중 (15~25초)') : '렌더링 중'}</span><span>{progress.total ? `${progress.done}/${progress.total}` : ''}</span></div><div className="h-2 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-[#1A8CFF] to-[#9B4DFF] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 5}%` }} /></div></div>}
             </div>
           )}
           {result && (
             <div className="bg-white rounded-2xl border p-5 space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2"><h2 className="font-bold">결과 — {result.pageCount}장 · {(result.bytes / 1048576).toFixed(1)}MB {result.fileId && <span className="text-green-700 text-sm font-normal">· 내 자료에 저장됨</span>}{result.images && <span className="text-gray-400 text-sm font-normal"> · 이미지 {result.images.generated}장</span>}
-                {qa.stage === 'lint' && <span className="text-indigo-600 text-sm font-normal"> · 자동 검수 중 {qa.done}/{qa.total}</span>}
-                {qa.stage === 'fix' && <span className="text-amber-600 text-sm font-normal"> · 레이아웃 오류 {qa.total}장 자동 수정 중 ({qa.done}/{qa.total})</span>}
-                {qa.stage === 'done' && !qa.skipped && <span className="text-gray-500 text-sm font-normal"> · 자동 검수 완료{qa.fixed ? ` (${qa.fixed}장 수정)` : ' (문제 없음)'}</span>}</h2>
+                {qa.stage === 'lint' && <span className="text-indigo-600 text-sm font-normal"> · 레이아웃 검수 중 {qa.done}/{qa.total}{qa.round && qa.round > 1 ? ` (${qa.round}차)` : ''}</span>}
+                {qa.stage === 'review' && <span className="text-indigo-600 text-sm font-normal"> · 디자인 디렉터 검수 중 {qa.done}/{qa.total}{qa.avg ? ` · 평균 ${qa.avg}점` : ''}</span>}
+                {qa.stage === 'fix' && <span className="text-amber-600 text-sm font-normal"> · {qa.round === 2 ? '디렉터 지시로' : '레이아웃 오류'} {qa.total}장 수정 중 ({qa.done}/{qa.total})</span>}
+                {qa.stage === 'done' && !qa.skipped && <span className="text-gray-500 text-sm font-normal"> · 검수 완료{qa.avg ? ` · 디렉터 평균 ${qa.avg}점` : ''}{qa.fixed ? ` · ${qa.fixed}장 수정` : ' · 문제 없음'}</span>}</h2>
                 <div className="flex gap-2"><button onClick={() => download('player')} className="px-3 py-2 rounded-lg border text-sm">오프라인 HTML</button><button onClick={() => download('qpresen')} className="px-3 py-2 rounded-lg border text-sm">Qpresen용 HTML</button>{result.fileId ? <a href="/dashboard" className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">발표하기 →</a> : <button onClick={uploadViaDashboard} className="px-3 py-2 rounded-lg bg-[#0A1633] text-white text-sm font-bold">내 자료에 올리기</button>}</div></div>
               <div className="aspect-video rounded-xl overflow-hidden border bg-black"><iframe ref={frameRef} title="deck" className="w-full h-full" srcDoc={srcdoc} allow="fullscreen" /></div>
               <div className="flex items-center gap-2 flex-wrap text-sm"><span className="text-gray-500">현재 {cur}/{result.pageCount}장 · {result.titles?.[cur - 1]}</span>

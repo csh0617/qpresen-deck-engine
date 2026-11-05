@@ -1,4 +1,6 @@
 /* Qpresen Deck Engine — base stylesheet (inlined into every slide). Theme tokens come from theme.ts */
+import { FX_CSS } from './fxCss.ts';
+
 export const BASE_CSS = `
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
@@ -645,4 +647,6 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 
 /* print */
 @media print{.deck-nav{display:none}}
+
+${FX_CSS}
 `;

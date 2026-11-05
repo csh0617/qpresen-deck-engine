@@ -19,6 +19,24 @@ export interface DeckMeta {
   footer?: string;          // footer brand line (default: title · presenter · date)
   durationMin?: number;
   logo?: string;            // data URI or URL (shown on cover/top bar)
+  quality?: 'standard' | 'premium' | 'studio';
+  fx?: ('aurora' | 'rail' | 'tilt' | '3d-in')[];   // deck-wide effects (html classes fx-*)
+  direction?: DeckDirection; // premium/studio art direction (deck-level design layer)
+}
+
+/** Art direction produced once per deck before the slides are designed (premium/studio). */
+export interface DeckDirection {
+  mood?: string;              // 한 줄 무드
+  concept?: string;           // 디자인 컨셉 설명(장 설계자에게 전달)
+  motifs?: string[];          // 반복 모티프
+  palette?: { sectionAccents?: Record<string, Accent>; notes?: string };
+  photoStrategy?: 'none' | 'backdrops' | 'side' | 'mixed';
+  imageBudget?: number;
+  motion?: string;            // 모션 언어
+  fx?: ('aurora' | 'rail' | 'tilt' | '3d-in')[];
+  deckCss?: string;           // injected into every slide after the base CSS
+  deckJs?: string;            // injected into every slide after the base JS
+  helpers?: string[];         // class names deckCss defines (for the slide designer)
 }
 
 export interface Section { id: string; label: string; numeral?: string; accent?: Accent }

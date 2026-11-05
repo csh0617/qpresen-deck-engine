@@ -6,3 +6,5 @@ export * as prompts from '../engine/llm/prompts.ts';
 export { generateImages, imageTargets, buildImagePrompt } from '../engine/llm/images.ts';
 export { fillSlideRich, fixSlideRich, richSystem, parseRich, sanitizeRich, kindForType, isRichTarget, warmRichCache, PLAN_PREMIUM_ADDON } from '../engine/llm/rich.ts';
 export { EXEMPLARS, exemplarsFor } from '../engine/knowledge/exemplars.ts';
+export { directDeck, applyDirection, directionBlock } from '../engine/llm/direct.ts';
+export { writeDossier } from '../engine/llm/dossier.ts';

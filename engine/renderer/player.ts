@@ -1,6 +1,7 @@
 import type { DeckSpec, Notes } from './types.ts';
 import { esc, pad, plain } from './util.ts';
 import { themeCss } from './theme.ts';
+import { SNAPSHOT_JS } from '../assets/libs.ts';
 
 export interface PlayerInput {
   spec: DeckSpec; pages: string[]; titles: string[]; notes: Notes[]; sections: [string, number, number][]; fontCss: string; thumbs?: string[];
@@ -11,7 +12,7 @@ export function renderPlayer(inp: PlayerInput): string {
   const { spec } = inp; const m = spec.meta; const N = inp.pages.length;
   const theme = m.theme || 'signature-white';
   const data = { total: N, titles: inp.titles, notes: inp.notes, sections: inp.sections, font: inp.fontCss, pages: inp.pages, thumbs: inp.thumbs || [], types: spec.slides.map(s => s.body?.type || ''), meta: { title: m.title, subtitle: m.subtitle || '', presenter: m.presenter?.name || '', date: m.date || '', event: m.event || '' } };
-  const json = JSON.stringify(data).replace(/<\//g, '<\\/').replace(/<!--/g, '<\\!--');
+  const json = JSON.stringify(data).replace(/<\//g, '<\\/').replace(/<!--/g, '<\\u0021--'); // keep the JSON valid (\u0021 = '!') while hiding </ and <!-- from the HTML parser
   const title = esc(m.title);
   return `<!doctype html>
 <html lang="${m.lang || 'ko'}">
@@ -86,6 +87,7 @@ body.notes #notes{display:flex}
 <div id="help"><b>키보드</b><br><kbd>→</kbd><kbd>Space</kbd>다음 · <kbd>←</kbd>이전 · <kbd>Home</kbd>/<kbd>End</kbd>처음·끝<br><kbd>H</kbd>목차 · <kbd>N</kbd>발표자 노트(+경과 시간) · <kbd>F</kbd>전체화면 · <kbd>T</kbd>다크 테마 · <kbd>B</kbd>검은 화면<br><kbd>Esc</kbd>닫기 · 주소 끝 <b>#s07</b> 바로가기 · <b>?static=1</b> 애니메이션 없이 완성 화면</div>
 <div id="black"></div>
 <script id="qp-data" type="application/json">${json}</script>
+<script id="qp-snap" type="text/plain">${SNAPSHOT_JS}</script>
 <script>
 (function(){
   'use strict';
@@ -137,8 +139,17 @@ body.notes #notes{display:flex}
     f.onload=function(){ setTimeout(function(){ var r; try{ r=f.contentWindow.QPLint?f.contentWindow.QPLint():{issues:[{sev:'error',code:'NO_LINT'}]}; }catch(e){ r={issues:[{sev:'error',code:'LINT_FAILED',extra:String(e&&e.message)}]}; } r.n=n; r.title=D.titles[n-1]; finish(r); },900); };
     setTimeout(function(){ finish({n:n,title:D.titles[n-1],issues:[{sev:'error',code:'LINT_TIMEOUT'}]}); },15000);
     f.srcdoc=src(n).replace(/<html /,'<html data-static="1" '); }); }
+  /* QA: render slide n in a hidden static frame and rasterize it (modern-screenshot inside the frame) → JPEG data URL. */
+  function snapshot(n,opt){ opt=opt||{}; var W=opt.width||1280, Q=opt.quality||.8; return new Promise(function(resolve,reject){
+    var f=document.createElement('iframe'); f.setAttribute('aria-hidden','true'); f.style.cssText='position:fixed;left:-4000px;top:0;width:1920px;height:1080px;border:0;opacity:0;pointer-events:none'; document.body.appendChild(f);
+    var done=false; function finish(err,r){ if(done) return; done=true; try{f.remove()}catch(e){} err?reject(err):resolve(r); }
+    f.onload=function(){ setTimeout(function(){ try{ var w=f.contentWindow, d=f.contentDocument; var sc=d.createElement('script'); sc.textContent=document.getElementById('qp-snap').textContent; d.head.appendChild(sc);
+      var api=w.modernScreenshot; if(!api) return finish(new Error('snapshot lib missing'));
+      api.domToJpeg(d.body,{width:1920,height:1080,scale:W/1920,quality:Q,backgroundColor:'#ffffff'}).then(function(u){ finish(null,{n:n,title:D.titles[n-1],image:u}); },function(e){ finish(e); }); }catch(e){ finish(e); } },1000); };
+    setTimeout(function(){ finish(new Error('snapshot timeout')); },20000);
+    f.srcdoc=src(n).replace(/<html /,'<html data-static="1" '); }); }
   function lintAll(onProgress){ var out=[]; var i=0; function next(){ if(i>=N) return Promise.resolve(out); var n=++i; return lint(n).then(function(r){ out.push(r); if(onProgress) try{onProgress(n,N,r)}catch(e){} return next(); }); } return next(); }
-  window.QPDeck={go:go,fullscreen:fullscreen,isStatic:isStatic,key:key,setTheme:function(t){theme=t;try{localStorage.setItem('deck-theme',t)}catch(e){}},current:function(){return cur},total:N,lint:lint,lintAll:lintAll,reload:function(){ var n=cur; cur=0; go(n); }};
+  window.QPDeck={go:go,fullscreen:fullscreen,isStatic:isStatic,key:key,setTheme:function(t){theme=t;try{localStorage.setItem('deck-theme',t)}catch(e){}},current:function(){return cur},total:N,lint:lint,lintAll:lintAll,snapshot:snapshot,reload:function(){ var n=cur; cur=0; go(n); }};
   var g=document.getElementById('ovg'), html='';
   (D.sections.length?D.sections:[['전체',1,N]]).forEach(function(s){
     html+='<h3>'+s[0]+'</h3><div class="grid">';

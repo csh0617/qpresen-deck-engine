@@ -4,6 +4,7 @@
 import { chat, type ProviderConfig } from './provider.ts';
 import { ICON_NAMES, rulesBlock } from './prompts.ts';
 import { exemplarsFor } from '../knowledge/exemplars.ts';
+import { directionBlock } from './direct.ts';
 import type { Brief, Plan, PlanSlide, PipelineOptions } from './pipeline.ts';
 import type { Slide, DeckSpec } from '../renderer/types.ts';
 
@@ -67,8 +68,17 @@ ${ICON_NAMES}
 - <canvas data-particles="60"></canvas>: 파티클 배경.
 - 정적 모드(html.static: 썸네일·인쇄)에서는 모든 reveal이 즉시 완료 상태로 그려진다. JS도 e.detail.static 이면 최종 상태를 즉시 그리고 끝낸다.
 
+- 연쇄 등장: data-after="#앞요소id" data-gap="ms" → 앞 요소의 타이핑/카운트/등장이 끝난 뒤 시작(레퍼런스 덱의 리듬). 긴 장면은 3~4단계로 연쇄.
+- 사진 백드롭: <div class="backdrop kb fade-r"><img data-image="장면 묘사" style="--pos:50% 40%" alt=""><div class="credit">AI 생성 이미지</div></div> — .body 첫 요소로 두면 화면 전체 사진 + 왼쪽 페이드(글자 영역 확보). kb=켄번즈. fade-b/fade-t/soft/dim 변형. 아트 디렉션이 이 장에 사진을 허용할 때만.
+- 사진 카드: <figure class="photo card"><img data-image="…" alt=""><figcaption class="cap">캡션</figcaption></figure> (side 사진). 이미지는 엔진이 생성·치환한다(src 쓰지 말 것).
+- 앱 화면 목업 키트: <div class="app claude|gpt v2"> 안에 .chrome(브라우저 상단바: .tl 신호등, .url 주소) .app-row > .app-side(사이드바 .it 항목) + .app-main(.app-top, .msg.user/.msg, .composer(.inp, .send)) · 드롭다운 .amenu(.open) · 아티팩트 .art-card · 사이드 패널 .app-panel. 실제 SaaS 화면을 재현할 때.
+- 가이드 클릭 엔진: 목업 루트에 data-guide='[{"at":600,"do":"click","sel":"#btn","call":"여기를 누르면","num":1,"pos":"r"},{"at":1800,"do":"type","sel":"#inp","text":"입력할 문장","speed":22,"call":"질문 입력","num":2},{"at":4200,"do":"show","show":".reply"},{"at":4500,"do":"point","sel":".reply","call":"답이 이렇게","num":3,"pos":"l"}]' 를 주면 커서가 움직이며 번호 콜아웃·링·타이핑을 자동 시연한다. do: click|type|point|show|hide|clear|call, 옵션 open/close(메뉴 .open), step(우측 단계 목록 [data-step] 강조), hold. 정적 모드는 최종 상태+콜아웃만.
+- 덱 전체 효과(아트 디렉션이 켬): 오로라 블롭, 푸터 섹션 레일, 카드 3D 틸트(hover), 블러+회전 등장 — 자동. 카드에 data-notilt 로 틸트 제외.
+- 시네마틱 다크 무대: 아트 디렉션이 지정한 섹션은 .stage.cine(어두운 배경, 유리 카드, 흰 글자)으로 렌더된다 — 그 장은 어두운 바탕에 맞게 설계.
+- 라이브러리: gsap 3 전역 사용 가능(gsap.timeline / gsap.to / stagger — 쓰면 자동 포함, 20~50줄의 안무에 권장). THREE(three.js r152) 전역 사용 가능 — 3D가 메시지의 핵심일 때만(부품 구조·공간·흐름), 100줄 이내, 캔버스는 .body 안 컨테이너에 append, STATIC이면 한 프레임만 렌더. 그 외 외부 라이브러리 금지.
+
 [JS 규칙]
-- 전부 document.addEventListener('deck:ready', function(e){ var STATIC=e.detail.static; … }) 안에 쓴다. 전역 변수 금지.
+- 전부 document.addEventListener('deck:ready', function(e){ var STATIC=e.detail.static; … }) 안에 쓴다. 전역 변수 금지(window.DeckFX 등 덱 레이어가 제공한 것은 사용 가능).
 - 자동 데모: 아무것도 누르지 않아도 2~6초 안에 움직임이 보이고, 사용자가 클릭·슬라이더·토글을 만지면 자동 데모를 멈춘다.
 - 금지: alert/confirm/prompt, fetch/XHR, localStorage, location 변경, 키보드 단축키(발표자 키와 충돌), 외부 라이브러리, document.write, 끝없이 누적되는 타이머.
 - 슬라이더·드래그 컨트롤에는 touchstart/touchend 에 stopPropagation (슬라이드 넘김 방지).
@@ -129,7 +139,8 @@ export function sanitizeRich(p: RichParts): { parts: RichParts; problems: string
   html = html.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (_m, c) => { css += '\n' + c; problems.push('style-in-html'); return ''; });
   html = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (_m, c) => { js += '\n' + c; problems.push('script-in-html'); return ''; });
   if (/<link\b/i.test(html)) { html = html.replace(/<link\b[^>]*>/gi, ''); problems.push('link-tag'); }
-  if (/<(img|iframe|video|audio|source|object|embed)\b/i.test(html)) { html = html.replace(/<(img|iframe|video|audio|source|object|embed)\b[^>]*>(?:<\/\1>)?/gi, ''); problems.push('external-media'); }
+  if (/<(iframe|video|audio|source|object|embed)\b/i.test(html)) { html = html.replace(/<(iframe|video|audio|source|object|embed)\b[^>]*>(?:<\/\1>)?/gi, ''); problems.push('external-media'); }
+  if (/<img\b[^>]*\ssrc=/i.test(html)) { html = html.replace(/<img\b([^>]*)\ssrc="[^"]*"([^>]*)>/gi, '<img$1$2>'); problems.push('img-src'); } // images come from data-image prompts only
   if (/https?:\/\//i.test(html)) { html = html.replace(/\s(?:src|href)="https?:\/\/[^"]*"/gi, ''); problems.push('url-in-html'); }
   if (/@import/i.test(css)) { css = css.replace(/@import[^;]*;/gi, ''); problems.push('css-import'); }
   if (/url\(\s*['"]?https?:/i.test(css)) { css = css.replace(/url\(\s*['"]?https?:[^)]*\)/gi, 'none'); problems.push('css-url'); }
@@ -170,7 +181,8 @@ export async function fillSlideRich(brief: Brief, plan: Plan, slide: PlanSlide, 
   const system = richSystem(kind, opt.rules || []);
   const outline = plan.slides.map(s => ({ id: s.id, type: s.type, title: s.title, signature: (s as any).signature || s.visual_hint || '' }));
   const idx = plan.slides.findIndex(s => s.id === slide.id);
-  const user = `${briefTextShort(brief, opt.materialsMax)}\n\n[덱 메타] ${JSON.stringify({ ...plan.meta, sections: plan.sections })}\n[덱 개요 — 다른 장과 레이아웃·시그니처가 겹치지 않게]\n${JSON.stringify(outline)}\n\n[이번에 설계할 장: ${idx + 1}/${plan.slides.length}장, kind=${kind}]\n${JSON.stringify(slide, null, 1)}\n\n위 장의 META/HTML/CSS/JS 를 출력 형식대로 작성하라.`;
+  const { direction, ...metaNoDir } = plan.meta as any;
+  const user = `${briefTextShort(brief, opt.materialsMax)}\n\n[덱 메타] ${JSON.stringify({ ...metaNoDir, sections: plan.sections })}${directionBlock(direction, slide)}\n[덱 개요 — 다른 장과 레이아웃·시그니처가 겹치지 않게]\n${JSON.stringify(outline)}\n\n[이번에 설계할 장: ${idx + 1}/${plan.slides.length}장, kind=${kind}]\n${JSON.stringify(slide, null, 1)}\n\n위 장의 META/HTML/CSS/JS 를 출력 형식대로 작성하라.`;
   const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: opt.temperature ?? 0.5, json: false, nudge: '(출력이 잘렸다. 같은 설계를 더 간결하게 다시 출력하라: CSS는 꼭 필요한 규칙만, JS는 120줄 이내, 네 구간 모두.)' });
   opt.log?.(`[rich ${slide.id}/${kind}] ${r.model} ${r.ms}ms in=${r.usage?.input ?? '?'} cacheRead=${r.usage?.cacheRead ?? 0} out=${r.usage?.output ?? '?'} cost=${r.usage?.cost ?? '?'}${r.truncated ? ' TRUNCATED' : ''}`);
   if (r.truncated) throw new Error('rich: output truncated');

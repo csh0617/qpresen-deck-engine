@@ -12,7 +12,24 @@ export interface ImageOptions {
   onProgress?: (e: { done: number; total: number; slide?: string }) => void;
 }
 
-interface Target { slide: Slide; ref: { prompt?: string; alt?: string; src?: string }; role: 'cover' | 'hero' | 'section' | 'visual' | 'annot' | 'quote'; size: string; priority: number }
+interface Target { slide: Slide; ref: { prompt?: string; alt?: string; src?: string }; role: 'cover' | 'hero' | 'section' | 'visual' | 'annot' | 'quote'; size: string; priority: number; apply?: (src: string) => void }
+
+/** Custom (premium) slides carry <img data-image="prompt" …> placeholders; each becomes a target whose result is written back into the HTML. */
+function customImageTargets(s: Slide): Target[] {
+  const b: any = s.body; if (b.type !== 'custom' || typeof b.html !== 'string') return [];
+  const out: Target[] = []; const re = /<img\b([^>]*?)>/gi; let m: RegExpExecArray | null; let k = 0;
+  while ((m = re.exec(b.html)) && k < 2) {
+    const attrs = m[1]; if (!/data-image=/.test(attrs) || /\ssrc=/.test(attrs)) continue;
+    const prompt = (attrs.match(/data-image="([^"]*)"/) || [])[1] || ''; if (!prompt.trim()) continue;
+    const ratio = (attrs.match(/data-ratio="([^"]*)"/) || [])[1] || '';
+    const before = b.html.slice(0, m.index); const inBackdrop = /class="[^"]*\bbackdrop\b[^"]*"[^>]*>\s*$/.test(before.slice(-400)) || /\bbackdrop\b/.test(attrs);
+    const size = ratio === '1:1' ? '1024x1024' : ratio === '3:4' ? '1024x1536' : (ratio === '16:9' || ratio === '4:3' || inBackdrop) ? '1536x1024' : '1024x1024';
+    const tag = m[0]; const ref = { prompt, alt: (attrs.match(/alt="([^"]*)"/) || [])[1] || '' };
+    out.push({ slide: s, ref, role: inBackdrop ? 'hero' : 'visual', size, priority: inBackdrop ? 2 : 5, apply: (src: string) => { b.html = b.html.replace(tag, tag.replace(/<img\b/, `<img src="${src}"`)); } });
+    k++;
+  }
+  return out;
+}
 
 /** Slides whose look depends on a picture. Priority: hero/cover first (full-bleed), then section/quote/visual. */
 export function imageTargets(spec: DeckSpec): Target[] {
@@ -33,6 +50,7 @@ export function imageTargets(spec: DeckSpec): Target[] {
       case 'quote': want(b.image, 'quote', '1024x1024', 4); break;
       case 'bullets-visual': if (b.visual?.kind === 'image') want(b.visual.image, 'visual', '1024x1024', 5); break;
       case 'question': want(b.image, 'visual', '1536x1024', 6); break;
+      case 'custom': out.push(...customImageTargets(s)); break;
     }
   }
   return out.sort((a, b) => a.priority - b.priority);
@@ -79,6 +97,7 @@ export async function generateImages(spec: DeckSpec, cfg: ProviderConfig, opt: I
     const t0 = Date.now();
     try {
       t.ref.src = await generateOne(cfg, prompt, t.size, opt);
+      if (t.apply) t.apply(t.ref.src);
       opt.log?.(`[image ${t.slide.id}/${t.role}] ${Date.now() - t0}ms ${(t.ref.src.length / 1024).toFixed(0)}KB`);
     } catch (e: any) { failed.push(`${t.slide.id}: ${String(e?.message || e).slice(0, 120)}`); opt.log?.(`[image ${t.slide.id}] failed: ${e?.message}`); }
     done++; opt.onProgress?.({ done, total: targets.length, slide: t.slide.id });
