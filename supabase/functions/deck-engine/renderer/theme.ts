@@ -94,7 +94,7 @@ function vars(obj: Record<string, string>): string {
 }
 
 /** Returns the :root token CSS for a theme (+ optional brand override) */
-export function themeCss(name: ThemeName, brand?: string): string {
+export function themeCss(name: ThemeName, brand?: string, stopsIn?: [string, string, string]): string {
   const t = THEMES[name] || THEMES['signature-white'];
   let light = { ...t.light }; let dark = { ...t.dark };
   if (brand && /^#[0-9a-fA-F]{6}$/.test(brand)) {
@@ -102,8 +102,9 @@ export function themeCss(name: ThemeName, brand?: string): string {
     dark = { ...dark, brand: `color-mix(in srgb,${brand} 70%,#fff)`, 'brand-600': `color-mix(in srgb,${brand} 55%,#fff)`, 'brand-700': `color-mix(in srgb,${brand} 40%,#fff)`, 'brand-100': `color-mix(in srgb,${brand} 35%,#0A1022)`, 'brand-50': `color-mix(in srgb,${brand} 22%,#0A1022)` };
   }
   const branded = !!(brand && /^#[0-9a-fA-F]{6}$/.test(brand));
-  const grad = branded ? `linear-gradient(115deg,${brand},color-mix(in srgb,${brand} 55%,#8B5CF6))` : t.gradient;
-  const stops = branded ? [brand!, `color-mix(in srgb,${brand} 75%,#8B5CF6)`, `color-mix(in srgb,${brand} 55%,#8B5CF6)`] : t.stops;
+  const customStops = Array.isArray(stopsIn) && stopsIn.length === 3 && stopsIn.every(x => /^#[0-9a-fA-F]{6}$/.test(x)) ? stopsIn : null;
+  const grad = customStops ? `linear-gradient(115deg,${customStops[0]} 0%,${customStops[1]} 52%,${customStops[2]} 100%)` : branded ? `linear-gradient(115deg,${brand},color-mix(in srgb,${brand} 55%,#8B5CF6))` : t.gradient;
+  const stops = customStops || (branded ? [brand!, `color-mix(in srgb,${brand} 75%,#8B5CF6)`, `color-mix(in srgb,${brand} 55%,#8B5CF6)`] : t.stops);
   light = { ...light, 'brand-ink': light['brand-ink'] || light['brand-600'] }; dark = { ...dark, 'brand-ink': dark['brand-ink'] || dark['brand'] };
   return `:root{${vars(light)};--qg:${grad};--q1:${stops[0]};--q2:${stops[1]};--q3:${stops[2]};--r:${t.radius.r};--r-sm:${t.radius.sm};--r-xs:${t.radius.xs};--font:${t.font};--ease:cubic-bezier(.16,1,.3,1);--stage-w:1920px;--stage-h:1080px;--f:var(--brand);--f-100:var(--brand-100);--f-50:var(--brand-50)}
 html[data-theme=dark]{${vars(dark)}}

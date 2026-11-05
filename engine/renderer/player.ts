@@ -23,7 +23,7 @@ export function renderPlayer(inp: PlayerInput): string {
 <meta name="qp-deck-pages" content="${N}">
 <title>${title}</title>
 ${inp.fontCss}
-<style>${themeCss(theme, m.brand)}
+<style>${themeCss(theme, m.brand, m.stops)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg-2);font-family:var(--font);color:var(--ink);word-break:keep-all}
 #stage{position:fixed;inset:0;transition:right .35s cubic-bezier(.16,1,.3,1)}

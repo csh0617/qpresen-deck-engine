@@ -79,7 +79,7 @@ export function renderSlideDoc(inp: SlideRenderInput): string {
 <title>${esc(title)}</title>
 <script>document.documentElement.classList.add('js');if(/[?&]static=1/.test(location.search)||document.documentElement.hasAttribute('data-static')||(function(){try{return window.parent!==window&&window.parent.QPDeck&&window.parent.QPDeck.isStatic}catch(e){return false}})())document.documentElement.classList.add('static');try{if(localStorage.getItem('deck-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
 ${FONT_PLACEHOLDER}
-<style>${themeCss(theme, spec.meta.brand)}
+<style>${themeCss(theme, spec.meta.brand, spec.meta.stops)}
 ${BASE_CSS}${deckCss}
 ${out.css || ''}</style>
 </head>

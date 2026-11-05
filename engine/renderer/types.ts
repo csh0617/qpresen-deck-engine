@@ -16,6 +16,7 @@ export interface DeckMeta {
   lang?: 'ko' | 'en' | 'ja' | 'zh';
   theme?: ThemeName;
   brand?: string;           // optional brand hex (#RRGGBB) → overrides --brand
+  stops?: [string, string, string]; // optional brand gradient stops (--q1/--q2/--q3, --qg) chosen by the art director
   footer?: string;          // footer brand line (default: title · presenter · date)
   durationMin?: number;
   logo?: string;            // data URI or URL (shown on cover/top bar)
@@ -29,7 +30,7 @@ export interface DeckDirection {
   mood?: string;              // 한 줄 무드
   concept?: string;           // 디자인 컨셉 설명(장 설계자에게 전달)
   motifs?: string[];          // 반복 모티프
-  palette?: { sectionAccents?: Record<string, Accent>; notes?: string };
+  palette?: { sectionAccents?: Record<string, Accent>; notes?: string; stops?: [string, string, string]; brand?: string };
   photoStrategy?: 'none' | 'backdrops' | 'side' | 'mixed';
   imageBudget?: number;
   motion?: string;            // 모션 언어

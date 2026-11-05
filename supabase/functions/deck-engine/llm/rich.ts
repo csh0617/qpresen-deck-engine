@@ -73,7 +73,7 @@ ${ICON_NAMES}
 - data-count="12345" (+ data-decimals data-prefix data-suffix data-duration): 숫자 카운트업. 요소 안 텍스트는 최종값(예: 12,345).
 - data-type (+ data-speed): 타자 효과. 내부 태그 없는 순수 텍스트 요소에만.
 - .bar data-bar="42" 안의 <i></i> 가 42%까지 차오름. svg path data-draw: 선 그리기. data-grow: 자라남.
-- 부모 data-cycle="2800" 안의 [data-step] 요소를 차례로 .on 처리(자동 하이라이트, mouseenter로 선택).
+- 부모 data-cycle="2800" 안의 [data-step] 요소를 차례로 .on 처리(자동 하이라이트, mouseenter로 선택). 순환 강조는 색·글로우·테두리·살짝 커짐만 바꾼다 — 내용을 접었다 펴는 아코디언/탭 전환(.on 아닌 카드의 본문 숨김, 패널 1개만 표시)은 금지: 정적 화면(썸네일·인쇄·검수)에서 빈 카드·빈 패널로 보인다. 모든 카드·패널은 항상 내용이 채워진 상태로 보여야 한다.
 - [data-mock] 안의 [data-at="ms"] 요소가 시간차로 나타남(채팅·화면 시연). data-click 이면 .cursor 가 그 위치로 이동, data-type-text 는 타이핑, 부모 data-loop="ms" 면 반복.
 - <canvas data-particles="60"></canvas>: 파티클 배경.
 - 살아있는 요소 만들기: 순환 강조 <div data-cycle="2600"><article data-step>…</article>…</div>(.on 에 스타일), 흐르는 점선 <path class="flowline" data-draw> 또는 stroke-dasharray + @keyframes dashflow, 펄스 점 .pulse, 진행 바 .bar data-bar, 켄번즈 .backdrop.kb, 타자 data-type, 카운트업 data-count. 이 중 하나는 반드시 끝까지 움직인다(등장만 하고 멈추는 장 금지).
@@ -220,6 +220,7 @@ export const RICH_FIX_SYSTEM = `당신은 Qpresen 프리미엄 덱의 슬라이�
 - SMALL_FONT: 14px 미만 글자를 키운다(캡션 15px 이상). LOW_CONTRAST: --muted/--faint 대신 --text/--ink, 면 위 글자는 -ink 토큰.
 - OVERLAP: 겹치는 요소의 간격·그리드 정의를 고친다. EMPTY/SPARSE: 내용을 보강하거나 요소를 키워 여백을 채운다. DENSE: 여백·간격을 늘리고 덜 중요한 요소를 뺀다.
 - 숫자가 비어 보이면(정적 모드) HTML에 최종값을 써 넣는다.
+- 카드/패널 하단이 비어 보이면: 순환(.on)으로 한 카드만 펼치는 구조를 '모든 카드가 항상 채워진 구조'로 바꾸고(아이콘 원·제목·수치·설명·태그 세트), 순환은 강조만 담당하게 한다. 카드 높이에 맞게 내용을 보강한다.
 - MOTION_LOW / 정적으로 보임: 등장 연쇄를 14개 이상으로 늘리고(data-reveal 변형과 data-delay 리듬), 숫자에 data-count, 살아있는 요소(data-cycle·flowline·pulse·bar·kb) 1개와 상호작용(hover/클릭/토글/슬라이더/자동 데모) 1개를 추가한다. 필요하면 gsap 타임라인으로 안무.
 - STYLE_OFF(하우스 스타일 이탈: 회색 리포트 룩·작은 라벨 다발·무거운 사진): 그라데이션 숫자·틴트/유리 카드·아이콘 원·칩으로 바꾸고 글자를 키운다.
 - TEXT_ON_PHOTO(페이드되지 않은 사진 위의 글자): 글과 사진은 반대편이어야 한다. 기본 .backdrop(=.fade-l)은 왼쪽이 바탕색·사진 오른쪽 → 글은 왼쪽 열에, .fade-r는 오른쪽이 바탕색·사진 왼쪽 → 글은 오른쪽 열에. 글이 왼쪽인데 .fade-r가 붙어 있으면 .fade-r를 뺀다. 사진 쪽에 남는 글은 .card/.glass 안에 넣거나 사진 반대편으로 옮기고, 빈 사진 쪽은 사진이 채우는 것이 정상(억지로 채우지 않는다).
