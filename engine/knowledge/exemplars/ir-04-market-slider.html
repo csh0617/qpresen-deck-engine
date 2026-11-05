@@ -1,0 +1,259 @@
+<!-- EXEMPLAR: 시장 인덱스 — 슬라이더로 움직이는 차트 + 인사이트 -->
+<!-- HTML (goes inside <section class="body">) -->
+<div class="card glass demo" data-reveal="zoom" data-delay="150">
+      <div class="dh">
+        <div class="k-eyebrow"><i class="lv"></i>LIVE DEMO · 같은 내용, 다른 전달</div>
+        <div class="rt">
+          <span class="hint"><i data-icon="hand"></i>직접 눌러 비교</span>
+          <div class="seg g" id="seg04"><button data-m="0" class="on"><i data-icon="presentation"></i>정적 PPT</button><button data-m="1"><i data-icon="sparkles"></i>Qpresen 동적</button></div>
+        </div>
+      </div>
+      <div class="dt">
+        <div class="tt">청중참여 시장 성장<span>2026=100 지수</span></div>
+        <div class="lgd"><span><i class="sw"></i>청중참여 <b>연 약 9%</b></span><span><i class="sl"></i>프레젠테이션 SW <b>연 약 14%</b></span></div>
+      </div>
+      <div class="view" id="view04">
+        <div class="lay ppt">
+          <div class="ph"><b>Market Outlook · 시장 전망</b><span class="kbd">PPT · 정지 화면</span></div>
+          <ul>
+            <li>청중참여 시장: 연 약 9% 성장 가정</li>
+            <li>프레젠테이션 SW: 연 약 14% 성장 가정</li>
+            <li>2031년 지수: 154 / 193 (2026=100)</li>
+          </ul>
+          <table>
+            <tr><th>지수(2026=100)</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2031</th></tr>
+            <tr><td>청중참여 (9%)</td><td>100</td><td>109</td><td>119</td><td>130</td><td>141</td><td>154</td></tr>
+            <tr><td>프레젠테이션 SW (14%)</td><td>100</td><td>114</td><td>130</td><td>148</td><td>169</td><td>193</td></tr>
+          </table>
+        </div>
+        <div class="lay chart" id="chart04"><svg id="svg04" aria-label="연도별 성장 지수 차트"></svg></div>
+      </div>
+      <div class="ctl">
+        <div class="yr"><small>YEAR</small><b class="num-g" id="yr04">2031</b></div>
+        <div class="rg">
+          <input type="range" class="rng" id="rng04" min="0" max="500" step="1" value="500" style="--p:100%" aria-label="연도 슬라이더 2026~2031">
+          <div class="ends"><span>2026</span><span>드래그해 연도를 바꿔 보세요</span><span>2031</span></div>
+        </div>
+        <div class="ro">
+          <div><span><i class="sw"></i>청중참여</span><b id="va04">154</b></div>
+          <div><span><i class="sl"></i>프레젠테이션 SW</span><b id="vb04">193</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="whyh" data-reveal="right" data-delay="250"><span class="k-eyebrow">WHY NOW · 지금이어야 하는 이유</span><span class="ln"></span></div>
+      <div class="wlist" data-cycle="2800" id="why04">
+        <article class="card lift wn f-violet" data-step data-reveal="right" data-delay="350">
+          <span class="ic-sq lg"><i data-icon="bot"></i></span>
+          <div class="tx"><div class="t">AI가 HTML을 만든다</div><div class="d">생성형 AI가 코드·차트·인터랙션이 든 동적 슬라이드를 생성</div><div class="tags"><span class="pill">코드</span><span class="pill">차트</span><span class="pill">인터랙션</span></div></div>
+          <span class="no">01</span><span class="pg"><i></i></span>
+        </article>
+        <article class="card lift wn f-azure" data-step data-reveal="right" data-delay="470">
+          <span class="ic-sq lg"><i data-icon="globe"></i></span>
+          <div class="tx"><div class="t">브라우저 표준의 성숙</div><div class="d">WebRTC·Realtime으로 앱 설치 없이 음성 중계·실시간 동기화</div><div class="tags"><span class="pill">WebRTC</span><span class="pill">Realtime</span><span class="pill">무설치</span></div></div>
+          <span class="no">02</span><span class="pg"><i></i></span>
+        </article>
+        <article class="card lift wn f-teal" data-step data-reveal="right" data-delay="590">
+          <span class="ic-sq lg"><i data-icon="glasses"></i></span>
+          <div class="tx"><div class="t">실시간 다국어·웨어러블</div><div class="d">STT·기계번역 단가 하락, 소비자용 스마트글래스 상용화</div><div class="tags"><span class="pill">STT</span><span class="pill">기계번역</span><span class="pill">스마트글래스</span></div></div>
+          <span class="no">03</span><span class="pg"><i></i></span>
+        </article>
+      </div>
+    </div>
+    <div class="card gborder callx" data-reveal="up" data-delay="700">
+      <p><span class="q">만드는 도구는 넘쳐난다 —</span> 비어 있는 것은 동적 HTML 발표의 <b class="gtext">'운영 플랫폼'</b>. 그 자리를 <b>Qpresen</b>이 맡습니다.</p>
+    </div>
+<!-- CSS (per-slide) -->
+<style>
+/* ===== slide 04 · insight ===== */
+.body{display:grid;grid-template-columns:minmax(0,58fr) minmax(0,42fr);grid-template-rows:minmax(0,1fr) auto;gap:22px 34px;min-height:0}
+/* ---- left: interactive demo panel ---- */
+.demo{display:flex;flex-direction:column;gap:14px;padding:22px 28px 22px;min-height:0;min-width:0}
+.dh{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.dh .k-eyebrow{display:flex;align-items:center;gap:10px}
+.dh .k-eyebrow .lv{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 18%,transparent);animation:blink 1.6s ease-in-out infinite}
+.dh .rt{display:flex;align-items:center;gap:14px}
+.dh .hint{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:600;color:var(--faint)}
+.dh .hint .ic{width:18px;height:18px;color:var(--q2)}
+.seg button{display:inline-flex;align-items:center;gap:7px}
+.seg button .ic{width:17px;height:17px}
+.seg button{position:relative}
+.seg button.press04{animation:press04 .4s var(--ease)}
+@keyframes press04{0%,100%{scale:1}50%{scale:1.06}}
+.seg button .tap{left:50%;top:50%}
+.dt{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.dt .tt{font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-.02em;white-space:nowrap}
+.dt .tt span{font-size:18px;font-weight:600;color:var(--muted);letter-spacing:-.01em;margin-left:10px}
+.dt .lgd{display:flex;align-items:center;gap:16px;font-size:16px;font-weight:700;color:var(--muted);white-space:nowrap}
+.dt .lgd span{display:inline-flex;align-items:center;gap:7px}
+.dt .lgd b{font-weight:800;color:var(--ink)}
+.dt .lgd .sw{width:12px;height:12px;border-radius:4px;background:linear-gradient(180deg,var(--q2),var(--q1))}
+.dt .lgd .sl{width:12px;height:12px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 3px var(--violet)}
+.view{position:relative;flex:1;min-height:0}
+.lay{position:absolute;inset:0;transition:opacity .75s var(--ease),scale .75s var(--ease),filter .75s var(--ease)}
+.view:not(.dyn) .chart{opacity:0;scale:.97;filter:blur(6px);pointer-events:none}
+.view.dyn .ppt{opacity:0;scale:1.02;filter:blur(6px);pointer-events:none}
+.view:not(.dyn)~.ctl{opacity:.38;pointer-events:none}
+/* static "PPT" layer — grey, frozen, read-to-understand */
+.ppt{display:flex;flex-direction:column;gap:10px;padding:18px 26px;border-radius:16px;background:var(--card-2);border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--card);filter:grayscale(1)}
+.ppt .ph{display:flex;align-items:center;justify-content:space-between}
+.ppt .ph b{font-size:23px;font-weight:700;color:var(--muted);letter-spacing:-.02em}
+.ppt .ph .kbd{font-size:16px}
+.ppt ul{display:flex;flex-direction:column;gap:3px}
+.ppt li{position:relative;padding-left:22px;font-size:17px;color:var(--muted);line-height:1.4}
+.ppt li::before{content:'';position:absolute;left:4px;top:.6em;width:8px;height:8px;border-radius:2px;background:var(--faint)}
+.ppt table{width:100%;border-collapse:collapse;font-size:16px;white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:auto}
+.ppt th,.ppt td{border:1px solid var(--line-2);padding:5px 10px;text-align:center;font-weight:600}
+.ppt th{background:var(--card-3);font-weight:700}
+.ppt td:first-child,.ppt th:first-child{text-align:left;width:220px}
+/* dynamic chart layer */
+.chart>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.chart .gl{stroke:var(--line);stroke-width:1;stroke-dasharray:3 6}
+.chart .gl0{stroke:var(--line-2);stroke-width:1.5}
+.chart .yt{font-size:15px;font-weight:600;fill:var(--faint)}
+.chart .ax{font-size:16px;font-weight:700;fill:var(--faint)}
+.chart .xt{font-size:17px;font-weight:700;fill:var(--faint);transition:fill .3s}
+.chart .xt.cur{fill:var(--ink)}
+.chart .gh{fill:none;stroke:var(--line-2);stroke-width:1.5;stroke-dasharray:5 6}
+.chart .bv{font-size:18px;font-weight:800;fill:var(--card)}
+.chart .band{fill:var(--q2);opacity:.06;transition:x .25s}
+.chart .ln04{fill:none;stroke:var(--violet);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.chart .pt{fill:var(--card);stroke:var(--violet);stroke-width:3}
+.chart .hd{fill:var(--violet)}
+.chart .hdr{fill:none;stroke:var(--violet);stroke-width:2;opacity:.35}
+.chart .lb rect{fill:var(--violet)}
+.chart .lb text{font-size:17px;font-weight:800;fill:var(--card)}
+.chart .bar{filter:drop-shadow(0 8px 14px color-mix(in srgb,var(--q2) 28%,transparent))}
+/* slider row */
+.ctl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:20px;padding:14px 18px;border-radius:16px;background:var(--card-2);border:1px solid var(--line);transition:opacity .6s var(--ease)}
+.ctl .yr{display:flex;flex-direction:column;line-height:1}
+.ctl .yr small{font-size:16px;font-weight:800;letter-spacing:.14em;color:var(--faint)}
+.ctl .yr b{margin-top:6px;font-size:38px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ctl .rg{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ctl .rg .ends{display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--faint)}
+.ctl .ro{display:flex;gap:10px}
+.ctl .ro div{display:flex;flex-direction:column;align-items:flex-start;padding:8px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);min-width:140px}
+.ctl .ro span{font-size:16px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.ctl .ro b{font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.15}
+.ctl .ro .sw{width:12px;height:12px;border-radius:4px;background:linear-gradient(180deg,var(--q2),var(--q1))}
+.ctl .ro .sl{width:12px;height:12px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 3px var(--violet)}
+input.rng{cursor:pointer}
+/* ---- right: why now ---- */
+.why{display:flex;flex-direction:column;gap:14px;min-height:0;min-width:0}
+.whyh{display:flex;align-items:center;gap:14px}
+.whyh .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--line-2),transparent)}
+.wlist{flex:1;display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:14px;min-height:0}
+.wn{position:relative;overflow:hidden;display:grid;grid-template-columns:64px minmax(0,1fr);gap:20px;align-items:center;padding:18px 24px;min-height:0;transition:border-color .5s var(--ease),box-shadow .5s var(--ease)}
+.wn .ic-sq{transition:background .5s var(--ease),color .5s var(--ease),box-shadow .5s var(--ease)}
+.wn .tx{display:flex;flex-direction:column;gap:6px;min-width:0;padding-right:58px}
+.wn .t{font-size:26px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.25}
+.wn .d{font-size:18px;line-height:1.5;color:var(--text)}
+.wn .tags{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.wn .tags .pill{height:28px;padding:0 12px;font-size:16px}
+.wn .no{position:absolute;right:22px;top:12px;font-size:60px;font-weight:800;letter-spacing:-.05em;line-height:1;background:var(--qg);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.16;transition:opacity .5s var(--ease)}
+.wn .pg{position:absolute;left:0;right:0;bottom:0;height:3px;background:transparent}
+.wn .pg i{display:block;height:100%;width:0;background:var(--f)}
+.wn.on{border-color:color-mix(in srgb,var(--f) 48%,var(--line));box-shadow:var(--shadow-lg)}
+.wn.on .ic-sq{background:var(--f);color:var(--card);box-shadow:0 10px 24px color-mix(in srgb,var(--f) 35%,transparent)}
+.wn.on .no{opacity:.5}
+.wn.on .pg i{animation:fill04 2.8s linear forwards}
+@keyframes fill04{from{width:0}to{width:100%}}
+/* ---- bottom callout ---- */
+.callx{grid-column:1/-1;position:relative;overflow:hidden;display:flex;align-items:center;gap:22px;padding:18px 26px 18px 22px}
+.callx .qi{width:46px;height:auto;flex:none;filter:drop-shadow(0 8px 16px color-mix(in srgb,var(--q2) 30%,transparent))}
+.callx p{flex:1;min-width:0;font-size:23px;font-weight:600;color:var(--ink);letter-spacing:-.015em;line-height:1.4}
+.callx p .q{color:var(--muted);font-weight:500}
+.callx .nx{text-decoration:none;flex:none;gap:8px}
+.callx .nx .ic{width:18px;height:18px}
+.callx::before{content:'';position:absolute;top:0;bottom:0;left:-30%;width:28%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,color-mix(in srgb,var(--q2) 9%,transparent),transparent);animation:sheen04 5.5s var(--ease) 1.2s infinite}
+@keyframes sheen04{0%{translate:0 0}60%,100%{translate:480% 0}}
+html.static .callx::before{display:none}
+</style>
+<!-- JS (per-slide, runs after base runtime) -->
+<script>
+document.addEventListener('deck:ready',function(e){
+  var STATIC=e.detail.static;
+  var A=[100,109,119,130,141,154], L=[100,114,130,148,169,193], Y0=2026, VMAX=200;
+  var NS='http://www.w3.org/2000/svg';
+  var view=document.getElementById('view04'), box=document.getElementById('chart04'), svg=document.getElementById('svg04');
+  var rng=document.getElementById('rng04'), yr=document.getElementById('yr04'), va=document.getElementById('va04'), vb=document.getElementById('vb04');
+  var btns=[].slice.call(document.querySelectorAll('#seg04 button'));
+  function mk(tag,at,par){ var n=document.createElementNS(NS,tag); for(var k in at) n.setAttribute(k,at[k]); if(par) par.appendChild(n); return n; }
+  /* ---- geometry (1:1 px viewBox) ---- */
+  var W=box.clientWidth||900, H=box.clientHeight||330;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  var ml=50, mr=10, mt=46, mb=34, pw=W-ml-mr, ph=H-mt-mb, gw=pw/6, bw=Math.min(74,gw*.48);
+  function X(i){ return ml+gw*(i+.5); }
+  function Yv(v){ return mt+ph*(1-v/VMAX); }
+  var defs=mk('defs',{},svg);
+  var bg=mk('linearGradient',{id:'bg04',x1:0,y1:0,x2:0,y2:1},defs);
+  mk('stop',{offset:0,'stop-color':'#5B63FF'},bg); mk('stop',{offset:1,'stop-color':'#1A8CFF'},bg);
+  var ag=mk('linearGradient',{id:'ag04',x1:0,y1:0,x2:0,y2:1},defs);
+  mk('stop',{offset:0,'stop-color':'#9B4DFF','stop-opacity':.16},ag); mk('stop',{offset:1,'stop-color':'#9B4DFF','stop-opacity':0},ag);
+  /* grid + axis */
+  [0,50,100,150,200].forEach(function(v){
+    mk('line',{x1:ml,x2:W-mr,y1:Yv(v),y2:Yv(v),'class':v===0?'gl0':'gl'},svg);
+    var t=mk('text',{x:ml-12,y:Yv(v)+5,'text-anchor':'end','class':'yt'},svg); t.textContent=v;
+  });
+  var axl=mk('text',{x:ml,y:18,'class':'ax'},svg); axl.textContent='지수(2026=100) · 성장률 가정 기반 계산';
+  var band=mk('rect',{x:X(5)-gw/2,y:mt-8,width:gw,height:ph+8,rx:12,'class':'band'},svg);
+  var xt=[], gh=[], bars=[], bv=[];
+  for(var i=0;i<6;i++){
+    gh.push(mk('rect',{x:X(i)-bw/2,y:Yv(A[i]),width:bw,height:ph+mt-Yv(A[i]),rx:10,'class':'gh'},svg));
+    bars.push(mk('path',{d:'',fill:'url(#bg04)','class':'bar'},svg));
+    var tv=mk('text',{x:X(i),y:0,'text-anchor':'middle','class':'bv'},svg); tv.textContent=A[i]; bv.push(tv);
+    var tx=mk('text',{x:X(i),y:H-8,'text-anchor':'middle','class':'xt'},svg); tx.textContent=Y0+i; xt.push(tx);
+  }
+  var area=mk('path',{d:'',fill:'url(#ag04)'},svg);
+  var line=mk('path',{d:'','class':'ln04'},svg);
+  var pts=[]; for(var j=0;j<6;j++) pts.push(mk('circle',{cx:X(j),cy:Yv(L[j]),r:6,'class':'pt'},svg));
+  var hdr=mk('circle',{r:13,'class':'hdr'},svg), hd=mk('circle',{r:7,'class':'hd'},svg);
+  var lb=mk('g',{'class':'lb'},svg), lbr=mk('rect',{rx:9,height:28,width:52},lb), lbt=mk('text',{'text-anchor':'middle'},lb);
+  function barPath(x,w,y0,y1,r){ var h=y1-y0; if(h<=.5) return ''; r=Math.min(r,h,w/2);
+    return 'M'+x+' '+y1+'V'+(y0+r)+'Q'+x+' '+y0+' '+(x+r)+' '+y0+'H'+(x+w-r)+'Q'+(x+w)+' '+y0+' '+(x+w)+' '+(y0+r)+'V'+y1+'Z'; }
+  var base=Yv(0);
+  function render(t){
+    t=Math.max(0,Math.min(5,t));
+    var k=Math.floor(t+1e-6);
+    for(var i=0;i<6;i++){
+      var f=i===0?1:Math.max(0,Math.min(1,t-(i-1)));
+      var top=base-(base-Yv(A[i]))*f;
+      bars[i].setAttribute('d',barPath(X(i)-bw/2,bw,top,base,10));
+      gh[i].style.opacity=f>=1?0:1;
+      bv[i].setAttribute('y',Yv(A[i])+27); bv[i].style.opacity=f>=.98?1:0;
+      xt[i].classList.toggle('cur',i===k);
+      pts[i].style.opacity=i<=k?1:0;
+    }
+    /* comparison line up to t */
+    var d='M'+X(0)+' '+Yv(L[0]), hx=X(0), hy=Yv(L[0]);
+    for(var j=1;j<=5;j++){ if(t>=j){ d+='L'+X(j)+' '+Yv(L[j]); hx=X(j); hy=Yv(L[j]); } else if(t>j-1){ var r=t-(j-1); hx=X(j-1)+(X(j)-X(j-1))*r; hy=Yv(L[j-1])+(Yv(L[j])-Yv(L[j-1]))*r; d+='L'+hx+' '+hy; break; } else break; }
+    line.setAttribute('d',d); area.setAttribute('d',d+'L'+hx+' '+base+'L'+X(0)+' '+base+'Z');
+    hd.setAttribute('cx',hx); hd.setAttribute('cy',hy); hdr.setAttribute('cx',hx); hdr.setAttribute('cy',hy);
+    /* label of the last reached year on the line */
+    lbt.textContent=L[k]; var lx=X(k), ly=Yv(L[k])-22;
+    lbr.setAttribute('x',lx-26); lbr.setAttribute('y',ly-20); lbt.setAttribute('x',lx); lbt.setAttribute('y',ly);
+    band.setAttribute('x',X(k)-gw/2);
+    yr.textContent=Y0+k; va.textContent=A[k]; vb.textContent=L[k];
+    rng.value=Math.round(t*100); rng.style.setProperty('--p',(t/5*100).toFixed(1)+'%');
+  }
+  function setMode(m){ btns.forEach(function(b,i){ b.classList.toggle('on',i===m); }); view.classList.toggle('dyn',m===1); }
+  if(STATIC){ setMode(1); render(5); return; }
+  /* ---- live: auto demo (PPT → dynamic, slider sweeps 2026 → 2031), stops on user input ---- */
+  var tw=null, timers=[], user=false, loops=0;
+  function sweep(from,to,ms,done){ clearInterval(tw); var t0=Date.now();
+    tw=setInterval(function(){ var p=Math.min(1,(Date.now()-t0)/ms), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; render(from+(to-from)*e); if(p>=1){ clearInterval(tw); tw=null; done&&done(); } },16); }
+  function later(ms,fn){ timers.push(setTimeout(fn,ms)); }
+  function stopAuto(){ user=true; clearInterval(tw); tw=null; timers.forEach(clearTimeout); timers=[]; }
+  function press(b){ b.classList.remove('press04'); void b.offsetWidth; b.classList.add('press04');
+    var tp=document.createElement('span'); tp.className='tap'; b.appendChild(tp); setTimeout(function(){ tp.remove(); b.classList.remove('press04'); },900); }
+  function play(){ if(user) return; setMode(0); render(0);
+    later(2000,function(){ press(btns[1]); setMode(1); later(250,function(){ sweep(0,5,1700,function(){ if(++loops>=2) return; later(5600,play); }); }); }); }
+  render(0); play();
+  btns.forEach(function(b,i){ b.addEventListener('click',function(){ stopAuto(); setMode(i); if(i===1){ render(0); sweep(0,5,1500); } }); });
+  rng.addEventListener('input',function(){ stopAuto(); setMode(1); render(rng.value/100); });
+  rng.addEventListener('change',function(){ var v=rng.value/100; sweep(v,Math.round(v),260); rng.blur(); });
+  var ctl=document.querySelector('.ctl');
+  ['touchstart','touchend'].forEach(function(ev){ ctl.addEventListener(ev,function(e){ e.stopPropagation(); },{passive:true}); });
+});
+</script>

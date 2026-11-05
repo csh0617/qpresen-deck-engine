@@ -157,6 +157,28 @@ html.js [data-grow].in,html.js.reveal-done [data-grow]{transform:none}
 html.static *,html.static *::before,html.static *::after{transition:none!important;animation:none!important}
 html.static [data-reveal]{opacity:1!important;translate:0 0!important;scale:1!important;filter:none!important}
 html.static [data-draw]{stroke-dashoffset:0!important}html.static [data-grow]{transform:none!important}
+/* ---------- interactive controls (premium/custom slides) ---------- */
+.seg{display:inline-flex;padding:4px;border-radius:999px;background:var(--card-3);gap:4px}
+.seg button{appearance:none;border:0;background:transparent;font:inherit;font-size:16px;font-weight:700;color:var(--muted);height:36px;padding:0 16px;border-radius:999px;cursor:pointer;transition:all .3s var(--ease);display:inline-flex;align-items:center;gap:7px}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.seg.g button.on{background:var(--qg);color:#fff}
+.seg button .ic{width:17px;height:17px}
+input[type=range].rng{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--q1),var(--q3)) 0/var(--p,50%) 100% no-repeat,var(--card-3);outline:none;cursor:pointer}
+input[type=range].rng::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--q2);box-shadow:0 4px 12px rgba(60,70,200,.3);cursor:pointer}
+input[type=range].rng::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--q2);box-shadow:0 4px 12px rgba(60,70,200,.3);cursor:pointer}
+.kbd{display:inline-block;padding:0 7px;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:6px;font-size:14px;font-weight:700;color:var(--muted)}
+.tap{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;pointer-events:none;z-index:5}
+.tap::before,.tap::after{content:'';position:absolute;inset:0;border-radius:50%;background:color-mix(in srgb,var(--q2) 40%,transparent)}
+.tap::after{background:transparent;border:2px solid var(--q2);animation:ping 1.2s var(--ease) infinite}
+.tap.off{opacity:0}
+.toggle{position:relative;width:54px;height:30px;border-radius:999px;background:var(--card-3);border:0;cursor:pointer;transition:background .3s var(--ease);flex:none}
+.toggle::after{content:'';position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:translate .3s var(--ease)}
+.toggle.on{background:var(--f)}
+.toggle.on::after{translate:24px 0}
+.btn{appearance:none;border:0;font:inherit;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;background:var(--f);color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--f) 30%,transparent);transition:translate .25s var(--ease),box-shadow .25s var(--ease)}
+.btn:hover{translate:0 -2px}
+.btn.ghost{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line-2)}
+.btn .ic{width:18px;height:18px}
 @keyframes floaty{0%,100%{translate:0 0}50%{translate:0 -10px}}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--f) 45%,transparent)}70%{box-shadow:0 0 0 14px transparent}}
 @keyframes spin{to{rotate:360deg}}

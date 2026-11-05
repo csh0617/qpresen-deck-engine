@@ -1,0 +1,128 @@
+<!-- EXEMPLAR: 프롬프트 공식 — 4칸 순차 → 조립된 프롬프트 컴포저 -->
+<!-- HTML (goes inside <section class="body">) -->
+<div class="wrap">
+      <div class="formula">
+        <div class="card fx" id="b1" data-reveal data-delay="150">
+          <div class="hd"><span class="num">1</span><h3>역할</h3><span class="icon-circle"><i data-icon="user"></i></span></div>
+          <p class="def">당신은 ○○입니다</p>
+          <div class="ex"><div class="exl"><i data-icon="quote"></i> 예시</div><div class="tw"><p class="t" id="ex1" data-reveal data-delay="800">당신은<br>고창군농업기술센터<br><span class="nb">○○팀 주무관입니다</span></p></div></div>
+        </div>
+        <div class="plus" data-reveal="scale" data-delay="300"><i><i data-icon="arrow-right"></i></i></div>
+        <div class="card fx" id="b2" data-reveal data-delay="300">
+          <div class="hd"><span class="num">2</span><h3>맥락</h3><span class="icon-circle"><i data-icon="layers"></i></span></div>
+          <p class="def">상황·자료·독자</p>
+          <div class="ex"><div class="exl"><i data-icon="quote"></i> 예시</div><div class="chips"><span data-reveal="scale" data-delay="2020">폭염</span><span data-reveal="scale" data-delay="2160">수박 농가 200곳</span></div></div>
+        </div>
+        <div class="plus" data-reveal="scale" data-delay="450"><i><i data-icon="arrow-right"></i></i></div>
+        <div class="card fx" id="b3" data-reveal data-delay="450">
+          <div class="hd"><span class="num">3</span><h3>과업</h3><span class="icon-circle"><i data-icon="target"></i></span></div>
+          <p class="def">무엇을 만들지</p>
+          <div class="ex"><div class="exl"><i data-icon="quote"></i> 예시</div><div class="chips"><span data-reveal="scale" data-delay="2460">안내문</span><span data-reveal="scale" data-delay="2600">답변</span><span data-reveal="scale" data-delay="2740">계획서 목차</span></div></div>
+        </div>
+        <div class="plus" data-reveal="scale" data-delay="600"><i><i data-icon="arrow-right"></i></i></div>
+        <div class="card fx" id="b4" data-reveal data-delay="600">
+          <div class="hd"><span class="num">4</span><h3>형식</h3><span class="icon-circle"><i data-icon="type"></i></span></div>
+          <p class="def">분량·어조·구조</p>
+          <div class="ex"><div class="exl"><i data-icon="quote"></i> 예시</div><div class="chips"><span data-reveal="scale" data-delay="3040">A4 1장</span><span data-reveal="scale" data-delay="3180">존댓말</span><span data-reveal="scale" data-delay="3320">표</span></div></div>
+        </div>
+        <div class="plus solid" data-reveal="scale" data-delay="3500"><i class="pulse"><i data-icon="arrow-right"></i></i></div>
+        <div class="card fx tint more" id="b5" data-reveal="scale" data-delay="3650">
+          <div class="hd"><span class="num">+1</span><h3>검토 기준</h3><span class="icon-circle solid"><i data-icon="check-circle"></i></span></div>
+          <p class="def">공무원용 한 칸 더</p>
+          <div class="ex"><div class="exl"><i data-icon="quote"></i> 예시</div>
+            <div class="cis">
+              <div class="ci" data-reveal="left" data-delay="3920"><i data-icon="check"></i><span>확인이 필요한 수치는 [확인]으로 표시</span></div>
+              <div class="ci" data-reveal="left" data-delay="4080"><i data-icon="check"></i><span>법령 조문은 추정 금지</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt" data-reveal data-delay="500">
+        <div class="plab"><i data-icon="sparkles"></i> 다섯 칸을 이어 붙이면 프롬프트 한 개</div>
+        <div class="ptext"><p>
+          <span class="seg" data-reveal="fade" data-delay="1980"><i>1</i>당신은 고창군농업기술센터 <span class="nb">○○팀 주무관입니다</span></span><span class="seg" data-reveal="fade" data-delay="2320"><i>2</i>폭염, 수박 농가 200곳</span><span class="seg" data-reveal="fade" data-delay="2900"><i>3</i>안내문</span><span class="seg" data-reveal="fade" data-delay="3480"><i>4</i>A4 1장, 존댓말, 표</span><br><span class="seg hi" data-reveal="fade" data-delay="4220"><i>+1</i>확인이 필요한 수치는 [확인]으로 표시, 법령 조문은 추정 금지</span>
+        </p></div>
+        <div class="ptool"><span class="btn"><i data-icon="arrow-right"></i></span><span class="btn"><i data-icon="sparkles"></i></span><span class="send" data-reveal="scale" data-delay="4500"><i data-icon="sparkles"></i></span></div>
+      </div>
+      <div class="aux">
+        <div class="card flat ax" id="ax1" data-reveal data-delay="1700">
+          <div class="lead"><span class="chip">보조 공식</span><b class="nm">RISEN</b><span class="use"><i data-icon="workflow"></i> 다단계 민원 처리</span></div>
+          <div class="letters">
+            <div class="lt" data-reveal="scale" data-delay="4020"><b>R</b><span>역할</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4100"><b>I</b><span>지시</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4180"><b>S</b><span>단계</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4260"><b>E</b><span>목표</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4340"><b>N</b><span>범위</span></div>
+          </div>
+        </div>
+        <div class="card flat ax" id="ax2" data-reveal data-delay="1850">
+          <div class="lead"><span class="chip">보조 공식</span><b class="nm">CO-STAR</b><span class="use"><i data-icon="sparkles"></i> 보도자료</span></div>
+          <div class="letters">
+            <div class="lt" data-reveal="scale" data-delay="4020"><b>C</b><span>맥락</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4100"><b>O</b><span>목표</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4180"><b>S</b><span>스타일</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4260"><b>T</b><span>어조</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4340"><b>A</b><span>독자</span></div>
+            <div class="lt" data-reveal="scale" data-delay="4420"><b>R</b><span>응답</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- CSS (per-slide) -->
+<style>
+/* 21 · 프롬프트 공식 — 4칸(+1) 순차 → 조립된 프롬프트(컴포저) → 보조 공식 */
+.wrap{flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) 236px 164px;gap:20px}
+/* row 1: formula boxes + connectors */
+.formula{display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr 30px 1fr 30px 1fr;gap:8px;align-items:stretch;min-height:0}
+.fx{position:relative;display:flex;flex-direction:column;padding:22px 22px 20px;min-height:0}
+.fx .hd{display:flex;align-items:center;gap:12px}
+.fx .hd .num{width:40px;height:40px;font-size:18px}
+.fx .hd h3{font-size:29px;font-weight:800;color:var(--ink);line-height:1.1;letter-spacing:-.01em}
+.fx .hd .icon-circle{margin-left:auto;width:48px;height:48px}
+.fx .hd .icon-circle .ic{width:24px;height:24px}
+.fx .def{margin-top:12px;font-size:19px;color:var(--muted);line-height:1.4;font-weight:500}
+.fx .ex{margin-top:14px;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:14px 16px 16px;border-radius:var(--r-sm);background:var(--f-50);border:1px solid color-mix(in srgb,var(--f) 18%,var(--line))}
+.fx .ex .exl{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:700;color:var(--f);letter-spacing:.02em}
+.fx .ex .exl .ic{width:16px;height:16px}
+.fx .ex .tw{flex:1;min-height:0;display:flex;align-items:center}
+.fx .ex .t{font-size:22px;line-height:1.5;color:var(--ink);font-weight:600}
+.fx .ex .chips{flex:1;min-height:0;display:flex;flex-wrap:wrap;gap:9px;align-content:center}
+.fx .ex .chips span{display:inline-flex;align-items:center;height:40px;padding:0 15px;border-radius:999px;background:var(--card);border:1px solid color-mix(in srgb,var(--f) 32%,var(--line));box-shadow:var(--shadow);font-size:20px;font-weight:700;color:var(--ink);white-space:nowrap}
+.fx .ex .cis{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.fx .ex .ci{display:flex;align-items:flex-start;gap:8px;font-size:20px;line-height:1.45;color:var(--ink);font-weight:600}
+.fx .ex .ci .ic{width:22px;height:22px;color:var(--f);margin-top:3px;flex:none}
+/* the +1 box */
+.fx.more{border:2px solid color-mix(in srgb,var(--f) 60%,var(--line));box-shadow:var(--shadow-lg)}
+.fx.more .def{color:var(--f);font-weight:700}
+.fx.more .ex{background:var(--card);border-color:color-mix(in srgb,var(--f) 28%,var(--line))}
+.plus{display:grid;place-items:center}
+.plus i{width:30px;height:30px;border-radius:50%;background:var(--f-100);color:var(--f);display:grid;place-items:center}
+.plus i .ic{width:18px;height:18px}
+.plus.solid i{background:var(--f);color:var(--card)}
+.nb{white-space:nowrap}
+/* row 2: assembled prompt, composer look */
+.prompt{display:flex;flex-direction:column;gap:10px;padding:18px 22px 14px 26px;border-radius:26px;background:var(--card);border:1.5px solid var(--line-2);box-shadow:var(--shadow-lg);min-height:0}
+.prompt .plab{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;color:var(--muted)}
+.prompt .plab .ic{width:20px;height:20px;color:var(--f)}
+.prompt .ptext{flex:1;min-height:0;display:flex;align-items:center;font-size:24px;line-height:1.6;color:var(--ink);font-weight:500}
+.prompt .ptext p{margin:0}
+.prompt .seg{display:inline;margin-right:18px}
+.prompt .seg i{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:var(--f);color:var(--card);font-size:16px;font-weight:800;font-style:normal;margin-right:8px;vertical-align:-4px;line-height:1}
+.prompt .seg.hi{color:var(--f);font-weight:700}
+.prompt .ptool{display:flex;align-items:center;gap:10px}
+.prompt .ptool .btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--ink)}
+.prompt .ptool .btn .ic{width:20px;height:20px}
+.prompt .ptool .send{margin-left:auto;width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+.prompt .ptool .send .ic{width:22px;height:22px}
+/* row 3: helper formulas */
+.aux{display:grid;grid-template-columns:1fr 1fr;gap:20px;min-height:0}
+.ax{display:flex;align-items:center;gap:22px;padding:18px 26px;min-height:0}
+.ax .lead{flex:none;width:206px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.ax .lead .nm{font-size:32px;font-weight:800;color:var(--ink);letter-spacing:.01em;line-height:1.1}
+.ax .lead .use{display:flex;align-items:center;gap:8px;font-size:17px;color:var(--muted);font-weight:600}
+.ax .lead .use .ic{width:20px;height:20px;color:var(--f)}
+.ax .letters{flex:1;display:flex;gap:14px;justify-content:center}
+.ax .lt{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:64px}
+.ax .lt b{width:56px;height:56px;border-radius:16px;background:var(--card);border:1px solid var(--line-2);color:var(--f);display:grid;place-items:center;font-size:27px;font-weight:800;box-shadow:var(--shadow)}
+.ax .lt span{font-size:18px;color:var(--text);font-weight:600;white-space:nowrap}
+</style>
