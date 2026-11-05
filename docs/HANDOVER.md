@@ -6,16 +6,17 @@
 | 엔진 코드(렌더러·파이프라인·린트·문서) | GitHub `csh0617/qpresen-deck-engine` (main) | `engine/`, `docs/` |
 | Supabase Edge Function `deck-engine` | 배포됨(원격 import, 커밋 SHA 고정) | 프로젝트 `rpnknnsplgomznlqlmlh` |
 | DB | `deck_jobs`(작업), `deck_feedback`(피드백), `deck_rules`(규칙 13개: 시드 8 + 증류 5) | Supabase |
-| 비밀키 | `DECK_LLM_API_KEY` = BizRouter(페어렌즈) — sonnet/opus/haiku 5.5 + gpt-image-2 사용 | Edge Function Secrets |
+| 비밀키 | `DECK_LLM_API_KEY` = BizRouter(페어렌즈) — 표준: sonnet-5.5 / 프리미엄: fable-5.1(설계)+opus-5.5(플랜·구조장) / gpt-image-2(이미지) | Edge Function Secrets |
 | 프런트 | Readdy Version 2160: `/dashboard/deck-studio` + 메뉴 'AI 슬라이드 스튜디오(신)' | **Publish 필요** |
 
 ## 2. 사용자 흐름 (스튜디오)
-1. 브리프 입력(주제·목적·청중·시간·장수·자료 붙여넣기·추가 지시·AI 이미지 on/off)
+1. 브리프 입력(주제·목적·청중·시간·장수·자료 붙여넣기·추가 지시·**품질: 표준/프리미엄**·AI 이미지 on/off)
 2. **덱 구조 설계** — 서사 구조(섹션)와 장별 유형 제안 (≈20초)
 3. **슬라이드 작성 + 렌더** — 3장씩 병렬 작성(≈15초) → AI 이미지(표지·히어로 최대 4장, ≈15초) → 렌더·검증 → **내 자료에 자동 등록**
 4. 미리보기에서 장별 👍/👎, "이 장 고치기"(자연어 수정 → 재렌더), 오프라인 HTML / Qpresen용 HTML 다운로드, 발표하기
 
-실측: 14장 특강 = 약 60초, 16장 IR = 약 70초. 비용은 덱당 수백 원 수준(BizRouter 과금 기준).
+실측(표준): 14장 특강 = 약 60초, 16장 IR = 약 70초. 비용은 덱당 수백 원 수준(BizRouter 과금 기준).
+**프리미엄**(장마다 맞춤 HTML 설계, `docs/METHODOLOGY.md` §9): 20장 ≈ 4.5~6분(플랜 1분 + 설계 4분 + 검수·수정), 비용 ≈ 9,000~12,000원/덱. 렌더 직후 **자동 검수 루프**(플레이어 내 lintAll → 오류 장 자동 수정 → 재렌더)가 돈다. 표준 모드에도 같은 검수 루프가 적용된다.
 
 ## 3. 자체 성장 루프 (사람 눈 → 규칙)
 - 피드백은 자동으로 `deck_feedback`에 쌓인다: 사용자 👍/👎·코멘트, 수정 요청, 린트 이슈, 리뷰어 코멘트.

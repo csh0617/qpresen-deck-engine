@@ -190,3 +190,32 @@ POST deck-engine { action: "build", brief }                      → { jobId }  
 
 ## 8. Qpresen 연동 포맷 (검증 완료 2026-11-05)
 Qpresen 대시보드는 업로드된 HTML을 **`<!-- slide-title: slide-NN -->` 구분자 + 완전한 HTML 문서 + `<!-- SLIDE BREAK -->`** 로 이어 붙인 파일로 인식해 장별로 분할·재생한다(플레이어 셸 불필요, `page_count`=문서 수, `first_slide`=1번 문서에서 `<style id="pretendard-embedded">` 내용을 비운 것). 각 문서는 `.stage` 루트 + `window.DECK={n,total}` + `<meta name="qp-standalone-part" content="1">`. 엔진은 `qpresenBundle(parts)`로 이 형식을 만들고(폰트는 CDN 링크, 장당 ~80KB), 오프라인용 단일파일 플레이어(`deck.html`, 폰트 내장)는 별도로 낸다. 실제 업로드 테스트: 27장 인식·재생·넘김 정상.
+
+## 9. 프리미엄 모드 — 템플릿 채우기에서 "장별 맞춤 설계"로 (2026-11-05)
+
+**왜 필요했나.** 표준 모드는 플랜 → 25종 아키타입 템플릿 채우기 → 결정적 렌더러 구조라 빠르고 싸지만(덱당 1분·수백 원), 레퍼런스 덱(고창군 AI특강·Qpresen IR·800조의 문법)과 나란히 놓으면 한 장 한 장이 '템플릿'으로 보인다. 레퍼런스는 장마다 메시지에 맞춘 고유 레이아웃(숫자 타일+추세 패널, 슬라이더 차트, 관제 목업, 공식 컴포저…)을 사람이 직접 짰기 때문이다.
+
+**무엇을 바꿨나.** 프리미엄 모드는 최상위 모델이 **장마다 body HTML·CSS·JS를 직접 설계**한다(`engine/llm/rich.ts`).
+- 입력: 디자인 시스템 치트시트(토큰·컴포넌트 클래스·모션 data-속성·JS 규칙·콘텐츠 규칙) + **레퍼런스 덱에서 발췌한 실제 슬라이드 2장**(`engine/knowledge/exemplars/`, kind별로 선택) + 덱 개요(다른 장의 signature) + 이 장의 플랜(kind·signature·content_hints).
+- 출력: `===META=== / ===HTML=== / ===CSS=== / ===JS===` 네 구간 → `custom(bare)` 바디. 아이콘은 `<i data-icon="name">` 플레이스홀더 → 렌더러가 SVG로 치환. `sanitizeRich`가 외부 리소스·금지 API를 제거.
+- 플랜: 프리미엄 애드온(`PLAN_PREMIUM_ADDON`)이 장마다 `kind`(numbers/chart/compare/process/concept/demo/story/list)와 `signature`(시그니처 비주얼 한 줄)를 요구 → 장별 시각 장치가 겹치지 않는다.
+- 구조 장(cover/section/agenda/closing/quote/image-hero)은 표준 렌더러 유지(일관성·AI 이미지).
+
+**측정 (BizRouter, 2026-11-05, '광주 미래자동차산업 고도화 전략' 20장 — 사용자가 표준 모드로 만들었던 동일 브리프)**
+| | 표준(sonnet-5.5) | 프리미엄(rich: fable-5.1, plan·구조장: opus-5.5) |
+|---|---|---|
+| 소요 | 약 60초 | 플랜 57초 + 설계 14장 병렬5 ≈ 4.4분 |
+| 비용 | 수백 원 | 약 9,000~11,000원 (장당 ₩400~1,000, 캐시 적중 시 ₩300~500) |
+| 린트 | 오류 0 | 오류 9/20장 → 자동 수정 루프 1회로 해소 |
+| 사람 눈 | 성기고 템플릿 느낌(03·06·18 등) | 레퍼런스 수준의 밀도·장치(타일+도넛, 연도 차트, 관제 목업, 3층 구조, 지도형 배치, 탭 체크리스트…) |
+
+모델 비교(같은 장): fable-5.1 60~100초·5~9K 출력 토큰·레이아웃 안정 / opus-5.5 30~40초·3.5~4.4K 토큰·열 폭 배분 실패 사례(카드 열 232px) → **rich는 fable, 플랜은 opus**(fable 플랜은 145초로 함수 한도 초과).
+BizRouter 특성: Claude 5.5/fable은 `thinking.type.disabled` 거부 → `reasoning:{effort:'low'}`로 숨은 사고 토큰 절반. 시스템 프롬프트 `cache_control`로 1시간 프롬프트 캐시 동작(₩337 → ₩7). 플랜 직후 kind별 캐시 워밍(`warmRichCache`).
+
+**자동 검수 루프(QA)가 프리미엄을 완성한다.** 모델이 직접 짠 HTML은 10~45%의 장에서 넘침·겹침이 생긴다. 그래서:
+1. 모든 슬라이드 문서가 `window.QPLint()`(= `engine/renderer/lintJs.ts`, Playwright 린트와 같은 코드)로 자기 검사를 한다.
+2. 플레이어가 `QPDeck.lintAll()`로 숨은 정적 프레임에 장을 하나씩 띄워 검사한다(장당 ≈1초).
+3. 스튜디오는 렌더 직후 `lintAll` → 오류 장(최대 6)을 `fix`(rich: `fixSlideRich`, 넘침 요소의 크기·부모 폭·텍스트를 함께 전달) → 재렌더. 사용자는 "자동 검수 중 n/N → 오류 k장 자동 수정 중 → 완료"를 본다.
+4. 린트가 못 보는 것(의도된 겹침은 제외 처리: 같은 자리 absolute 스택·backface) — 시각적 어색함(예: 선택지 카드가 좁아 글자가 세로로 쪼개짐)은 사람 눈/비전 리뷰 몫. 👎·"이 장 고치기"가 `deck_feedback`으로 쌓여 규칙 증류로 환원된다.
+
+**치트시트가 정확해야 한다.** 첫 라운드에서 `.num`을 "숫자 글꼴"로 잘못 설명해 모델이 값 표시에 써서 흰 원 배지(44px)가 되었다. 베이스 전역 클래스 58개의 실제 정의(`.num` 번호 배지, `.chip` 어두운 바탕용, `.k-title` 흰 글자…)를 치트시트에 그대로 적고 "예약된 이름" 목록을 두어 재정의 충돌을 막았다. 아키타입 전용 규칙은 `.a-*`로 스코프되어 있어 새 클래스와 충돌하지 않는다.

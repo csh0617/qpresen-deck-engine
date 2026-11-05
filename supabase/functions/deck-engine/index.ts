@@ -6,7 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
 import { renderDeck, qpresenBundle, firstSlidePayload } from './renderer/index.ts';
 import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from './llm/pipeline.ts';
-import { fillSlideRich, fixSlideRich, isRichTarget } from './llm/rich.ts';
+import { fillSlideRich, fixSlideRich, isRichTarget, warmRichCache } from './llm/rich.ts';
 import { generateImages } from './llm/images.ts';
 import { listModels, type ProviderConfig } from './llm/provider.ts';
 import { validateSpec } from './renderer/validate.ts';
@@ -21,8 +21,14 @@ function provider(): ProviderConfig {
   return { kind, apiKey, baseUrl: Deno.env.get('LLM_BASE_URL') || (kind === 'anthropic' ? 'https://api.anthropic.com' : 'https://bizrouter.ai/api/v1'), model: Deno.env.get('LLM_MODEL') || (kind === 'anthropic' ? 'claude-sonnet-5-5' : 'anthropic/claude-sonnet-5.5'), fallbackModels: (Deno.env.get('LLM_FALLBACKS') || (kind === 'anthropic' ? '' : 'anthropic/claude-opus-5.5,anthropic/claude-haiku-5.5')).split(',').map(s => s.trim()).filter(Boolean), timeoutMs: 120000, maxRetries: 1 };
 }
 /* Premium ("rich") slides are designed one by one by the top-tier model. DECK_RICH_MODEL / DECK_RICH_FALLBACKS override the defaults. */
+/* Measured 2026-11-05 (BizRouter): fable-5.1 designs a slide in 60~100s (5~9K output tokens, ≈₩450~1,000 with prompt cache);
+   opus-5.5 in 30~40s but with weaker layouts. Planning uses opus (fable needs ~145s for a 20-slide plan — over the function limit).
+   No model fallback inside one request: a failed/slow slide returns an error fast and the studio retries with a fresh request. */
 function richProvider(base: ProviderConfig): ProviderConfig {
-  return { ...base, model: Deno.env.get('DECK_RICH_MODEL') || (base.kind === 'anthropic' ? 'claude-fable-5-1' : 'anthropic/claude-fable-5.1'), fallbackModels: (Deno.env.get('DECK_RICH_FALLBACKS') || (base.kind === 'anthropic' ? 'claude-opus-5-5' : 'anthropic/claude-opus-5.5,anthropic/claude-sonnet-5.5')).split(',').map(s => s.trim()).filter(Boolean), timeoutMs: 140000, maxRetries: 0 };
+  return { ...base, model: Deno.env.get('DECK_RICH_MODEL') || (base.kind === 'anthropic' ? 'claude-fable-5-1' : 'anthropic/claude-fable-5.1'), fallbackModels: [], timeoutMs: 135000, maxRetries: 0 };
+}
+function premiumPlanProvider(base: ProviderConfig): ProviderConfig {
+  return { ...base, model: Deno.env.get('DECK_PREMIUM_PLAN_MODEL') || (base.kind === 'anthropic' ? 'claude-opus-5-5' : 'anthropic/claude-opus-5.5'), fallbackModels: [base.model], timeoutMs: 120000, maxRetries: 0 };
 }
 function qrSvg(text: string): string {
   const qr = qrcode(0, 'M'); qr.addData(text); qr.make();
@@ -69,13 +75,14 @@ Deno.serve(async (req: Request) => {
       const brief = body.brief as Brief; if (!brief?.topic) return json({ error: 'TOPIC_REQUIRED' }, 400, allow);
       const premium = body.quality === 'premium' || (brief as any).quality === 'premium';
       if (premium) (brief as any).quality = 'premium';
-      const planProv = premium ? richProvider(prov) : prov;
+      const planProv = premium ? premiumPlanProvider(prov) : prov;
       const rules = await loadRules();
       const { data: job, error } = await db.from('deck_jobs').insert({ user_id: userId, status: 'planning', brief, model: planProv.model }).select('id').single();
       if (error) return json({ error: 'DB:' + error.message }, 500, allow);
       try {
         const plan = await planDeck(brief, { provider: planProv, rules, log, premium });
         await touch(job.id, { status: 'filling', plan, progress: { done: 0, total: plan.slides.length } });
+        if (premium) { const n = await warmRichCache(plan, { provider: richProvider(prov), rules, log }); log(`[plan] premium cache warmed: ${n} prompts`); }
         return json({ jobId: job.id, plan }, 200, allow);
       } catch (e: any) { await touch(job.id, { status: 'failed', error: String(e.message) }); throw e; }
     }
@@ -93,9 +100,11 @@ Deno.serve(async (req: Request) => {
         const planSlides = (job.plan as Plan).slides; const want = ids.slice(0, 6).filter((id: string) => planSlides.some(p => p.id === id));
         const richIds = want.filter((id: string) => isRichTarget(planSlides.find(p => p.id === id)!)).slice(0, 2);
         const stdIds = want.filter((id: string) => !richIds.includes(id) && !isRichTarget(planSlides.find(p => p.id === id)!));
-        const rp = richProvider(prov);
-        const richRes = await Promise.all(richIds.map(async (id: string) => { const p = planSlides.find(x => x.id === id)!; try { return await fillSlideRich(job.brief as Brief, job.plan as Plan, p, { provider: rp, rules, log }); } catch (e: any) { log(`[rich ${id}] failed: ${e.message} → standard fill`); const [s] = await fillSlides(job.brief as Brief, job.plan as Plan, [id], { provider: rp, rules, log }); return s; } }));
-        const stdRes = stdIds.length ? await fillSlides(job.brief as Brief, job.plan as Plan, stdIds, { provider: rp, rules, log }) : [];
+        const rp = richProvider(prov), sp = premiumPlanProvider(prov);
+        const richRes = await Promise.all(richIds.map(async (id: string) => { const p = planSlides.find(x => x.id === id)!;
+          if (body.mode === 'standard') { const [s] = await fillSlides(job.brief as Brief, job.plan as Plan, [id], { provider: sp, rules, log }); return s; }
+          return await fillSlideRich(job.brief as Brief, job.plan as Plan, p, { provider: rp, rules, log }); }));
+        const stdRes = stdIds.length ? await fillSlides(job.brief as Brief, job.plan as Plan, stdIds, { provider: sp, rules, log }) : [];
         slides = [...richRes, ...stdRes];
       } else {
         slides = await fillSlides(job.brief as Brief, job.plan as Plan, ids.slice(0, 6), { provider: prov, rules, log });
@@ -179,7 +188,7 @@ Deno.serve(async (req: Request) => {
       const spec = job.spec as any; const idx = spec.slides.findIndex((s: any) => s.id === slideId); if (idx < 0) return json({ error: 'SLIDE_NOT_FOUND' }, 404, allow);
       const issueList = Array.isArray(issues) ? issues : [{ what: String(body.comment || '개선') }];
       const isRich = spec.slides[idx]?.body?.type === 'custom' && spec.slides[idx]?.body?.rich;
-      const fixed = isRich ? await fixSlideRich(spec.slides[idx], issueList, { provider: richProvider(prov), log }, spec.meta) : await fixSlide(spec.slides[idx], issueList, { provider: prov, log }, spec.meta);
+      const fixed = isRich ? await fixSlideRich(spec.slides[idx], issueList, { provider: richProvider(prov), log }, spec.meta) : await fixSlide(spec.slides[idx], issueList, { provider: (spec.meta as any)?.quality === 'premium' ? premiumPlanProvider(prov) : prov, log }, spec.meta);
       spec.slides[idx] = fixed; await touch(jobId, { spec });
       await db.from('deck_feedback').insert({ job_id: jobId, user_id: userId, slide_id: slideId, slide_type: fixed.body?.type, source: body.source === 'lint' ? 'lint' : 'author', comment: body.comment || null, data: { issues: issueList, rich: !!isRich } });
       return json({ slide: fixed }, 200, allow);

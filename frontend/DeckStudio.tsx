@@ -64,7 +64,8 @@ export default function DeckStudio() {
     let cursor = 0; const failed: string[] = [];
     const worker = async () => { while (cursor < batches.length) { const b = batches[cursor++]; try { await callEngine({ action: 'fill', jobId, ids: b }); } catch (e) { failed.push(...b); } done += b.length; setProgress({ done, total: ids.length }); } };
     await Promise.all(Array.from({ length: Math.min(quality === 'premium' ? 5 : 4, batches.length) }, worker));
-    if (failed.length) { for (const id of failed) { try { await callEngine({ action: 'fill', jobId, ids: [id] }); } catch { /* fallback handled by renderer */ } } }
+    if (failed.length) { // retry once more each (premium: a second design attempt), then ask for a standard-template version of that slide
+      for (const id of failed) { try { await callEngine({ action: 'fill', jobId, ids: [id] }); } catch { try { await callEngine({ action: 'fill', jobId, ids: [id], mode: 'standard' }); } catch { /* renderer drops missing slides */ } } } }
     try { setStage('render'); setProgress({ done: 0, total: 0 }); const d = await callEngine({ action: 'render', jobId, images: withImages, maxImages: 4 }); setResult(d); setStage('done'); setBusy(false); await qaLoop(d); } catch (e: any) { setErr(e.message); setStage('plan'); } finally { setBusy(false); }
   }
   /** Wait until the preview player (same-origin srcdoc) exposes QPDeck.lintAll. */

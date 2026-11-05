@@ -214,3 +214,12 @@ export const PLAN_PREMIUM_ADDON = `
 - "signature": 이 장의 시그니처 비주얼·인터랙션 한 줄(≤ 40자, 예: "연도 슬라이더로 움직이는 성장 막대차트", "전/후 토글 비교 카드 3장")
 cover/section/agenda/closing/quote/image-hero 는 kind 없이 그대로 둔다. 연속된 장이 같은 kind·같은 signature 를 쓰지 않게 하고, 덱 전체에서 kind 가 5종 이상 섞이게 한다.
 content_hints 는 4~6개까지 넉넉히: 자료가 있으면 자료의 수치·고유명사·예시를, 자료가 없으면 널리 알려진 공개 사실·수치(기관·연도 명시, 불확실하면 '약'·'추정')를 뽑아 장마다 구체적인 재료를 준다. 일반론만 있는 장은 만들지 않는다.`;
+
+/** Prompt-cache warm-up: the per-kind system prompts (≈19K tokens each) are cached for 1h by the gateway after the first call.
+    Parallel slide requests that start together all miss the cache, so warm each distinct prompt once right after planning. */
+export async function warmRichCache(plan: Plan, opt: PipelineOptions): Promise<number> {
+  const keys = new Map<string, string>();
+  for (const p of plan.slides) { if (!isRichTarget(p)) continue; const kind = String((p as any).kind || kindForType(p.type, p.visual_hint)); const key = exemplarsFor(kind).map(e => e.id).join('+'); if (!keys.has(key)) keys.set(key, kind); }
+  await Promise.all([...keys.values()].map(async kind => { try { await chat(opt.provider, { system: richSystem(kind, opt.rules || []), messages: [{ role: 'user', content: 'OK' }], maxTokens: 5, json: false }); } catch (e: any) { opt.log?.(`[warm ${kind}] ${e.message}`); } }));
+  return keys.size;
+}

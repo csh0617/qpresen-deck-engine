@@ -53,3 +53,9 @@ Readdy 채팅에 `frontend/DeckStudio.tsx`를 첨부하고 `Readdy_지시문.txt
 ## 5. 운영 루프
 - 주 1회 `{action:"distill"}` 호출(관리자) → 새 규칙 확인 후 부적절한 것은 `deck_rules.active=false`
 - `render` 스코프 규칙은 렌더러 백로그 → 엔진 저장소에 반영 → 재배포
+
+## 6. 프리미엄 모드 (2026-11-05)
+- 함수 env(선택): `DECK_RICH_MODEL`(기본 `anthropic/claude-fable-5.1`), `DECK_PREMIUM_PLAN_MODEL`(기본 `anthropic/claude-opus-5.5`). 키는 그대로 `DECK_LLM_API_KEY`.
+- 요청: `plan`에 `quality:'premium'`(brief에도 저장) → `fill`은 장 1개씩(rich) / 구조장 묶음, `mode:'standard'`면 템플릿 폴백. `fix`는 rich 장이면 `fixSlideRich`.
+- 시간 한도: rich 1장 60~100초(함수 timeout 135초). 실패 시 스튜디오가 재시도 → 그래도 실패하면 `mode:'standard'`.
+- 스튜디오 자동 검수: 결과 플레이어의 `QPDeck.lintAll()` → `fix(source:'lint', issues)` → `render(register:false)`.
