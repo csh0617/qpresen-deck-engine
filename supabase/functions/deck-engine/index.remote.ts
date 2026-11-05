@@ -4,10 +4,11 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
-import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/renderer/index.ts';
-import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/llm/pipeline.ts';
-import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/llm/provider.ts';
-import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/953ac17e2c4d0ef29500ba885e80b6ce1673cf45/engine/renderer/validate.ts';
+import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/renderer/index.ts';
+import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/llm/pipeline.ts';
+import { generateImages } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/llm/images.ts';
+import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/llm/provider.ts';
+import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/renderer/validate.ts';
 
 const ORIGINS = ['https://qpresen.com', 'https://www.qpresen.com', 'https://readdy.ai', 'http://localhost:5173', 'http://127.0.0.1:5173'];
 const json = (body: unknown, status = 200, origin = '*') => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Cache-Control': 'no-store' } });
@@ -77,13 +78,26 @@ Deno.serve(async (req: Request) => {
       if (!job?.plan) return json({ error: 'JOB_NOT_FOUND' }, 404, allow);
       const rules = await loadRules();
       const slides = await fillSlides(job.brief as Brief, job.plan as Plan, ids.slice(0, 6), { provider: prov, rules, log });
-      // merge into job.spec.slides by id
-      const spec = (job.spec as any) || { meta: (job.plan as Plan).meta, sections: (job.plan as Plan).sections, slides: [] };
-      const map = new Map<string, any>((spec.slides || []).map((s: any) => [s.id, s]));
-      slides.forEach(s => map.set(s.id!, s));
-      spec.slides = (job.plan as Plan).slides.map(p => map.get(p.id)).filter(Boolean);
-      const done = spec.slides.length; const total = (job.plan as Plan).slides.length;
-      await touch(jobId, { spec, progress: { done, total }, status: done >= total ? 'rendering' : 'filling' });
+      // Merge into job.spec.slides by id — fill batches run concurrently, so use optimistic concurrency:
+      // re-read, merge, and write only if the row's revision stamp is unchanged; retry otherwise.
+      const plan = job.plan as Plan; const total = plan.slides.length;
+      let done = 0;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const { data: cur } = await db.from('deck_jobs').select('spec,progress').eq('id', jobId).single();
+        const spec = (cur?.spec as any) || { meta: plan.meta, sections: plan.sections, slides: [] };
+        const prevRev = (cur?.progress as any)?.rev ?? null;
+        const map = new Map<string, any>((spec.slides || []).map((s: any) => [s.id, s]));
+        slides.forEach(s => map.set(s.id!, s));
+        spec.slides = plan.slides.map(p => map.get(p.id)).filter(Boolean);
+        done = spec.slides.length;
+        const rev = crypto.randomUUID();
+        let q = db.from('deck_jobs').update({ spec, progress: { done, total, rev }, status: done >= total ? 'rendering' : 'filling', updated_at: new Date().toISOString() }).eq('id', jobId).eq('user_id', userId);
+        q = prevRev ? q.eq('progress->>rev', prevRev) : q.is('progress->>rev', null);
+        const { data: upd, error } = await q.select('id');
+        if (error) { log('fill merge error: ' + error.message); break; }
+        if (upd && upd.length) break; // committed
+        await new Promise(r => setTimeout(r, 60 + Math.random() * 140)); // lost the race → retry with fresh state
+      }
       return json({ slides, progress: { done, total } }, 200, allow);
     }
 
@@ -104,6 +118,12 @@ Deno.serve(async (req: Request) => {
       // order slides by plan, drop missing
       if (plan) { const map = new Map<string, any>((spec.slides || []).map((s: any) => [s.id, s])); spec.slides = plan.slides.map(p => map.get(p.id)).filter(Boolean); }
       const { spec: valid, warnings } = validateSpec(spec);
+      // image stage: real pictures for cover/hero/section slides (idempotent — cached in the job spec as data URLs)
+      let images: { generated: number; failed: string[] } | null = null;
+      if (body.images !== false && prov.apiKey) {
+        if (jobId) await touch(jobId, { status: 'imaging' });
+        images = await generateImages(valid, prov, { max: Math.max(0, Math.min(6, Number(body.maxImages ?? 4))), quality: body.imageQuality || 'low', log, onProgress: (e: { done: number; total: number }) => { if (jobId) touch(jobId, { progress: { stage: 'images', done: e.done, total: e.total } }); } });
+      }
       // Qpresen-native bundle (slides concatenated with slide-title/SLIDE BREAK markers, CDN font) is what gets stored & registered;
       // the offline single-file player (embedded font) is returned for download when requested.
       const wantPlayer = body.includeHtml !== false;
@@ -122,7 +142,7 @@ Deno.serve(async (req: Request) => {
       }
       if (jobId) await touch(jobId, { status: 'done', spec: valid, storage_path: path, page_count: res.parts.length, file_id: fileId, lint: { warnings } });
       const includeHtml = wantPlayer && res.html.length < 9_000_000;
-      return json({ jobId, fileId, path, signedUrl, pageCount: res.parts.length, titles: res.titles, sections: res.sections, warnings, bytes: bytes.length, html: includeHtml ? res.html : undefined, qpresenHtml: bytes.length < 6_000_000 ? bundle : undefined, spec: valid }, 200, allow);
+      return json({ jobId, fileId, path, signedUrl, pageCount: res.parts.length, titles: res.titles, sections: res.sections, warnings, images, bytes: bytes.length, html: includeHtml ? res.html : undefined, qpresenHtml: bytes.length < 6_000_000 ? bundle : undefined, spec: valid }, 200, allow);
     }
 
     if (action === 'status') {
