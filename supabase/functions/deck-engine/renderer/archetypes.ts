@@ -78,12 +78,12 @@ function diagramSvg(kind: string, nodes: DiagramNode[], edges: DiagramEdge[], ce
     return `<g data-reveal="scale" data-delay="${300 + i * 110}" style="transform-box:fill-box;transform-origin:center"><rect class="dg-node" x="${x}" y="${y}" width="${w}" height="${h}" rx="18" style="stroke:color-mix(in srgb,var(--${col}) 45%,var(--line-2))"/><rect x="${x}" y="${y}" width="6" height="${h}" rx="3" fill="var(--${col})"/>${iconM}<text class="dg-text" x="${x + w / 2 + 3}" y="${ty}" text-anchor="middle">${esc(n.label)}</text>${n.desc ? `<text class="dg-desc" x="${x + w / 2 + 3}" y="${ty + 26}" text-anchor="middle">${esc(n.desc)}</text>` : ''}</g>`;
   };
   if (kind === 'hub') {
-    const cx = W / 2, cy = H / 2, R = 230;
-    const n = nodes.length;
-    nodes.forEach((nd, i) => { const a = -Math.PI / 2 + (i / n) * Math.PI * 2; const x = cx + Math.cos(a) * (R + 90) - 110, y = cy + Math.sin(a) * R - 46; pos[nd.id] = { x, y, w: 220, h: 92 }; });
+    const cx = W / 2, cy = H / 2, R = 236;
+    const n = nodes.length; const bw = n <= 5 ? 290 : 240, bh = n <= 5 ? 112 : 96;
+    nodes.forEach((nd, i) => { const a = -Math.PI / 2 + (i / n) * Math.PI * 2; const x = cx + Math.cos(a) * (R + 170) - bw / 2, y = cy + Math.sin(a) * R - bh / 2; pos[nd.id] = { x, y, w: bw, h: bh }; });
     nodes.forEach((nd, i) => { const p = pos[nd.id]; const px = p.x + p.w / 2, py = p.y + p.h / 2; out += `<line class="dg-edge" x1="${cx}" y1="${cy}" x2="${px}" y2="${py}" stroke="var(--line-2)" data-draw data-delay="${200 + i * 80}"/>`; });
     nodes.forEach((nd, i) => { const p = pos[nd.id]; out += nodeBox(nd, p.x, p.y, p.w, p.h, i); });
-    out += `<g data-reveal="scale" data-delay="150" style="transform-box:fill-box;transform-origin:center"><circle cx="${cx}" cy="${cy}" r="112" fill="var(--f)" opacity=".12"/><circle cx="${cx}" cy="${cy}" r="88" fill="var(--f)"/><text x="${cx}" y="${cy + (center?.desc ? 2 : 9)}" text-anchor="middle" style="fill:#fff;font-size:24px;font-weight:800;font-family:var(--font)">${esc(center?.label || '')}</text>${center?.desc ? `<text x="${cx}" y="${cy + 30}" text-anchor="middle" style="fill:rgba(255,255,255,.85);font-size:14px;font-weight:600;font-family:var(--font)">${esc(center.desc)}</text>` : ''}</g>`;
+    out += `<g data-reveal="scale" data-delay="150" style="transform-box:fill-box;transform-origin:center"><circle cx="${cx}" cy="${cy}" r="128" fill="var(--f)" opacity=".12"/><circle cx="${cx}" cy="${cy}" r="102" fill="var(--f-ink)"/><text x="${cx}" y="${cy + (center?.desc ? 2 : 10)}" text-anchor="middle" style="fill:#fff;font-size:27px;font-weight:800;font-family:var(--font)">${esc(center?.label || '')}</text>${center?.desc ? `<text x="${cx}" y="${cy + 32}" text-anchor="middle" style="fill:rgba(255,255,255,.88);font-size:15px;font-weight:600;font-family:var(--font)">${esc(center.desc)}</text>` : ''}</g>`;
   } else if (kind === 'cycle') {
     const cx = W / 2, cy = H / 2, R = 215; const n = nodes.length;
     out += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--line-2)" stroke-width="3" stroke-dasharray="4 10"/>`;
@@ -164,7 +164,8 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
       const n = b.items.length; const cols = b.columns || (n <= 2 ? 2 : n === 3 ? 3 : n === 4 ? 4 : n <= 6 ? 3 : 4);
       const styleCls = b.style === 'tint' ? 'tint' : b.style === 'edge' ? 'edge' : b.style === 'solid' ? 'solid' : b.style === 'glass' ? 'glass' : '';
       const items = b.items.map((c, i) => `<div class="card lift ${styleCls} ${fclass(c.accent || cycleAccent(i))}" ${rv(i, 'up', 90)}>${b.style === 'number' ? `<span class="ghost">${pad(i + 1)}</span>` : ''}<div class="tp">${c.icon ? `<span class="ic-sq ${b.style === 'solid' ? '' : ''}">${ic(c.icon)}</span>` : b.style === 'number' ? `<span class="num sq">${i + 1}</span>` : ''}${c.tag ? `<span class="tag">${esc(c.tag)}</span>` : ''}</div><h3>${rich(c.title)}</h3>${c.desc ? `<p>${rich(c.desc)}</p>` : ''}${c.points && c.points.length ? `<ul class="pts">${c.points.map(p => `<li>${rich(p)}</li>`).join('')}</ul>` : ''}${c.value ? `<div class="val">${esc(c.value)}${c.label ? `<small>${esc(c.label)}</small>` : ''}</div>` : ''}</div>`).join('');
-      return { html: `<div class="a-cards"><div class="grid grid-${cols}">${items}</div>${b.footer ? `<div class="foot" ${rv(n + 1, 'up')}>${ic('arrow-right', 'ic')} <span>${rich(b.footer)}</span></div>` : ''}</div>` };
+      const rows = Math.ceil(n / cols);
+      return { html: `<div class="a-cards"><div class="grid grid-${cols} rows-${Math.min(rows, 3)}">${items}</div>${b.footer ? `<div class="foot" ${rv(n + 1, 'up')}>${ic('arrow-right', 'ic')} <span>${rich(b.footer)}</span></div>` : ''}</div>` };
     }
     case 'comparison': {
       const cols = b.columns.length;
