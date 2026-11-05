@@ -106,5 +106,7 @@ export function themeCss(name: ThemeName, brand?: string): string {
   const stops = branded ? [brand!, `color-mix(in srgb,${brand} 75%,#8B5CF6)`, `color-mix(in srgb,${brand} 55%,#8B5CF6)`] : t.stops;
   light = { ...light, 'brand-ink': light['brand-ink'] || light['brand-600'] }; dark = { ...dark, 'brand-ink': dark['brand-ink'] || dark['brand'] };
   return `:root{${vars(light)};--qg:${grad};--q1:${stops[0]};--q2:${stops[1]};--q3:${stops[2]};--r:${t.radius.r};--r-sm:${t.radius.sm};--r-xs:${t.radius.xs};--font:${t.font};--ease:cubic-bezier(.16,1,.3,1);--stage-w:1920px;--stage-h:1080px;--f:var(--brand);--f-100:var(--brand-100);--f-50:var(--brand-50)}
-html[data-theme=dark]{${vars(dark)}}`;
+html[data-theme=dark]{${vars(dark)}}
+/* cinematic dark stage (premium art direction): the whole token set flips to the dark palette inside .stage.cine */
+.stage.cine{${vars(dark)};--f-ink:var(--brand-ink)}`;
 }

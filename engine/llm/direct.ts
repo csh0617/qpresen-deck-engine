@@ -15,16 +15,16 @@ export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디�
 [출력 — 정확히 세 구간]
 ===JSON===
 {
- "mood": "한 줄 무드(예: 정밀한 산업 리포트, 차분한 남색 위에 전기차의 청록 전류)",
+ "mood": "한 줄 무드 — 이 덱의 주제에서 끌어낸 고유한 표현(형식 예시: '깊은 바다의 남청색 위에 형광 라임 포인트, 연구 노트의 정밀함')",
  "concept": "이 덱만의 시각 언어 3~5문장: 색의 역할, 형태(각진/둥근), 선·면의 비중, 사진의 쓰임, 숫자의 표현, 여백의 리듬",
- "motifs": ["반복 모티프 3~5개(예: 회로 라인, 전류 점선, 도장 스탬프 라벨)"],
+ "motifs": ["반복 모티프 3~5개 — 주제에서 유래한 것(형식 예시: 등고선, 눈금자 라벨, 현미경 원형 프레임)"],
  "sectionAccents": {"s1":"azure","s2":"teal"},   // 섹션 id → brand|azure|violet|teal|amber|rose|navy|ok|danger (섹션마다 다르게, 전체 2~4색)
  "darkSections": [],                              // 시네마틱 다크 무대(.stage.cine)로 그릴 섹션 id (0~1개 권장; 임팩트 장면·클라이맥스)
  "photoStrategy": "none|backdrops|side|mixed",
  "images": [ {"id":"p03","role":"backdrop|side|mock|illustration","prompt":"장면 묘사(한국어, 구체적·사실적)","ratio":"16:9|1:1|3:4|4:3"} ],  // 최대 imageBudget 장. cover/section/image-hero 제외(엔진이 따로 생성)
  "motion": "모션 언어 2~3문장(등장 리듬·강조 방식·인터랙션 톤)",
  "fx": ["aurora","rail","tilt","3d-in"],         // 덱 전체 효과: aurora(배경 오로라 블롭) rail(푸터 섹션 레일) tilt(카드 3D 틸트) 3d-in(블러+회전 등장). 격식 보고서는 aurora/3d-in 제외 가능
- "helpers": [ {"class":"d-stamp","purpose":"도장형 라벨"}, {"class":"d-wire","purpose":"회로 점선 구분선"} ],  // 아래 CSS에서 정의한 클래스 3~8개
+ "helpers": [ {"class":"d-…","purpose":"…"} ],  // 아래 CSS에서 정의한 helper 클래스 3~8개(이름·용도는 이 덱의 모티프에서)
  "typography": "제목·숫자·라벨 처리 메모 1~2문장",
  "notes": "장 설계자에게 주는 지시 2~4문장(해야 할 것/하지 말 것)"
 }

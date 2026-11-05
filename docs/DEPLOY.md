@@ -59,3 +59,4 @@ Readdy 채팅에 `frontend/DeckStudio.tsx`를 첨부하고 `Readdy_지시문.txt
 - 요청: `plan`에 `quality:'premium'`(brief에도 저장) → `fill`은 장 1개씩(rich) / 구조장 묶음, `mode:'standard'`면 템플릿 폴백. `fix`는 rich 장이면 `fixSlideRich`.
 - 시간 한도: rich 1장 60~100초(함수 timeout 135초). 실패 시 스튜디오가 재시도 → 그래도 실패하면 `mode:'standard'`.
 - 스튜디오 자동 검수: 결과 플레이어의 `QPDeck.lintAll()` → `fix(source:'lint', issues)` → `render(register:false)`.
+- 프리미엄 2.0 액션: `plan`(+자료집, `dossier:false`로 끔) → `direct`(아트 디렉션, `imageBudget`) → `fill` → `render`(`maxImages` 기본 10) → `review`(`image` dataURL + `lint`) → `fix`(`source:'vision'|'lint'`). 함수가 GitHub에서 `engine/assets/libs.ts`(730KB: GSAP·Three·modern-screenshot)를 함께 받으므로 콜드 스타트가 1~2초 늘어난다.

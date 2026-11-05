@@ -9,7 +9,7 @@ export const FX_CSS = `
 .photo.kb img{animation:kenburns 24s ease-in-out infinite alternate;transform-origin:center}
 @keyframes kenburns{from{scale:1;translate:0 0}to{scale:1.09;translate:-1.2% .8%}}
 .photo .cap{position:absolute;left:18px;bottom:16px;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.9);color:var(--ink);font-size:16px;font-weight:700;backdrop-filter:blur(6px);z-index:2}
-.photo .credit,.backdrop .credit{position:absolute;right:14px;bottom:10px;font-size:12px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:2;pointer-events:none}
+.photo .credit,.backdrop .credit{position:absolute;right:14px;bottom:10px;font-size:13px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:2;pointer-events:none}
 .backdrop .credit.dark{color:rgba(0,0,0,.5);text-shadow:none}
 .photo.frame{border:1px solid var(--line);box-shadow:var(--shadow)}
 .photo.sq{border-radius:var(--r-sm)}

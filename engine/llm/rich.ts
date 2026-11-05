@@ -140,7 +140,7 @@ export function sanitizeRich(p: RichParts): { parts: RichParts; problems: string
   html = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (_m, c) => { js += '\n' + c; problems.push('script-in-html'); return ''; });
   if (/<link\b/i.test(html)) { html = html.replace(/<link\b[^>]*>/gi, ''); problems.push('link-tag'); }
   if (/<(iframe|video|audio|source|object|embed)\b/i.test(html)) { html = html.replace(/<(iframe|video|audio|source|object|embed)\b[^>]*>(?:<\/\1>)?/gi, ''); problems.push('external-media'); }
-  if (/<img\b[^>]*\ssrc=/i.test(html)) { html = html.replace(/<img\b([^>]*)\ssrc="[^"]*"([^>]*)>/gi, '<img$1$2>'); problems.push('img-src'); } // images come from data-image prompts only
+  if (/<img\b[^>]*\ssrc="(?!data:)/i.test(html)) { html = html.replace(/<img\b([^>]*)\ssrc="(?!data:)[^"]*"([^>]*)>/gi, '<img$1$2>'); problems.push('img-src'); } // images come from data-image prompts only (data: = carried-over generated image)
   if (/https?:\/\//i.test(html)) { html = html.replace(/\s(?:src|href)="https?:\/\/[^"]*"/gi, ''); problems.push('url-in-html'); }
   if (/@import/i.test(css)) { css = css.replace(/@import[^;]*;/gi, ''); problems.push('css-import'); }
   if (/url\(\s*['"]?https?:/i.test(css)) { css = css.replace(/url\(\s*['"]?https?:[^)]*\)/gi, 'none'); problems.push('css-url'); }
@@ -204,15 +204,34 @@ ${DESIGN_SYSTEM}
 ${RICH_OUTPUT}
 수정된 전체(META/HTML/CSS/JS 네 구간 모두)를 출력한다. 바뀌지 않은 구간도 전부 다시 쓴다.`;
 
+/** Generated images live inline as data URLs; they are stripped before a slide goes back to the model (prompt size) and carried over afterwards by their data-image prompt. */
+export function stripImageSrcs(html: string): { html: string; srcs: Record<string, string> } {
+  const srcs: Record<string, string> = {};
+  const out = html.replace(/<img\b([^>]*)>/gi, (m, attrs: string) => {
+    const prompt = (attrs.match(/data-image="([^"]*)"/) || [])[1]; const src = (attrs.match(/\ssrc="(data:[^"]*)"/) || [])[1];
+    if (!prompt || !src) return m; srcs[prompt] = src; return `<img${attrs.replace(/\ssrc="data:[^"]*"/, '')}>`;
+  });
+  return { html: out, srcs };
+}
+export function carryImageSrcs(html: string, srcs: Record<string, string>): string {
+  return html.replace(/<img\b([^>]*)>/gi, (m, attrs: string) => {
+    if (/\ssrc=/.test(attrs)) return m; const prompt = (attrs.match(/data-image="([^"]*)"/) || [])[1];
+    return prompt && srcs[prompt] ? `<img${attrs} src="${srcs[prompt]}">` : m;
+  });
+}
+
 export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: string; what?: string; extra?: any; el?: string; fix?: string }[], opt: RichOptions, specMeta?: DeckSpec['meta']): Promise<Slide> {
   const b: any = slide.body;
-  const cur = `===META===\n${JSON.stringify({ title: slide.title, sub: slide.sub, source: slide.source, notes: slide.notes, signature: b.signature })}\n===HTML===\n${b.html}\n===CSS===\n${b.css || ''}\n===JS===\n${b.js || ''}`;
+  const { html: htmlNoImg, srcs } = stripImageSrcs(String(b.html || ''));
+  const dirMeta: any = specMeta ? { ...specMeta } : {}; const direction = dirMeta.direction; delete dirMeta.direction;
+  const cur = `===META===\n${JSON.stringify({ title: slide.title, sub: slide.sub, source: slide.source, notes: slide.notes, signature: b.signature })}\n===HTML===\n${htmlNoImg}\n===CSS===\n${b.css || ''}\n===JS===\n${b.js || ''}`;
   const fmt = (i: any) => `- ${i.sev || ''} ${i.code || ''} ${i.el || ''}${i.extra != null ? ' (' + JSON.stringify(i.extra).slice(0, 120) + (/OVERFLOW/.test(i.code || '') ? 'px 넘침' : '') + ')' : ''}${i.box ? ' 요소크기=' + i.box[0] + '×' + i.box[1] + 'px' : ''}${i.parent ? ' 부모=' + i.parent : ''}${i.text ? ' 텍스트="' + String(i.text).slice(0, 40) + '"' : ''} ${i.what || ''} ${i.fix ? '→ ' + i.fix : ''}`;
-  const user = `[덱 메타] ${JSON.stringify(specMeta || {})}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(fmt).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라.`;
+  const user = `[덱 메타] ${JSON.stringify(dirMeta)}${directionBlock(direction, { id: slide.id!, section: slide.section })}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(fmt).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라. (이미지는 <img data-image="…"> 태그를 같은 프롬프트로 유지하면 기존 생성 이미지가 그대로 쓰인다)`;
   const r = await chat(opt.provider, { system: RICH_FIX_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: 0.3, json: false, nudge: '(출력이 잘렸다. 네 구간을 더 간결하게 다시 출력하라.)' });
   opt.log?.(`[rich-fix ${slide.id}] ${r.model} ${r.ms}ms${r.truncated ? ' TRUNCATED' : ''}`);
   const { parts } = sanitizeRich(parseRich(r.text));
   if (parts.html.length < 400) return slide;
+  parts.html = carryImageSrcs(parts.html, srcs);
   const fixed = richSlideFromParts({ id: slide.id!, section: slide.section, type: 'custom', title: slide.title, sub: slide.sub, t: slide.notes?.t, kind: b.kind } as any, parts, r.model);
   if (!parts.meta?.title) { fixed.title = slide.title; fixed.sub = slide.sub; fixed.source = slide.source; fixed.notes = slide.notes; }
   return fixed;
