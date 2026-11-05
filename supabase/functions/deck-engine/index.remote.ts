@@ -4,12 +4,15 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
-import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/f9d8e0d3e95ad356b39fa8910c8c1222740084c2/engine/renderer/index.ts';
-import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/f9d8e0d3e95ad356b39fa8910c8c1222740084c2/engine/llm/pipeline.ts';
-import { fillSlideRich, fixSlideRich, isRichTarget, warmRichCache } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/f9d8e0d3e95ad356b39fa8910c8c1222740084c2/engine/llm/rich.ts';
-import { generateImages } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/f9d8e0d3e95ad356b39fa8910c8c1222740084c2/engine/llm/images.ts';
-import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/f9d8e0d3e95ad356b39fa8910c8c1222740084c2/engine/llm/provider.ts';
-import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/f9d8e0d3e95ad356b39fa8910c8c1222740084c2/engine/renderer/validate.ts';
+import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/renderer/index.ts';
+import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/pipeline.ts';
+import { fillSlideRich, fixSlideRich, isRichTarget, warmRichCache } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/rich.ts';
+import { directDeck, applyDirection } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/direct.ts';
+import { writeDossier } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/dossier.ts';
+import { reviewSlide } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/pipeline.ts';
+import { generateImages } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/images.ts';
+import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/llm/provider.ts';
+import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/35f676554f9569e7fffafe927c46d8aff060f502/engine/renderer/validate.ts';
 
 const ORIGINS = ['https://qpresen.com', 'https://www.qpresen.com', 'https://readdy.ai', 'http://localhost:5173', 'http://127.0.0.1:5173'];
 const json = (body: unknown, status = 200, origin = '*') => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Cache-Control': 'no-store' } });
@@ -73,18 +76,49 @@ Deno.serve(async (req: Request) => {
 
     if (action === 'plan') {
       const brief = body.brief as Brief; if (!brief?.topic) return json({ error: 'TOPIC_REQUIRED' }, 400, allow);
-      const premium = body.quality === 'premium' || (brief as any).quality === 'premium';
+      const premium = body.quality === 'premium' || body.quality === 'studio' || (brief as any).quality === 'premium' || (brief as any).quality === 'studio';
       if (premium) (brief as any).quality = 'premium';
       const planProv = premium ? premiumPlanProvider(prov) : prov;
       const rules = await loadRules();
       const { data: job, error } = await db.from('deck_jobs').insert({ user_id: userId, status: 'planning', brief, model: planProv.model }).select('id').single();
       if (error) return json({ error: 'DB:' + error.message }, 500, allow);
       try {
+        // premium: thin briefs get a research dossier first (facts, figures, named examples) so slides are concrete, not generic
+        let dossier: string | undefined;
+        if (premium && body.dossier !== false && String(brief.materials || '').length < 1500) {
+          try { dossier = await writeDossier(brief, { provider: planProv, log }); brief.materials = `[자료집 — 모델이 정리한 공개 사실·수치(출처·연도 명시, 추정 표기)]\n${dossier}\n\n${brief.materials || ''}`.trim(); (brief as any).dossier = true; await touch(job.id, { brief }); } catch (e: any) { log('[dossier] failed: ' + e.message); }
+        }
         const plan = await planDeck(brief, { provider: planProv, rules, log, premium });
-        await touch(job.id, { status: 'filling', plan, progress: { done: 0, total: plan.slides.length } });
-        if (premium) { const n = await warmRichCache(plan, { provider: richProvider(prov), rules, log }); log(`[plan] premium cache warmed: ${n} prompts`); }
-        return json({ jobId: job.id, plan }, 200, allow);
+        (plan.meta as any).quality = premium ? 'premium' : 'standard';
+        await touch(job.id, { status: premium ? 'directing' : 'filling', plan, progress: { done: 0, total: plan.slides.length } });
+        return json({ jobId: job.id, plan, dossier: !!dossier }, 200, allow);
       } catch (e: any) { await touch(job.id, { status: 'failed', error: String(e.message) }); throw e; }
+    }
+
+    if (action === 'direct') {
+      // premium: deck-level art direction (design layer + section accents + photo plan), then warm the per-kind prompt caches
+      const { jobId } = body; if (!jobId) return json({ error: 'JOB_REQUIRED' }, 400, allow);
+      const { data: job } = await db.from('deck_jobs').select('brief,plan').eq('id', jobId).eq('user_id', userId).single();
+      if (!job?.plan) return json({ error: 'JOB_NOT_FOUND' }, 404, allow);
+      const plan = job.plan as Plan; const rules = await loadRules();
+      const direction = await directDeck(job.brief as Brief, plan, { provider: richProvider(prov), rules, log, imageBudget: Math.max(0, Math.min(8, Number(body.imageBudget ?? 6))) });
+      applyDirection(plan, direction);
+      await touch(jobId, { status: 'filling', plan });
+      const n = await warmRichCache(plan, { provider: richProvider(prov), rules, log }); log(`[direct] cache warmed: ${n} prompts`);
+      const { deckCss, deckJs, ...summary } = direction as any;
+      return json({ jobId, direction: { ...summary, deckCssBytes: (deckCss || '').length, deckJsBytes: (deckJs || '').length } }, 200, allow);
+    }
+
+    if (action === 'review') {
+      // premium QA: vision review of one slide (screenshot from the player) — returns the verdict; the studio decides whether to call fix
+      const { jobId, slideId, image, lint } = body; if (!jobId || !slideId || !image) return json({ error: 'JOB_SLIDE_IMAGE_REQUIRED' }, 400, allow);
+      const { data: job } = await db.from('deck_jobs').select('spec').eq('id', jobId).eq('user_id', userId).single();
+      if (!job?.spec) return json({ error: 'JOB_NOT_FOUND' }, 404, allow);
+      const spec = job.spec as any; const slide = spec.slides.find((x: any) => x.id === slideId); if (!slide) return json({ error: 'SLIDE_NOT_FOUND' }, 404, allow);
+      const dir = spec.meta?.direction; const dirText = dir ? `${dir.mood || ''} / ${dir.concept || ''}` : undefined;
+      const review = await reviewSlide(String(image), slide, { provider: richProvider(prov), log }, { lint: Array.isArray(lint) ? lint : undefined, direction: dirText });
+      await db.from('deck_feedback').insert({ job_id: jobId, user_id: userId, slide_id: slideId, slide_type: slide.body?.type, source: 'vision', rating: typeof review?.score === 'number' ? Math.round(review.score) : null, comment: review?.upgrade || null, data: { review } });
+      return json({ review }, 200, allow);
     }
 
     if (action === 'fill') {
@@ -153,7 +187,8 @@ Deno.serve(async (req: Request) => {
       let images: { generated: number; failed: string[] } | null = null;
       if (body.images !== false && prov.apiKey) {
         if (jobId) await touch(jobId, { status: 'imaging' });
-        images = await generateImages(valid, prov, { max: Math.max(0, Math.min(6, Number(body.maxImages ?? 4))), quality: body.imageQuality || 'low', log, onProgress: (e: { done: number; total: number }) => { if (jobId) touch(jobId, { progress: { stage: 'images', done: e.done, total: e.total } }); } });
+        const isPremiumSpec = (valid.meta as any)?.quality === 'premium' || !!(valid.meta as any)?.direction;
+        images = await generateImages(valid, prov, { max: Math.max(0, Math.min(12, Number(body.maxImages ?? (isPremiumSpec ? 10 : 4)))), quality: body.imageQuality || 'low', log, onProgress: (e: { done: number; total: number }) => { if (jobId) touch(jobId, { progress: { stage: 'images', done: e.done, total: e.total } }); } });
       }
       // Qpresen-native bundle (slides concatenated with slide-title/SLIDE BREAK markers, CDN font) is what gets stored & registered;
       // the offline single-file player (embedded font) is returned for download when requested.
