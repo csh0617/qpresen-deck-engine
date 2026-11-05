@@ -25,8 +25,8 @@ export function imageTargets(spec: DeckSpec): Target[] {
     };
     switch (b.type) {
       case 'cover':
-        if (b.visual === 'photo' && !b.image) b.image = { prompt: `${spec.meta.title || ''} — 주제를 상징하는 장면`, alt: spec.meta.title || '' };
-        if (b.visual === 'photo' || b.image) want(b.image, 'cover', '1536x1024', 0); break;
+        if ((b.visual === 'photo' || b.visual === 'art' || !b.visual) && !b.image) b.image = { prompt: `${spec.meta.title || ''} — 주제를 상징하는 장면`, alt: spec.meta.title || '' };
+        if (b.image) want(b.image, b.visual === 'photo' ? 'cover' : 'visual', b.visual === 'photo' ? '1536x1024' : '1024x1024', 0); break;
       case 'image-hero': want(b.image, 'hero', '1536x1024', 1); break;
       case 'annotated-image': want(b.image, 'annot', '1536x1024', 2); break;
       case 'section': want(b.image, 'section', '1024x1024', 3); break;

@@ -193,7 +193,8 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
     case 'process': {
       const n = b.steps.length; const style = b.style || 'arrows';
       const steps = b.steps.map((st, i) => `<div class="st ${fclass(st.accent || cycleAccent(i))}" ${rv(i, 'right', 140)}>${style === 'circles' ? `<span class="big-ic">${ic(st.icon || 'check')}</span>` : `<div class="no"><span class="num">${i + 1}</span>${st.icon ? `<span class="ic-sq">${ic(st.icon)}</span>` : ''}</div>`}<h3>${rich(st.title)}</h3>${st.desc ? `<p>${rich(st.desc)}</p>` : ''}</div>`).join('');
-      return { html: `<div class="a-proc ${style === 'chevrons' ? 'chev' : style === 'circles' ? 'circ' : ''}"><div class="steps n${n}" style="--n:${n}">${steps}</div>${b.result ? `<div class="result" ${rv(n + 1, 'up')}>${ic('check-circle')}<span>${rich(b.result)}</span></div>` : ''}</div>` };
+      const twoRow = n >= 7; // 7–8 steps: two rows of 4 (chevrons/arrows stay readable)
+      return { html: `<div class="a-proc ${style === 'chevrons' ? 'chev' : style === 'circles' ? 'circ' : ''} ${twoRow ? 'two-row' : ''}"><div class="steps n${n}" style="--n:${twoRow ? 4 : n}">${steps}</div>${b.result ? `<div class="result" ${rv(n + 1, 'up')}>${ic('check-circle')}<span>${rich(b.result)}</span></div>` : ''}</div>` };
     }
     case 'chart': {
       const layout = b.layout || ((b.insight || (b.callouts && b.callouts.length)) ? 'chart-left' : 'chart-full');
@@ -231,7 +232,8 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
         inner = diagramSvg(b.kind, b.nodes, b.edges || [], b.center);
       }
       const plain = b.kind === 'layers' || b.kind === 'funnel' || inner.startsWith('<div class="flow">');
-      return { html: `<div class="a-diag ${aside ? 'aside' : ''}"><div class="cv ${plain ? 'plain' : ''}" ${rv(0, 'scale', 0, 150)}>${inner}</div>${aside}</div>` };
+      const stack = aside && inner.startsWith('<div class="flow">') && b.nodes.length >= 4; // wide flows: aside goes below
+      return { html: `<div class="a-diag ${aside ? 'aside' : ''} ${stack ? 'stack' : ''}"><div class="cv ${plain ? 'plain' : ''}" ${rv(0, 'scale', 0, 150)}>${inner}</div>${aside}</div>` };
     }
     case 'quote': {
       const img = b.image ? `<div ${rv(3, 'scale')}>${imageHtml(b.image, '', seed)}</div>` : '';

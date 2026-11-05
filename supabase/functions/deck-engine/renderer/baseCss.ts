@@ -388,6 +388,10 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 .stage.dark .a-proc .result,html[data-theme=dark] .a-proc .result{background:var(--card-3);color:var(--ink)}
 .a-proc.chev .st{min-height:360px;padding-top:40px;justify-content:center}.a-proc.chev .st h3{font-size:25px}.a-proc.chev .st p{font-size:19px}
 .a-proc .steps.n5 .st h3,.a-proc .steps.n6 .st h3{font-size:21px}.a-proc .steps.n6 .st p{font-size:16px}
+.a-proc.two-row .steps{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 18px}
+.a-proc.two-row .st,.a-proc.two-row.chev .st{min-height:0;padding:26px 28px 26px 44px;justify-content:center}.a-proc.two-row.chev .st:first-child,.a-proc.two-row.chev .st:nth-child(5){padding-left:30px;clip-path:polygon(0 0,calc(100% - 34px) 0,100% 50%,calc(100% - 34px) 100%,0 100%)}
+.a-proc.two-row .st h3{font-size:22px}.a-proc.two-row .st p{font-size:17px}.a-proc.two-row .st .no .num{width:38px;height:38px;font-size:16px}.a-proc.two-row .st .no .ic-sq{width:44px;height:44px}.a-proc.two-row .st .no .ic-sq .ic{width:22px;height:22px}
+.a-proc.two-row:not(.chev) .st:nth-child(4)::after{display:none}
 
 /* chart */
 .a-chart{height:100%;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:36px;align-items:stretch;min-height:0}
@@ -441,6 +445,7 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 /* diagram */
 .a-diag{height:100%;display:grid;grid-template-columns:1fr;gap:30px;min-height:0}
 .a-diag.aside{grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr)}
+.a-diag.aside.stack{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:24px}.a-diag.aside.stack .as{flex-direction:row;align-items:center;gap:28px}.a-diag.aside.stack .as .card{flex:1;display:flex;align-items:center;gap:28px;padding:22px 30px}.a-diag.aside.stack .as h3{margin:0;white-space:nowrap}.a-diag.aside.stack .as ul{display:flex;gap:26px;flex-wrap:wrap}.a-diag.aside.stack .as li{margin:0}
 .a-diag .cv{position:relative;min-height:0;border-radius:var(--r);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);padding:30px;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .a-diag .cv.plain{background:none;border:none;box-shadow:none;padding:0;overflow:visible}
 .a-diag .cv svg{width:100%;height:100%;max-height:100%}
@@ -464,7 +469,7 @@ html.static .flowline,html.static .float,html.static .pulse,html.static .spin-sl
 .a-diag .funnel .fl{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 32px;border-radius:14px;background:var(--f-ink);color:#fff;font-weight:700;font-size:20px;width:var(--w)}
 .a-diag .funnel .fl small{font-size:15px;opacity:.85;font-weight:600}
 .a-diag .flow{display:flex;align-items:stretch;gap:0;width:100%;justify-content:center}
-.a-diag .flow .fn{flex:1;max-width:340px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:44px 24px;border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.a-diag .flow .fn{flex:1;max-width:360px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:44px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
 .a-diag .flow .fn .ic-sq.lg{width:96px;height:96px;border-radius:28px}.a-diag .flow .fn .ic-sq.lg .ic{width:46px;height:46px}.a-diag .flow .fn .num.lg{width:72px;height:72px;font-size:30px}
 .a-diag .flow .fn h4{font-size:26px;font-weight:800;color:var(--ink)}.a-diag .flow .fn p{font-size:19px;color:var(--muted);line-height:1.45}
 .a-diag .flow .ar{display:grid;place-items:center;width:60px;color:var(--f)}.a-diag .flow .ar .ic{width:34px;height:34px}

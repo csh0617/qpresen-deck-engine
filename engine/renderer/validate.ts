@@ -1,7 +1,7 @@
 import type { DeckSpec, Slide, Body } from './types.ts';
 
 const CAPS: Record<string, [string, number][]> = {
-  'kpi-grid': [['items', 6]], 'cards': [['items', 8]], 'timeline': [['items', 8]], 'process': [['steps', 6]], 'bullets-visual': [['bullets', 5]],
+  'kpi-grid': [['items', 6]], 'cards': [['items', 8]], 'timeline': [['items', 8]], 'process': [['steps', 8]], 'bullets-visual': [['bullets', 5]],
   'annotated-image': [['hotspots', 6]], 'pricing': [['plans', 4]], 'team': [['members', 6]], 'summary': [['takeaways', 4]], 'agenda': [['items', 10]],
   'checklist': [['items', 8]], 'comparison': [['columns', 3], ['rows', 7]], 'table': [['rows', 12], ['columns', 7]], 'question': [['options', 5]], 'matrix': [['points', 8], ['quadrants', 4]], 'diagram': [['nodes', 8]], 'big-number': [['compare', 3]], 'cover': [['tags', 6], ['agenda', 8], ['stats', 3]], 'closing': [['keywords', 8]], 'section': [['bullets', 4]],
 };
