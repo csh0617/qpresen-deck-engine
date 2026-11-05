@@ -13,7 +13,7 @@ export const FX_CSS = `
 .backdrop .credit.dark{color:rgba(0,0,0,.5);text-shadow:none}
 .photo.frame{border:1px solid var(--line);box-shadow:var(--shadow)}
 .photo.sq{border-radius:var(--r-sm)}
-.backdrop{position:absolute!important;inset:0;overflow:hidden;z-index:0;border-radius:0}
+.backdrop{position:fixed!important;inset:0;overflow:hidden;z-index:0;border-radius:0} /* fixed = relative to the transformed .stage, so it bleeds to the stage edges even from inside a positioned .body */
 .backdrop img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,center)}
 .backdrop.kb img{animation:kenburns 26s ease-in-out infinite alternate}
 .backdrop::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,var(--bg) 36%,color-mix(in srgb,var(--bg) 72%,transparent) 58%,color-mix(in srgb,var(--bg) 10%,transparent) 100%)}

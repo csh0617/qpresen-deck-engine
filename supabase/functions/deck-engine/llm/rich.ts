@@ -199,7 +199,7 @@ export async function fillSlideRich(brief: Brief, plan: Plan, slide: PlanSlide, 
   const outline = plan.slides.map(s => ({ id: s.id, type: s.type, title: s.title, signature: (s as any).signature || s.visual_hint || '' }));
   const idx = plan.slides.findIndex(s => s.id === slide.id);
   const { direction, ...metaNoDir } = plan.meta as any;
-  const user = `${briefTextShort(brief, opt.materialsMax)}\n\n[덱 메타] ${JSON.stringify({ ...metaNoDir, sections: plan.sections })}${directionBlock(direction, slide)}\n[덱 개요 — 다른 장과 레이아웃·시그니처가 겹치지 않게]\n${JSON.stringify(outline)}\n\n[이번에 설계할 장: ${idx + 1}/${plan.slides.length}장, kind=${kind}]\n${JSON.stringify(slide, null, 1)}\n\n위 장의 META/HTML/CSS/JS 를 출력 형식대로 작성하라.`;
+  const user = `${briefTextShort(brief, opt.materialsMax)}\n\n[덱 메타] ${JSON.stringify({ ...metaNoDir, sections: plan.sections })}${directionBlock(direction, { ...slide, kind })}\n[덱 개요 — 다른 장과 레이아웃·시그니처가 겹치지 않게]\n${JSON.stringify(outline)}\n\n[이번에 설계할 장: ${idx + 1}/${plan.slides.length}장, kind=${kind}]\n${JSON.stringify(slide, null, 1)}\n\n위 장의 META/HTML/CSS/JS 를 출력 형식대로 작성하라.`;
   const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: opt.temperature ?? 0.5, json: false, nudge: '(출력이 잘렸다. 같은 설계를 더 간결하게 다시 출력하라: CSS는 꼭 필요한 규칙만, JS는 120줄 이내, 네 구간 모두.)' });
   opt.log?.(`[rich ${slide.id}/${kind}] ${r.model} ${r.ms}ms in=${r.usage?.input ?? '?'} cacheRead=${r.usage?.cacheRead ?? 0} out=${r.usage?.output ?? '?'} cost=${r.usage?.cost ?? '?'}${r.truncated ? ' TRUNCATED' : ''}`);
   if (r.truncated) throw new Error('rich: output truncated');
@@ -243,7 +243,7 @@ export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: 
   const dirMeta: any = specMeta ? { ...specMeta } : {}; const direction = dirMeta.direction; delete dirMeta.direction;
   const cur = `===META===\n${JSON.stringify({ title: slide.title, sub: slide.sub, source: slide.source, notes: slide.notes, signature: b.signature, head: b.noHead ? 'none' : 'engine', stage: b.cine ? 'cine' : 'light' })}\n===HTML===\n${htmlNoImg}\n===CSS===\n${b.css || ''}\n===JS===\n${b.js || ''}`;
   const fmt = (i: any) => `- ${i.sev || ''} ${i.code || ''} ${i.el || ''}${i.extra != null ? ' (' + JSON.stringify(i.extra).slice(0, 120) + (/OVERFLOW/.test(i.code || '') ? 'px 넘침' : '') + ')' : ''}${i.box ? ' 요소크기=' + i.box[0] + '×' + i.box[1] + 'px' : ''}${i.parent ? ' 부모=' + i.parent : ''}${i.text ? ' 텍스트="' + String(i.text).slice(0, 40) + '"' : ''} ${i.what || ''} ${i.fix ? '→ ' + i.fix : ''}`;
-  const user = `[덱 메타] ${JSON.stringify(dirMeta)}${directionBlock(direction, { id: slide.id!, section: slide.section })}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(fmt).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라. (이미지는 <img data-image="…"> 태그를 같은 프롬프트로 유지하면 기존 생성 이미지가 그대로 쓰인다)`;
+  const user = `[덱 메타] ${JSON.stringify(dirMeta)}${directionBlock(direction, { id: slide.id!, section: slide.section, kind: b.kind })}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(fmt).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라. (이미지는 <img data-image="…"> 태그를 같은 프롬프트로 유지하면 기존 생성 이미지가 그대로 쓰인다)`;
   const r = await chat(opt.provider, { system: RICH_FIX_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: 0.3, json: false, nudge: '(출력이 잘렸다. 네 구간을 더 간결하게 다시 출력하라.)' });
   opt.log?.(`[rich-fix ${slide.id}] ${r.model} ${r.ms}ms${r.truncated ? ' TRUNCATED' : ''}`);
   const { parts } = sanitizeRich(parseRich(r.text));
