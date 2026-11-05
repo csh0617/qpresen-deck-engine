@@ -4,11 +4,11 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import qrcode from 'npm:qrcode-generator@1.4.4';
-import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/renderer/index.ts';
-import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/llm/pipeline.ts';
-import { generateImages } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/llm/images.ts';
-import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/llm/provider.ts';
-import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/868410dadd82ebe8436095dd664b45039d4cecfb/engine/renderer/validate.ts';
+import { renderDeck, qpresenBundle, firstSlidePayload } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eb41f55568e88880d36432953ffc996c93a1aa07/engine/renderer/index.ts';
+import { planDeck, fillSlides, buildSpec, fixSlide, distillRules, type Brief, type Rule, type Plan } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eb41f55568e88880d36432953ffc996c93a1aa07/engine/llm/pipeline.ts';
+import { generateImages } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eb41f55568e88880d36432953ffc996c93a1aa07/engine/llm/images.ts';
+import { listModels, type ProviderConfig } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eb41f55568e88880d36432953ffc996c93a1aa07/engine/llm/provider.ts';
+import { validateSpec } from 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/eb41f55568e88880d36432953ffc996c93a1aa07/engine/renderer/validate.ts';
 
 const ORIGINS = ['https://qpresen.com', 'https://www.qpresen.com', 'https://readdy.ai', 'http://localhost:5173', 'http://127.0.0.1:5173'];
 const json = (body: unknown, status = 200, origin = '*') => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Cache-Control': 'no-store' } });
