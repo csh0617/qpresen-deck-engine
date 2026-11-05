@@ -164,8 +164,9 @@ export async function fillSlideRich(brief: Brief, plan: Plan, slide: PlanSlide, 
   const outline = plan.slides.map(s => ({ id: s.id, type: s.type, title: s.title, signature: (s as any).signature || s.visual_hint || '' }));
   const idx = plan.slides.findIndex(s => s.id === slide.id);
   const user = `${briefTextShort(brief, opt.materialsMax)}\n\n[덱 메타] ${JSON.stringify({ ...plan.meta, sections: plan.sections })}\n[덱 개요 — 다른 장과 레이아웃·시그니처가 겹치지 않게]\n${JSON.stringify(outline)}\n\n[이번에 설계할 장: ${idx + 1}/${plan.slides.length}장, kind=${kind}]\n${JSON.stringify(slide, null, 1)}\n\n위 장의 META/HTML/CSS/JS 를 출력 형식대로 작성하라.`;
-  const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: opt.temperature ?? 0.5 });
-  opt.log?.(`[rich ${slide.id}/${kind}] ${r.model} ${r.ms}ms out=${r.usage?.output ?? '?'}${r.truncated ? ' TRUNCATED' : ''}`);
+  const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: opt.temperature ?? 0.5, json: false, nudge: '(출력이 잘렸다. 같은 설계를 더 간결하게 다시 출력하라: CSS는 꼭 필요한 규칙만, JS는 120줄 이내, 네 구간 모두.)' });
+  opt.log?.(`[rich ${slide.id}/${kind}] ${r.model} ${r.ms}ms in=${r.usage?.input ?? '?'} cacheRead=${r.usage?.cacheRead ?? 0} out=${r.usage?.output ?? '?'} cost=${r.usage?.cost ?? '?'}${r.truncated ? ' TRUNCATED' : ''}`);
+  if (r.truncated) throw new Error('rich: output truncated');
   const { parts, problems } = sanitizeRich(parseRich(r.text));
   if (problems.length) opt.log?.(`[rich ${slide.id}] sanitized: ${problems.join(',')}`);
   if (parts.html.length < 400) throw new Error('rich: html too short');
@@ -186,7 +187,7 @@ export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: 
   const b: any = slide.body;
   const cur = `===META===\n${JSON.stringify({ title: slide.title, sub: slide.sub, source: slide.source, notes: slide.notes, signature: b.signature })}\n===HTML===\n${b.html}\n===CSS===\n${b.css || ''}\n===JS===\n${b.js || ''}`;
   const user = `[덱 메타] ${JSON.stringify(specMeta || {})}\n[현재 슬라이드]\n${cur}\n\n[지적 사항]\n${issues.map(i => `- ${i.sev || ''} ${i.code || ''} ${i.el || ''} ${i.extra != null ? '(' + JSON.stringify(i.extra).slice(0, 200) + ')' : ''} ${i.what || ''} ${i.fix ? '→ ' + i.fix : ''}`).join('\n')}\n\n수정된 네 구간을 출력 형식대로 작성하라.`;
-  const r = await chat(opt.provider, { system: RICH_FIX_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: 0.3 });
+  const r = await chat(opt.provider, { system: RICH_FIX_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: opt.maxTokens || 14000, temperature: 0.3, json: false, nudge: '(출력이 잘렸다. 네 구간을 더 간결하게 다시 출력하라.)' });
   opt.log?.(`[rich-fix ${slide.id}] ${r.model} ${r.ms}ms${r.truncated ? ' TRUNCATED' : ''}`);
   const { parts } = sanitizeRich(parseRich(r.text));
   if (parts.html.length < 400) return slide;

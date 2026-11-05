@@ -1,6 +1,7 @@
 /* Deck pipeline: brief → plan → fill → spec → render. Runtime-agnostic (Node/Deno). */
 import { chat, extractJson, type ProviderConfig } from './provider.ts';
 import { PLAN_SYSTEM, FILL_SYSTEM, FIX_SYSTEM, REVIEW_SYSTEM, DISTILL_SYSTEM, rulesBlock } from './prompts.ts';
+import { PLAN_PREMIUM_ADDON, fillSlideRich, isRichTarget } from './rich.ts';
 import type { DeckSpec, Slide, Purpose, ThemeName } from '../renderer/types.ts';
 import { validateSpec } from '../renderer/validate.ts';
 
@@ -22,7 +23,7 @@ export interface Brief {
 
 export interface Rule { scope: 'plan' | 'fill' | 'render' | 'all'; text: string; weight?: number }
 
-export interface PlanSlide { id: string; section?: string | null; type: string; title: string; sub?: string; intent?: string; content_hints?: string[]; visual_hint?: string; t?: number }
+export interface PlanSlide { id: string; section?: string | null; type: string; title: string; sub?: string; intent?: string; content_hints?: string[]; visual_hint?: string; t?: number; kind?: string; signature?: string }
 export interface Plan { meta: DeckSpec['meta']; sections: DeckSpec['sections']; slides: PlanSlide[] }
 
 export interface PipelineOptions {
@@ -32,6 +33,9 @@ export interface PipelineOptions {
   concurrency?: number;
   onProgress?: (e: { stage: string; done?: number; total?: number; msg?: string }) => void;
   log?: (m: string) => void;
+  premium?: boolean;             // premium: plan asks for kind/signature; content slides are designed one by one (rich HTML)
+  richProvider?: ProviderConfig; // model used for rich slides (defaults to provider)
+  richConcurrency?: number;
 }
 
 function briefText(b: Brief): string {
@@ -51,7 +55,7 @@ function briefText(b: Brief): string {
 
 export async function planDeck(brief: Brief, opt: PipelineOptions): Promise<Plan> {
   opt.onProgress?.({ stage: 'plan', msg: '덱 구조 설계 중' });
-  const system = PLAN_SYSTEM + rulesBlock(opt.rules || [], 'plan');
+  const system = PLAN_SYSTEM + (opt.premium ? PLAN_PREMIUM_ADDON : '') + rulesBlock(opt.rules || [], 'plan');
   const r = await chat(opt.provider, { system, messages: [{ role: 'user', content: briefText(brief) + '\n\n위 브리프로 덱 플랜 JSON을 작성하라.' }], maxTokens: 12000, temperature: 0.5 });
   opt.log?.(`[plan] ${r.model} ${r.ms}ms`);
   const plan = extractJson<Plan>(r.text);
@@ -87,14 +91,25 @@ export async function fillSlides(brief: Brief, plan: Plan, ids: string[], opt: P
 export async function buildSpec(brief: Brief, opt: PipelineOptions, existingPlan?: Plan): Promise<{ spec: DeckSpec; plan: Plan; warnings: string[] }> {
   const plan = existingPlan || await planDeck(brief, opt);
   const batch = opt.batchSize || 3, conc = opt.concurrency || 4;
-  const ids = plan.slides.map(s => s.id);
+  const results: Record<string, Slide> = {};
+  let ids = plan.slides.map(s => s.id);
+  if (opt.premium) {
+    // premium: content slides are designed individually by the rich pipeline; structural slides go through the standard fill below
+    const richIds = plan.slides.filter(isRichTarget).map(s => s.id);
+    ids = ids.filter(id => !richIds.includes(id));
+    let rdone = 0; let rc = 0; const rconc = opt.richConcurrency || 4;
+    opt.onProgress?.({ stage: 'rich', done: 0, total: richIds.length });
+    const rworker = async () => { while (rc < richIds.length) { const id = richIds[rc++]; const p = plan.slides.find(x => x.id === id)!; try { results[id] = await fillSlideRich(brief, plan, p, { ...opt, provider: opt.richProvider || opt.provider }); } catch (e: any) { opt.log?.(`[rich] ${id} failed: ${e.message} → standard fill`); ids.push(id); } rdone++; opt.onProgress?.({ stage: 'rich', done: rdone, total: richIds.length }); } };
+    await Promise.all(Array.from({ length: Math.min(rconc, richIds.length) }, rworker));
+    ids = plan.slides.map(s => s.id).filter(id => ids.includes(id));
+  }
   const batches: string[][] = []; for (let i = 0; i < ids.length; i += batch) batches.push(ids.slice(i, i + batch));
-  const results: Record<string, Slide> = {}; let done = 0;
+  let done = 0;
   opt.onProgress?.({ stage: 'fill', done: 0, total: ids.length });
   let cursor = 0;
   const worker = async () => { while (cursor < batches.length) { const b = batches[cursor++]; try { const ss = await fillSlides(brief, plan, b, opt); ss.forEach(s => results[s.id!] = s); } catch (e: any) { opt.log?.(`[fill] batch ${b.join(',')} failed: ${e.message}`); b.forEach(id => { const p = plan.slides.find(x => x.id === id)!; results[id] = { id, section: p.section || undefined, title: p.title, sub: p.sub, notes: { t: p.t || 40, s: p.intent || '' }, body: { type: 'bullets-visual', bullets: (p.content_hints || [p.title]).slice(0, 5).map(h => ({ title: h.slice(0, 40) })) } } as Slide; }); } done += b.length; opt.onProgress?.({ stage: 'fill', done, total: ids.length }); } };
   await Promise.all(Array.from({ length: Math.min(conc, batches.length) }, worker));
-  const slides = ids.map(id => results[id]);
+  const slides = plan.slides.map(s => results[s.id]).filter(Boolean);
   // section ids: keep only valid
   const secIds = new Set((plan.sections || []).map(s => s.id));
   slides.forEach(s => { if (s.section && !secIds.has(s.section)) s.section = undefined; });

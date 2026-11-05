@@ -3,6 +3,11 @@ import { esc, rich, plain, imageHtml, artSvg, qrPlaceholder, fclass, cycleAccent
 import { iconSvg } from './icons.ts';
 import { chartSvg, legendHtml } from './charts.ts';
 
+/** Replace <i data-icon="name"></i> / <i data-icon="name" class="x"></i> placeholders with inline icon SVGs. */
+export function withIcons(html: string): string {
+  return html.replace(/<i\s+data-icon="([a-z0-9-]+)"(?:\s+class="([^"]*)")?\s*>\s*<\/i>/g, (_m, name, cls) => iconSvg(name, cls ? `ic ${cls}` : 'ic'));
+}
+
 export interface Ctx {
   n: number; total: number; accent: Accent; theme: string;
   qr?: (text: string) => string;      // returns <svg> markup
@@ -285,7 +290,10 @@ export function renderBody(s: Slide, ctx: Ctx): BodyOut {
       return { noHead: true, html: `<div class="amb"><i class="orb a"></i><i class="orb b"></i></div><div class="a-closing ${card ? '' : 'solo'}" ${card ? '' : 'style="grid-template-columns:1fr"'}><div><h2 ${rv(1, '', 90, 200)}>${rich(b.heading || s.title)}</h2>${b.sub || s.sub ? `<p class="sub" ${rv(2)}>${rich(b.sub || s.sub)}</p>` : ''}${kw ? `<div class="kw">${kw}</div>` : ''}${b.thanks ? `<div class="thanks" ${rv(8)}>${esc(b.thanks)}</div>` : ''}</div>${card}</div>` };
     }
     case 'custom': {
-      return { html: `<div class="a-custom">${b.html}</div>`, css: b.css, js: b.js };
+      // `bare`: premium/rich slides — HTML goes straight into <section class="body"> (the author styles .body itself);
+      // <i data-icon="name"></i> placeholders become inline Lucide SVGs.
+      const html = withIcons(String(b.html || ''));
+      return { html: b.bare ? html : `<div class="a-custom">${html}</div>`, css: b.css, js: b.js };
     }
   }
   ctx.warnings.push(`unknown archetype on slide ${ctx.n}`);

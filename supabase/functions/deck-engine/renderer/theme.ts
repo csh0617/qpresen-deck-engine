@@ -5,6 +5,7 @@ export interface ThemeTokens {
   light: Record<string, string>;
   dark: Record<string, string>;
   gradient: string;          // brand gradient used for em/progress (or flat color)
+  stops: [string, string, string]; // --q1/--q2/--q3: gradient stops for custom (premium) slides
   radius: { r: string; sm: string; xs: string };
   font: string;
   ambient: 'particles' | 'orbs' | 'none';
@@ -46,7 +47,7 @@ export const THEMES: Record<ThemeName, ThemeTokens> = {
     dark: { bg: '#0A1022', 'bg-2': '#060B18', ink: '#F2F5FC', text: '#D9E1F0', muted: '#9AA9C4', faint: '#6D7C98', line: '#1E2A4A', 'line-2': '#2B3966', card: '#0F1830', 'card-2': '#13203D', 'card-3': '#182747',
       brand: '#8F97FF', 'brand-600': '#A7ADFF', 'brand-700': '#C3C7FF', 'brand-100': '#232A66', 'brand-50': '#191F4D', ...baseDark,
       shadow: '0 12px 32px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.3)', 'shadow-lg': '0 24px 60px rgba(0,0,0,.5)', 'shadow-xl': '0 44px 110px rgba(0,0,0,.6)' },
-    gradient: 'linear-gradient(115deg,#1A8CFF 0%,#5B63FF 52%,#9B4DFF 100%)',
+    gradient: 'linear-gradient(115deg,#1A8CFF 0%,#5B63FF 52%,#9B4DFF 100%)', stops: ['#1A8CFF', '#5B63FF', '#9B4DFF'],
     radius: { r: '24px', sm: '16px', xs: '11px' }, font: "'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif",
     ambient: 'orbs', glass: true,
   },
@@ -58,7 +59,7 @@ export const THEMES: Record<ThemeName, ThemeTokens> = {
     dark: { bg: '#0B1526', 'bg-2': '#070E1A', ink: '#F1F5FA', text: '#D5DEEA', muted: '#97A6BC', faint: '#687892', line: '#1C2A42', 'line-2': '#2A3B58', card: '#101C31', 'card-2': '#142340', 'card-3': '#192B4C',
       brand: '#7FA6FF', 'brand-600': '#9DB9FF', 'brand-700': '#BBCDFF', 'brand-100': '#1E3366', 'brand-50': '#172852', ...baseDark,
       shadow: '0 12px 32px rgba(0,0,0,.35)', 'shadow-lg': '0 24px 60px rgba(0,0,0,.5)', 'shadow-xl': '0 44px 110px rgba(0,0,0,.6)' },
-    gradient: 'linear-gradient(90deg,#2563EB,#06B6D4)',
+    gradient: 'linear-gradient(90deg,#2563EB,#06B6D4)', stops: ['#2563EB', '#1E88D9', '#06B6D4'],
     radius: { r: '22px', sm: '14px', xs: '10px' }, font: "'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif",
     ambient: 'none', glass: false,
   },
@@ -70,7 +71,7 @@ export const THEMES: Record<ThemeName, ThemeTokens> = {
     dark: { bg: '#0C1730', 'bg-2': '#060D1F', ink: '#F3F6FC', text: '#DCE4F2', muted: '#9FB0C9', faint: '#6F809B', line: '#22315A', 'line-2': '#31427A', card: '#122044', 'card-2': '#172852', 'card-3': '#1C3060',
       brand: '#A99CFF', 'brand-600': '#BEB4FF', 'brand-700': '#D3CCFF', 'brand-100': '#2A2566', 'brand-50': '#1F1C50', ...baseDark,
       shadow: '0 12px 32px rgba(0,0,0,.35)', 'shadow-lg': '0 24px 60px rgba(0,0,0,.5)', 'shadow-xl': '0 44px 110px rgba(0,0,0,.6)' },
-    gradient: 'linear-gradient(115deg,#6D5DF6,#C86DD7)',
+    gradient: 'linear-gradient(115deg,#6D5DF6,#C86DD7)', stops: ['#6D5DF6', '#9A65E7', '#C86DD7'],
     radius: { r: '22px', sm: '14px', xs: '10px' }, font: "'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif",
     ambient: 'none', glass: true,
   },
@@ -82,7 +83,7 @@ export const THEMES: Record<ThemeName, ThemeTokens> = {
     dark: { bg: '#0B1020', 'bg-2': '#05080F', ink: '#F4F6FC', text: '#DCE3F2', muted: '#9DACC6', faint: '#6C7B98', line: '#1E2A47', 'line-2': '#2C3B62', card: '#111A33', 'card-2': '#15213F', 'card-3': '#1B2A4C',
       brand: '#7C8CFF', 'brand-600': '#98A5FF', 'brand-700': '#B6C0FF', 'brand-100': '#20286A', 'brand-50': '#181F4E', ...baseDark,
       shadow: '0 12px 32px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3)', 'shadow-lg': '0 24px 60px rgba(0,0,0,.55)', 'shadow-xl': '0 44px 110px rgba(0,0,0,.65)' },
-    gradient: 'linear-gradient(115deg,#5EE7DF,#7C8CFF 50%,#C78BFF)',
+    gradient: 'linear-gradient(115deg,#5EE7DF,#7C8CFF 50%,#C78BFF)', stops: ['#5EE7DF', '#7C8CFF', '#C78BFF'],
     radius: { r: '24px', sm: '16px', xs: '11px' }, font: "'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif",
     ambient: 'particles', glass: true,
   },
@@ -100,8 +101,10 @@ export function themeCss(name: ThemeName, brand?: string): string {
     light = { ...light, brand, 'brand-600': `color-mix(in srgb,${brand} 85%,#000)`, 'brand-700': `color-mix(in srgb,${brand} 70%,#000)`, 'brand-100': `color-mix(in srgb,${brand} 14%,#fff)`, 'brand-50': `color-mix(in srgb,${brand} 7%,#fff)` };
     dark = { ...dark, brand: `color-mix(in srgb,${brand} 70%,#fff)`, 'brand-600': `color-mix(in srgb,${brand} 55%,#fff)`, 'brand-700': `color-mix(in srgb,${brand} 40%,#fff)`, 'brand-100': `color-mix(in srgb,${brand} 35%,#0A1022)`, 'brand-50': `color-mix(in srgb,${brand} 22%,#0A1022)` };
   }
-  const grad = brand && /^#[0-9a-fA-F]{6}$/.test(brand) ? `linear-gradient(115deg,${brand},color-mix(in srgb,${brand} 55%,#8B5CF6))` : t.gradient;
+  const branded = !!(brand && /^#[0-9a-fA-F]{6}$/.test(brand));
+  const grad = branded ? `linear-gradient(115deg,${brand},color-mix(in srgb,${brand} 55%,#8B5CF6))` : t.gradient;
+  const stops = branded ? [brand!, `color-mix(in srgb,${brand} 75%,#8B5CF6)`, `color-mix(in srgb,${brand} 55%,#8B5CF6)`] : t.stops;
   light = { ...light, 'brand-ink': light['brand-ink'] || light['brand-600'] }; dark = { ...dark, 'brand-ink': dark['brand-ink'] || dark['brand'] };
-  return `:root{${vars(light)};--qg:${grad};--r:${t.radius.r};--r-sm:${t.radius.sm};--r-xs:${t.radius.xs};--font:${t.font};--ease:cubic-bezier(.16,1,.3,1);--stage-w:1920px;--stage-h:1080px;--f:var(--brand);--f-100:var(--brand-100);--f-50:var(--brand-50)}
+  return `:root{${vars(light)};--qg:${grad};--q1:${stops[0]};--q2:${stops[1]};--q3:${stops[2]};--r:${t.radius.r};--r-sm:${t.radius.sm};--r-xs:${t.radius.xs};--font:${t.font};--ease:cubic-bezier(.16,1,.3,1);--stage-w:1920px;--stage-h:1080px;--f:var(--brand);--f-100:var(--brand-100);--f-50:var(--brand-50)}
 html[data-theme=dark]{${vars(dark)}}`;
 }
