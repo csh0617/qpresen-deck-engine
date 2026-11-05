@@ -18,8 +18,10 @@ export const FX_CSS = `
 .photo.sq{border-radius:var(--r-sm)}
 .backdrop{position:fixed!important;inset:0;overflow:hidden;z-index:0;border-radius:0} /* fixed = relative to the transformed .stage, so it bleeds to the stage edges even from inside a positioned .body */
 .backdrop img{width:100%;height:100%;object-fit:cover;object-position:var(--pos,center)}
-.backdrop::before{content:'';position:absolute;left:0;right:0;bottom:0;height:130px;z-index:1;pointer-events:none;background:linear-gradient(0deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 70%,transparent) 55%,transparent 100%)}
-.stage.cine .backdrop::before{background:linear-gradient(0deg,#070C1C 0%,rgba(7,12,28,.7) 55%,transparent 100%)}
+.backdrop::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--bd-top,linear-gradient(transparent,transparent)),linear-gradient(0deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 70%,transparent) 7%,transparent 12%)} /* footer strip (+ header strip when the engine header is present) so chrome text never sits on the photo */
+.stage>.head~.body .backdrop{--bd-top:linear-gradient(180deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 85%,transparent) 17%,transparent 34%)}
+.stage.cine .backdrop::before{background:var(--bd-top,linear-gradient(transparent,transparent)),linear-gradient(0deg,#070C1C 0%,rgba(7,12,28,.7) 7%,transparent 12%)}
+.stage.cine>.head~.body .backdrop{--bd-top:linear-gradient(180deg,#070C1C 0%,rgba(7,12,28,.85) 17%,transparent 34%)}
 .backdrop.kb img{animation:kenburns 26s ease-in-out infinite alternate}
 .backdrop::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,var(--bg) 36%,color-mix(in srgb,var(--bg) 72%,transparent) 58%,color-mix(in srgb,var(--bg) 10%,transparent) 100%)}
 .backdrop.fade-l::after{background:linear-gradient(90deg,var(--bg) 0%,var(--bg) 36%,color-mix(in srgb,var(--bg) 72%,transparent) 58%,color-mix(in srgb,var(--bg) 10%,transparent) 100%)}

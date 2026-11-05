@@ -40,6 +40,12 @@ bash scripts/release.sh "변경 요약"      # 커밋 → index.remote.ts SHA �
 - [ ] 선택: Storage 공개 버킷 `deck-assets`에 `PretendardVariable-ko-subset.woff2` 업로드(현재는 jsDelivr 폰트 사용 — 정상 동작)
 - [ ] 선택: 기존 'HTML 슬라이드 생성' 탭을 새 엔진으로 교체(지금은 별도 메뉴로 공존)
 
+## 5-1. 프리미엄 2.1에서 달라진 운영 포인트
+- 아트 디렉션 카드에 덱의 **브랜드 그라데이션 스와치**가 보인다(디렉터가 고른 3색). 보라(테마 기본)가 아니라 주제에 맞는 색이 나오는 것이 정상.
+- 린트에 `MOTION_LOW`(정지 화면), `TEXT_ON_PHOTO`(사진 위 글자), `CINE_BG_LIGHT`가 추가됐다. 프리미엄 QA 루프가 이들을 수정 라운드로 보낸다.
+- 검수 점수는 7축(style·dynamics 추가). 어두운(cine) 장은 의도된 다크 무대로 평가된다.
+- 모션이 궁금하면 `node scripts/motion-strip.mjs <outdir> out.jpg --only=1,4` 로 등장 장면을 시간대별로 캡처할 수 있다.
+
 ## 6. 다음 품질 후보
 1. 인터랙티브 장(슬라이더·토글 비교·라이브 데모 목업) — 레퍼런스 덱의 '만져보는' 요소
 2. 히어로 이미지 품질 medium 옵션, 섹션 간지 이미지 자동 생성
