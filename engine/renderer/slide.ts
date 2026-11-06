@@ -3,8 +3,10 @@ import { themeCss } from './theme.ts';
 import { BASE_CSS } from './baseCss.ts';
 import { BASE_JS } from './baseJs.ts';
 import { renderBody, type Ctx } from './archetypes.ts';
-import { esc, rich, plain, pad, cycleAccent, fclass, artSvg, sanitizeDeckCss } from './util.ts';
+import { esc, rich, plain, pad, cycleAccent, fclass, artSvg, sanitizeDeckCss, hardenCss } from './util.ts';
 import { GSAP_JS, THREE_JS, SCENES_JS } from '../assets/libs.ts';
+import { MAPS_JS } from '../assets/maps.ts';
+import { SCENE_NAMES, SCENE_DEFAULTS, suggestScenes } from './scenes.ts';
 
 export const FONT_PLACEHOLDER = '__QP_FONT__';
 const ROMAN = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ⅹ', 'Ⅺ', 'Ⅻ'];
@@ -21,11 +23,12 @@ export function withImagePlaceholders(html: string, seed: string): string {
   });
 }
 /** Third-party libraries are inlined only when the slide (or deck layer) actually uses them. */
-export function libsFor(js: string, scene?: string): string {
+export function libsFor(js: string, scene?: string, html = ''): string {
   let out = '';
   if (/\bgsap\b/.test(js)) out += `<script>${GSAP_JS}</script>\n`;
   if (/\bTHREE\b/.test(js) || scene) out += `<script>${THREE_JS}</script>\n`;
   if (scene) out += `<script>${SCENES_JS}</script>\n`;
+  if (/data-map=/.test(html)) out += `<script>${MAPS_JS}</script>\n`;
   return out;
 }
 
@@ -58,18 +61,19 @@ export function renderSlideDoc(inp: SlideRenderInput): string {
   const out = renderBody(s, ctx);
   if ((s.body as any).type === 'custom') out.html = withImagePlaceholders(out.html, s.id || String(n));
   const dir = spec.meta.direction; const fx = (spec.meta.fx || dir?.fx || []).map(f => 'qfx-' + f).join(' ');
-  const deckCss = dir?.deckCss ? `\n/* deck layer */\n${sanitizeDeckCss(dir.deckCss)}` : '';
+  const deckCss = dir?.deckCss ? `\n/* deck layer */\n${hardenCss(sanitizeDeckCss(dir.deckCss))}` : '';
   const deckJs = dir?.deckJs ? `<script>${dir.deckJs}</script>\n` : '';
   const cineEarly = (s.body as any).type === 'custom' && (!!(s.body as any).cine || !!(s.section && (dir as any)?.darkSections?.includes(s.section)));
   const kindEarly = String((s.body as any).kind || s.body.type || '');
-  const SCENES = ['terrain', 'network', 'cubes', 'fireflies'];
+  const SCENES: readonly string[] = SCENE_NAMES;
   let scene: string | undefined = (s.body as any).scene; if (scene === 'none') scene = undefined;
   if (!scene && cineEarly && dir?.scenes) { const want = dir.scenes[String(s.id || '')] || dir.scenes[kindEarly]; if (want && want !== 'none') scene = want; }
+  // deterministic variety: a cine cover/section/closing with no chosen scene gets one seeded by the deck title (different decks → different trio)
+  if (!scene && cineEarly && /^(cover|section|closing)$/.test(kindEarly) && !(dir?.scenes && dir.scenes[kindEarly] === 'none')) scene = suggestScenes(String(spec.meta.title || ''))[kindEarly as 'cover' | 'section' | 'closing'];
   if (scene && !SCENES.includes(scene)) scene = undefined;
-  const SCENE_DEFAULTS: Record<string, Record<string, unknown>> = { terrain: { opacity: .8, camY: 300, camZ: 1050, lookY: -160, y: -380, amp: 75, size: 2, op: .7 }, network: { opacity: .85, n: 130, ox: 380, link: 250, lop: .45 }, cubes: { opacity: .8 }, fireflies: { opacity: .85 } };
-  const sceneOpts = scene ? ((s.body as any).sceneOpts || SCENE_DEFAULTS[scene]) : undefined;
+  const sceneOpts = scene ? ((s.body as any).sceneOpts || (SCENE_DEFAULTS as Record<string, Record<string, unknown>>)[scene]) : undefined;
   const sceneAttr = scene ? ` data-scene="${scene}" data-scene-opts='${JSON.stringify(sceneOpts || {}).replace(/'/g, '&#39;')}'` : '';
-  const libs = libsFor((dir?.deckJs || '') + '\n' + (out.js || ''), scene);
+  const libs = libsFor((dir?.deckJs || '') + '\n' + (out.js || ''), scene, out.html || '');
   const { sec, idx } = sectionOf(spec, s);
   const eyebrow = s.eyebrow || (sec ? `${sec.numeral || ROMAN[idx] || ''} · ${sec.label}` : (spec.meta.event || ''));
   const head = out.noHead ? '' : `<header class="head" data-reveal data-delay="0"><div class="eyebrow"><span class="no">${pad(n)}</span>${esc(eyebrow)}<span class="ln"></span></div><h1>${rich(s.title)}</h1>${s.sub ? `<p class="sub">${rich(s.sub)}</p>` : ''}</header>`;
@@ -91,7 +95,7 @@ export function renderSlideDoc(inp: SlideRenderInput): string {
 ${FONT_PLACEHOLDER}
 <style>${themeCss(theme, spec.meta.brand, spec.meta.stops)}
 ${BASE_CSS}${deckCss}
-${out.css || ''}</style>
+${hardenCss(out.css || '')}</style>
 </head>
 <body>
 <main class="${stageCls}"${sceneAttr}>

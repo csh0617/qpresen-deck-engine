@@ -314,3 +314,20 @@ BizRouter 특성: Claude 5.5/fable은 `thinking.type.disabled` 거부 → `reaso
 - `frontend/DeckStudio.tsx`(화면) + `frontend/deckStudioEngine.ts`(오케스트레이션)로 분리. 버튼 하나가 계획(25장 초과는 자료집→개요→상세 분할) → 아트 디렉션(프리미엄) → 장별 작성 → 이미지·렌더(내 자료 저장) → 검수(린트 → 프리미엄은 비전 검수 → 수정)까지 이어서 수행.
 - 입력: 주제·목적·톤·장수(제한 없음)·테마·품질·발표자·소속·행사·일자·청중·참고자료(텍스트 + 파일 업로드: `pdfs` 버킷 서명 URL → `extract-file-content`로 본문 추출, 파일당 1만 자, 합계 4만 자)·추가 지시. AI 이미지 체크박스 없음 — 항상 `images:true`, 어느 장에 사진을 쓸지는 엔진(사진 계획/imageTargets)이 결정.
 - 대시보드 레이아웃 안에 콘텐츠로 들어가며 앱의 색 토큰(primary=indigo, accent=violet, 사이드바 그라데이션 purple-600→blue-600)을 그대로 쓴다.
+
+## 14. 정밀 레이어 — "미세하게 비껴지거나 겹치는" 문제의 근본 원인과 구조적 해결 (2026-11-06 저녁)
+
+사용자가 실제 덱(섹터커플링 20장)에서 짚은 7곳을 DB의 원본 HTML/CSS로 역추적한 결과, 원인은 세 가지였다.
+
+| 증상 | 원인 (실제 코드) | 구조적 해결 |
+|---|---|---|
+| 표지 '출력제어' 첫 글자 위에 아이콘, 허브·노드 아이콘이 원 왼쪽 위에 | `.cv-orb svg{position:absolute;inset:0}` — 연결선 svg 를 노린 **태그 선택자**가 아이콘 `svg.ic` 까지 잡음 | `hardenCss()`: 슬라이드/덱 CSS의 `X span` `X svg` `X i` 를 `span:where(:not(.icon-circle,.pill,…))` `svg:where(:not(.ic))` 로 자동 재작성(specificity 불변) + 베이스 CSS 가드 `.stage .icon-circle{display:grid;place-items:center}` `.stage .icon-circle>svg.ic{position:static;margin:0}` |
+| 3P 콜아웃·5P 목록·19P 로켓 아이콘이 원의 왼쪽 위 | `.g3-co span{display:block;margin-top:6px}` `.q5pts span{display:block}` — 설명 span 을 노린 태그 선택자가 `span.icon-circle` 의 grid 를 block 으로 바꿈 | 위와 동일(하드닝 + 가드). 같은 덱(h22)을 새 렌더러로 다시 그리면 ICON 오류 16건 → 0건 |
+| 6P 허브→열/수소/수송 곡선이 상자에 안 닿음 | 모델이 SVG path 좌표를 손으로 적고, 상자는 CSS 가 배치 — 두 좌표계가 다름 | **`<svg data-connect="#a>#b, #a>#c \| 라벨" data-flow data-arrow data-dots data-draw>`**: 엔진이 실제 DOM rect 로 선을 긋고 등장 애니메이션 4.2초 동안·리사이즈·클래스 변화마다 다시 맞춤(fxJs `connectors()`) |
+| 9P 슬라이더 라벨 "3." / "0" | 라벨 폭 24px 에 `overflow-wrap:anywhere` | 런타임 자가치유 `fixNumWrap()`(숫자 텍스트가 두 줄이면 nowrap+min-width) + 린트 NUM_WRAP |
+| 4P 대한민국 지도가 대충 그린 다각형 | 모델이 polygon 을 즉흥으로 그림 | **`<div data-map="kr\|world" data-view=… data-highlight=… data-markers=… data-routes=…>`**: Natural Earth(퍼블릭 도메인) 실측 경계(시·도 17, 국가 176) + 도시 좌표 180곳, 마커·경로를 같은 메르카토르 투영으로 계산(engine/assets/maps.ts, scripts/make-maps.cjs) |
+| 표지·간지가 덱마다 비슷(terrain/network 반복) | 디렉터 프롬프트의 예시 조합을 모델이 그대로 복사 | 장면 9종(aurora·orbit·waves·particles·globe 추가) + 표지 변주 5종·간지 변주 4종·제목 안무 5종을 **덱 제목 해시로 섞은 기본값**을 디렉터에게 제안(주제에 맞을 때만 바꿈) + 렌더러 폴백 `suggestScenes()` |
+
+린트(QPLint)에 정밀 규칙 7개 추가: ICON_OFFCENTER(홀더 중앙 ±3px) · ICON_ABS · ICON_SIZE · ICON_OVERLAP(아이콘-글자 겹침) · ICON_MISALIGN(행 세로 중심 ±4/6px) · ICON_CLIP · NUM_WRAP · CONNECTOR_OFF(손 좌표 연결선 끝점이 어느 상자에도 안 닿음). 오류 등급은 스튜디오 1차 수정 라운드가 자동으로 고치고, 수정 프롬프트(RICH_FIX_SYSTEM)에 코드별 처방을 넣었다. 비전 검수 축 correctness 에 '정밀' 항목 추가.
+
+검증: 고의 결함 픽스처(out/lintfx) 8종 전부 검출, 정상 행 오탐 0. 이전 덱 재렌더(out/h22n) 오류 16→0. 장치 데모(out/prec) — 연결선 끝점 정확, 지도 마커 정확(제주·광주·서울·도쿄·신주). 장면 5종 헤드리스 WebGL 렌더 확인(out/scenes).

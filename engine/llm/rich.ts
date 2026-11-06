@@ -6,6 +6,7 @@ import { ICON_NAMES, rulesBlock } from './prompts.ts';
 import { exemplarsFor } from '../knowledge/exemplars.ts';
 import { directionBlock } from './direct.ts';
 import { HOUSE_STYLE } from './house.ts';
+import { SCENE_NAMES, SCENE_CATALOG } from '../renderer/scenes.ts';
 export { HOUSE_STYLE } from './house.ts';
 import type { Brief, Plan, PlanSlide, PipelineOptions } from './pipeline.ts';
 import type { Slide, DeckSpec } from '../renderer/types.ts';
@@ -99,7 +100,9 @@ ${ICON_NAMES}
 - 장면 전환 패널: 단계 목록 <ol id="steps" data-cycle="5000"><li data-step>…</li></ol> + <div data-switch="#steps" class="fade"><div>장면1</div><div>장면2</div>…</div> — 현재 단계의 패널만 .on. 공정·절차·시나리오(단계마다 다른 그림/캔버스/목업). 참고 p800-12.
 - 시뮬 러너: 캔버스/Three 시뮬은 window.SLIDE={init(){…},tick(dt,t){…}} 로 쓰면 엔진이 init 한 번 + 매 프레임 tick 을 돌린다(정적 모드: init + tick 1회, 탭 숨김 시 정지). 이 전역 하나만 허용. 참고 p800-12·p800-23·p800-15.
 - 기기 프레임: .dv-phone(--pw 폭, 안에 .scr; .tilt3d) · .dv-browser(.bar>i*3+.url, .vw) · .dv-screen(+.dv-stand) · .dv-hud(글라스 HUD 녹색 글자) · .dv-glasses(>.lens×2). 실제 제품 화면·앱·HUD 를 보여줄 때 — 안의 내용은 HTML 로 직접 그린다(스크린샷 흉내가 아니라 살아있는 UI). 참고 ir-10.
-- 3D 배경 장면(표지·간지·마무리의 cine 무대): META.scene="terrain"(지형 파도 점) | "network"(별자리 네트워크) | "cubes" | "fireflies" — 사진 백드롭 위에 은은하게 깔린다(THREE·장면 키트 자동 포함). 참고 고창 표지·간지.
+- 3D 배경 장면(표지·간지·마무리의 cine 무대): META.scene 에 ${SCENE_NAMES.join(' | ')} 중 하나 — ${Object.entries(SCENE_CATALOG).map(([k, v]) => k + '(' + v.split(' — ')[0] + ')').join(', ')}. 사진 백드롭 위에 은은하게 깔린다(THREE·장면 키트 자동 포함). 아트 디렉션이 장면을 정해 주면 그대로 쓴다.
+- 연결선: 상자와 상자를 잇는 선은 절대 좌표를 손으로 적지 말고 <svg data-connect="#a>#b, #a>#c | 라벨" data-flow data-arrow data-dots data-draw data-curve="s|line|elbow|arc" data-width="3"></svg> 를 같은 부모(position:relative) 안에 둔다 — 엔진이 실제 DOM 위치에서 선을 긋고 리사이즈·등장 애니메이션 뒤에도 다시 맞춘다. 참고 '잉여전력 → 열/수소/수송' 같은 허브-노드 도식.
+- 지도: 실제 지형이 필요한 장(확산 경로·거점·수출국)은 <div class="map" data-map="kr|world" data-view="kr|kr-south|honam|yeongnam|sudogwon|chungcheong|gangwon|jeju|eastasia|asia|europe|america|usa|mideast|oceania|africa|pacific" data-highlight="전남,제주" data-dim data-region-labels="전남,제주" data-markers="제주:제주 · 2020:rose|광주:호남 확산:amber|서울:전국|목포@34.81,126.39:목포항" data-routes="제주>광주>서울" style="height:…"></div> — Natural Earth 실측 경계(한국 17개 시·도, 세계 176개국)와 도시 좌표(국내 90여 곳·해외 90여 곳 이름으로)를 엔진이 그린다. 직접 polygon 으로 지도를 그리지 않는다.
 - 숫자가 사는 장치: 실시간 검사/진행 카운터(수율·처리량·누적 — 캔버스/Three 에서 매 tick 숫자 갱신, p800-15), 슬라이더로 움직이는 차트(ir-04), 번호 타깃 카드(ir-13).
 
 [무대 전체 장 — kind가 cover / section / closing / agenda 일 때]
@@ -109,7 +112,14 @@ ${ICON_NAMES}
 - 마무리(closing): 핵심 메시지 한 문장(60~80px) + 오늘의 숫자 3개 + 다음 행동/연락처(.contact) + '질문·토론' 안내. QR은 엔진이 제공하지 않으므로 넣지 않는다. 참고 ir-20·gochang-60.
 - 목차(agenda): 섹션 3~6개를 번호·제목·한 줄·분량(장수/분)으로, 왼쪽 큰 번호 타이포 + 오른쪽 설명 카드, 또는 세로 스텝. 각 항목 등장 리듬 120ms.
 - 이 장들에도 시그니처(사진·목업·거대 타이포)를 두되 글자 수는 적게. 발표자 이름·소속·행사·일시는 덱 메타에서 가져온다(없으면 생략).
-- cine 무대의 표지·간지·마무리에는 META.scene 으로 3D 배경 장면을 하나 고른다(표지 terrain, 간지 network 가 고창 덱의 조합; 주제에 따라 cubes·fireflies). 사진 백드롭 + 장면 + 다단 등장(제목 → 메타 → 칩 → 목차 띠)이 '살아있는 표지'를 만든다.
+- cine 무대의 표지·간지·마무리에는 META.scene 으로 3D 배경 장면을 하나 고른다 — 아트 디렉션의 scenes/표지·간지 변주/제목 안무 지시가 있으면 그대로 따른다(덱마다 다른 조합이어야 10개의 덱이 비슷해 보이지 않는다). 사진 백드롭 + 장면 + 다단 등장(제목 → 메타 → 칩 → 목차 띠)이 '살아있는 표지'를 만든다.
+
+[정밀 규칙 — 픽셀 단위로 어긋나지 않게]
+- CSS 선택자는 반드시 클래스로 쓴다. .x span / .x svg / .x i / .x div 같은 '태그만 있는 후손 선택자'는 금지 — 엔진 컴포넌트(span.icon-circle, svg.ic 아이콘, span.pill)까지 잡혀 아이콘이 원 밖으로 밀리거나 글자 위에 겹친다. 연결선·장식 svg 에는 클래스를 붙여 선택한다(.x>svg.lines).
+- 아이콘은 <i data-icon="…"></i>(엔진 Lucide 세트)만 쓰고, 원/사각 홀더(.icon-circle, .ic-sq)에 넣거나 flex 행의 첫 항목으로 둔다(align-items:center, 아이콘 flex:none, gap 으로 간격). 아이콘에 position:absolute·음수 margin 금지. 아이콘 크기는 .ic 에만 width/height.
+- 숫자·단위 라벨(3.0, 21.6%, 2,790만톤)은 white-space:nowrap 과 충분한 폭(min-width:max-content). 슬라이더 양끝 값, 축 라벨, 범례 수치가 특히 그렇다.
+- 상자 사이 연결선은 data-connect, 지도는 data-map, 차트 축·눈금은 CSS grid 로 — 손으로 계산한 px 좌표는 글자 폭·폰트 로딩에 따라 어긋난다.
+- 두 줄 글 옆의 아이콘 홀더는 글 블록의 세로 중앙(align-items:center) 또는 첫 줄 중앙(align-items:flex-start + margin-top 으로 첫 줄 높이 보정) 중 하나를 명확히.
 
 [JS 규칙]
 - 전부 document.addEventListener('deck:ready', function(e){ var STATIC=e.detail.static; … }) 안에 쓴다. 전역 변수 금지(window.DeckFX 등 덱 레이어가 제공한 것은 사용 가능). 예외: 캔버스/3D 시뮬은 window.SLIDE={init,tick} 하나로 쓴다(엔진이 루프를 돌림) — 이 경우 deck:ready 래퍼 없이 최상위에서 window.SLIDE 를 정의해도 된다.
@@ -130,7 +140,7 @@ export const RICH_OUTPUT = `[출력 형식 — 정확히 아래 4개 구분선, 
 {"title":"결론형 제목(**강조**)","sub":"근거 한 문장","source":"출처·기준연도(없으면 빈 문자열)","notes":{"t":45,"s":"발표 대본(구어체 존댓말, 80~220자)"},"signature":"이 장의 시그니처 비주얼 한 줄(≤ 40자)","head":"engine|none","stage":"light|cine","scene":"none|terrain|network|cubes|fireflies"}
  - head: engine = 엔진이 상단에 번호·eyebrow·h1 제목·sub를 그린다(콘텐츠 장 기본). none = 표지·간지·마무리·목차처럼 무대 전체를 직접 구성(제목도 HTML 안에 직접).
  - stage: cine = 시네마틱 다크 무대(토큰 전체가 다크로 반전; 표지·간지·클라이맥스에 권장), light = 기본.
- - scene(선택): "terrain" | "network" | "cubes" | "fireflies" | "none" — cine 무대 위 3D 배경 장면(표지·간지·마무리). sceneOpts(선택): {"opacity":0.8} 등.
+ - scene(선택): ${SCENE_NAMES.map(s => '"' + s + '"').join(' | ')} | "none" — cine 무대 위 3D 배경 장면(표지·간지·마무리). sceneOpts(선택): {"opacity":0.8} 등.
 ===HTML===
 (section.body 안에 들어갈 HTML. <style>·<script> 태그 금지. 외부 리소스·이미지 URL·base64 금지. 아이콘은 <i data-icon="…"></i>)
 ===CSS===
@@ -206,7 +216,7 @@ export function richSlideFromParts(p: PlanSlide, parts: RichParts, model?: strin
     id: p.id, section: p.section || undefined,
     title: String(m.title || p.title), sub: m.sub != null ? String(m.sub) : p.sub, source: m.source ? String(m.source) : undefined, notes,
     body: { type: 'custom', bare: true, rich: true, html: parts.html, css: parts.css || undefined, js: parts.js || undefined, kind: (p as any).kind, signature: m.signature || (p as any).signature, description: m.signature ? String(m.signature) : undefined,
-      noHead: m.head ? m.head === 'none' : FULL_STAGE_KINDS.has(String((p as any).kind || '')), cine: m.stage === 'cine', scene: ['terrain', 'network', 'cubes', 'fireflies', 'none'].includes(String(m.scene || '')) ? String(m.scene) : undefined, sceneOpts: m.sceneOpts && typeof m.sceneOpts === 'object' ? m.sceneOpts : undefined },
+      noHead: m.head ? m.head === 'none' : FULL_STAGE_KINDS.has(String((p as any).kind || '')), cine: m.stage === 'cine', scene: ([...SCENE_NAMES, 'none'] as string[]).includes(String(m.scene || '')) ? String(m.scene) : undefined, sceneOpts: m.sceneOpts && typeof m.sceneOpts === 'object' ? m.sceneOpts : undefined },
     ...(model ? { _model: model } as any : {}),
   } as Slide;
 }
@@ -241,6 +251,9 @@ export const RICH_FIX_SYSTEM = `당신은 Qpresen 프리미엄 덱의 슬라이�
 - STYLE_OFF(하우스 스타일 이탈: 회색 리포트 룩·작은 라벨 다발·무거운 사진): 그라데이션 숫자·틴트/유리 카드·아이콘 원·칩으로 바꾸고 글자를 키운다.
 - TEXT_ON_PHOTO(페이드되지 않은 사진 위의 글자): 글과 사진은 반대편이어야 한다. 기본 .backdrop(=.fade-l)은 왼쪽이 바탕색·사진 오른쪽 → 글은 왼쪽 열에, .fade-r는 오른쪽이 바탕색·사진 왼쪽 → 글은 오른쪽 열에. 글이 왼쪽인데 .fade-r가 붙어 있으면 .fade-r를 뺀다. 사진 쪽에 남는 글은 .card/.glass 안에 넣거나 사진 반대편으로 옮기고, 빈 사진 쪽은 사진이 채우는 것이 정상(억지로 채우지 않는다).
 - CINE_BG_LIGHT: cine 무대에서 var(--ink)는 밝은 글자색이다. .stage.cine 의 background 덮어쓰기를 지우고, 어두운 면이 필요하면 var(--bg)·var(--card).
+- ICON_OFFCENTER / ICON_ABS / ICON_SIZE / ICON_OVERLAP / ICON_MISALIGN / ICON_CLIP(아이콘 정밀): 원인은 거의 항상 '.x span{…}' '.x svg{…}' 같은 태그 선택자가 엔진 컴포넌트(span.icon-circle, svg.ic)까지 덮은 것 — 그 규칙에 클래스를 붙여 범위를 좁히고(예: .x .desc{…}, .x>svg.lines{…}), 아이콘은 홀더 안에서 margin 0·position static, 행은 align-items:center. 홀더보다 큰 아이콘은 줄인다.
+- NUM_WRAP: 숫자가 두 줄로 꺾였다 — 라벨에 white-space:nowrap 과 min-width:max-content(또는 넉넉한 고정 폭), 필요하면 글자 크기 축소.
+- CONNECTOR_OFF: 손으로 좌표를 적은 연결선이 상자에 닿지 않는다 — 그 <svg> 를 <svg data-connect="#from>#to, …" data-flow data-arrow> 로 바꾸고 양 끝 요소에 id 를 준다(좌표 계산은 엔진이 한다).
 - 사용자 코멘트는 그 지시를 따른다.
 ${DESIGN_SYSTEM}
 

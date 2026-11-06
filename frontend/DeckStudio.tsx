@@ -24,6 +24,7 @@ export default function DeckStudio() {
   const sel = jobs.find(j => j.id === selectedId) ? selectedId : (active?.id || jobs[0]?.id || null);
 
   useEffect(() => { if (!active && !queued) return; const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; }; window.addEventListener('beforeunload', h); return () => window.removeEventListener('beforeunload', h); }, [!!active, queued]);
+  useEffect(() => { deckJobs.markAllSeen(); }, [jobs]); // 이 화면을 보고 있는 동안 끝난 작업은 확인한 것으로 (사이드바 점 → 회색)
 
   const n = count || defaultSlideCount(b.purpose);
   const [tMin, tMax] = useMemo(() => estimateMinutes(n, quality), [n, quality]);

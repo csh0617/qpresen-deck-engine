@@ -1,4 +1,4 @@
-/* ===== v2 · three.js scene kit (terrain / network / cubes / fireflies) — offline, inlined ===== */
+/* ===== v3 · three.js scene kit (terrain / network / cubes / fireflies / aurora / orbit / waves / particles / globe) — offline, inlined ===== */
 window.DeckScenes=(function(){
   if(!window.THREE) return {};
   var T=window.THREE;
@@ -124,5 +124,90 @@ window.DeckScenes=(function(){
     loop(function(t){ uni.uTime.value=t; pts.rotation.y=mouse.x*.12; pts.rotation.x=mouse.y*.08; r.render(sc,cam); },opts);
   }
 
-  return {terrain:terrain,network:network,cubes:cubes,fireflies:fireflies};
+  /* ---------- aurora: slow translucent ribbons (light curtains) ---------- */
+  function aurora(box,st,o,opts){
+    var r=renderer(box), sc=new T.Scene();
+    var cam=new T.PerspectiveCamera(40,1920/1080,1,5000); cam.position.set(0,0,o.camZ||1100);
+    var c1=col(st,'--f','#22D3EE'), c2=col(st,'--f-alt','#A78BFA'); var N=o.n||5, grp=new T.Group(); sc.add(grp); var mats=[];
+    for(var i=0;i<N;i++){
+      var geo=new T.PlaneGeometry(o.w||2600,o.h||420,160,8);
+      var uni={uTime:{value:0},uSeed:{value:i*1.7},uC1:{value:c1.clone().lerp(c2,i/Math.max(1,N-1))},uC2:{value:c2},uOp:{value:(o.op!=null?o.op:.22)}};
+      var vs='uniform float uTime;uniform float uSeed;varying vec2 vUv;void main(){vUv=uv;vec3 p=position;p.y+=sin(p.x*0.0035+uTime*0.35+uSeed)*120.0+sin(p.x*0.011-uTime*0.22+uSeed*2.0)*40.0;p.z+=cos(p.x*0.004+uTime*0.3+uSeed)*160.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);}';
+      var fs='uniform vec3 uC1;uniform vec3 uC2;uniform float uOp;uniform float uTime;uniform float uSeed;varying vec2 vUv;void main(){float e=smoothstep(0.0,0.35,vUv.y)*smoothstep(1.0,0.55,vUv.y);float s=0.75+0.25*sin(vUv.x*18.0+uTime*0.9+uSeed);gl_FragColor=vec4(mix(uC1,uC2,vUv.x),e*s*uOp);}';
+      var m=new T.ShaderMaterial({uniforms:uni,vertexShader:vs,fragmentShader:fs,transparent:true,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide});
+      var mesh=new T.Mesh(geo,m); mesh.position.set(0,(i-(N-1)/2)*(o.gap||150)+(o.oy||120),-i*60); mesh.rotation.x=-(o.tilt||0.55); grp.add(mesh); mats.push(uni);
+    }
+    loop(function(t){ mats.forEach(function(u){ u.uTime.value=t; }); grp.rotation.y=mouse.x*.12; grp.rotation.x=mouse.y*.06; r.render(sc,cam); },opts);
+  }
+
+  /* ---------- orbit: tilted rings with satellites around a glowing core ---------- */
+  function orbit(box,st,o,opts){
+    var r=renderer(box), sc=new T.Scene();
+    var cam=new T.PerspectiveCamera(42,1920/1080,1,6000); cam.position.set(0,120,o.camZ||1500); cam.lookAt(0,0,0);
+    var c1=col(st,'--f','#1F4FD8'), c2=col(st,'--f-alt','#06B6D4'); var grp=new T.Group(); grp.position.set(o.ox||380,o.oy||-40,0); sc.add(grp);
+    var tex=dot(); var rings=[]; var R=o.rings||4;
+    var core=new T.Sprite(new T.SpriteMaterial({map:tex,color:c2,transparent:true,opacity:.9,blending:T.AdditiveBlending,depthWrite:false})); core.scale.set(260,260,1); grp.add(core);
+    for(var i=0;i<R;i++){ var rad=(o.r0||220)+i*(o.dr||120); var pts=[]; for(var k=0;k<=160;k++){ var a=k/160*Math.PI*2; pts.push(new T.Vector3(Math.cos(a)*rad,0,Math.sin(a)*rad)); }
+      var lg=new T.BufferGeometry().setFromPoints(pts); var lm=new T.LineBasicMaterial({color:c1.clone().lerp(c2,i/R),transparent:true,opacity:.45-i*.06,blending:T.AdditiveBlending,depthWrite:false});
+      var ring=new T.Line(lg,lm); var g=new T.Group(); g.add(ring); g.rotation.set((o.tilt||1.05)+i*.08,0,i*.5); grp.add(g);
+      var sats=[]; var ns=2+(i%3); for(var j=0;j<ns;j++){ var sp=new T.Sprite(new T.SpriteMaterial({map:tex,color:j%2?c2:c1,transparent:true,opacity:.95,blending:T.AdditiveBlending,depthWrite:false})); sp.scale.set(22+j*6,22+j*6,1); g.add(sp); sats.push({s:sp,ph:j/ns*Math.PI*2,sp:(.35-i*.05)*(j%2?1:-1)}); }
+      rings.push({g:g,rad:rad,sats:sats,i:i}); }
+    loop(function(t){ rings.forEach(function(rg){ rg.g.rotation.y=t*(.05+rg.i*.01); rg.sats.forEach(function(sa){ var a=sa.ph+t*sa.sp; sa.s.position.set(Math.cos(a)*rg.rad,0,Math.sin(a)*rg.rad); }); });
+      core.material.opacity=.75+Math.sin(t*1.4)*.15; grp.rotation.y=mouse.x*.3; grp.rotation.x=mouse.y*.15; r.render(sc,cam); },opts);
+  }
+
+  /* ---------- waves: wireframe sea — rolling line field seen from the shore ---------- */
+  function waves(box,st,o,opts){
+    var r=renderer(box), sc=new T.Scene();
+    var cam=new T.PerspectiveCamera(48,1920/1080,1,8000); cam.position.set(0,(o.camY||240),(o.camZ||900)); cam.lookAt(0,-140,-600);
+    var c1=col(st,'--f','#0EA5E9'), c2=col(st,'--f-alt','#8B5CF6');
+    var W=o.w||4200, D=o.d||3200, nx=o.nx||70, nz=o.nz||44; var pos=new Float32Array(nx*nz*3); var idx=[]; 
+    for(var z=0;z<nz;z++) for(var x=0;x<nx;x++){ var i=(z*nx+x)*3; pos[i]=(x/(nx-1)-.5)*W; pos[i+1]=0; pos[i+2]=-(z/(nz-1))*D; if(x<nx-1) idx.push(z*nx+x,z*nx+x+1); if(z<nz-1&&(x%3===0)) idx.push(z*nx+x,(z+1)*nx+x); }
+    var geo=new T.BufferGeometry(); geo.setAttribute('position',new T.BufferAttribute(pos,3)); geo.setIndex(idx);
+    var uni={uTime:{value:0},uC1:{value:c1},uC2:{value:c2},uAmp:{value:o.amp||70},uOp:{value:o.op!=null?o.op:.55}};
+    var vs='uniform float uTime;uniform float uAmp;varying float vA;varying float vH;void main(){vec3 p=position;float h=sin(p.x*0.004+uTime*0.9)*0.5+sin(p.z*0.006-uTime*0.7)*0.8+sin((p.x+p.z)*0.0025+uTime*0.5)*0.6;p.y=h*uAmp;vH=clamp((h+1.9)/3.8,0.0,1.0);vec4 mv=modelViewMatrix*vec4(p,1.0);vA=clamp(1.0-(-mv.z-300.0)/3200.0,0.0,1.0);gl_Position=projectionMatrix*mv;}';
+    var fs='uniform vec3 uC1;uniform vec3 uC2;uniform float uOp;varying float vA;varying float vH;void main(){gl_FragColor=vec4(mix(uC1,uC2,vH),vA*uOp*(0.35+vH*0.65));}';
+    var mat=new T.ShaderMaterial({uniforms:uni,vertexShader:vs,fragmentShader:fs,transparent:true,depthWrite:false,blending:T.AdditiveBlending});
+    var lines=new T.LineSegments(geo,mat); lines.position.y=o.y||-200; sc.add(lines);
+    loop(function(t){ uni.uTime.value=t; cam.position.x+=((mouse.x*80)-cam.position.x)*.04; cam.lookAt(0,-140,-600); r.render(sc,cam); },opts);
+  }
+
+  /* ---------- particles: data streams flowing along curved lanes ---------- */
+  function particles(box,st,o,opts){
+    var r=renderer(box), sc=new T.Scene();
+    var cam=new T.PerspectiveCamera(45,1920/1080,1,5000); cam.position.set(0,0,o.camZ||1100);
+    var c1=col(st,'--f','#22C55E'), c2=col(st,'--f-alt','#06B6D4'); var L=o.lanes||7, PER=o.per||90, N=L*PER;
+    var pos=new Float32Array(N*3), aT=new Float32Array(N), aLane=new Float32Array(N), aSz=new Float32Array(N);
+    for(var i=0;i<N;i++){ aT[i]=Math.random(); aLane[i]=Math.floor(i/PER); aSz[i]=4+Math.random()*10; }
+    var g=new T.BufferGeometry(); g.setAttribute('position',new T.BufferAttribute(pos,3)); g.setAttribute('aT',new T.BufferAttribute(aT,1)); g.setAttribute('aLane',new T.BufferAttribute(aLane,1)); g.setAttribute('aSz',new T.BufferAttribute(aSz,1));
+    var uni={uTime:{value:0},uTex:{value:dot()},uC1:{value:c1},uC2:{value:c2},uPR:{value:r.getPixelRatio()},uL:{value:L},uSpeed:{value:o.speed||.09},uOp:{value:o.op!=null?o.op:.9}};
+    var vs='attribute float aT;attribute float aLane;attribute float aSz;uniform float uTime;uniform float uPR;uniform float uL;uniform float uSpeed;varying float vK;varying float vA;'+
+      'void main(){float t=fract(aT+uTime*uSpeed*(0.6+0.4*aLane/uL));float lane=(aLane-(uL-1.0)/2.0);float x=(t-0.5)*2600.0;float y=lane*110.0+sin(t*6.283+lane)*90.0+sin(x*0.004+uTime*0.6)*40.0;float z=cos(t*6.283*0.5+lane*1.3)*220.0;vK=aLane/uL;vA=sin(t*3.1416);vec4 mv=modelViewMatrix*vec4(x,y,z,1.0);gl_PointSize=aSz*(900.0/-mv.z)*uPR;gl_Position=projectionMatrix*mv;}';
+    var fs='uniform sampler2D uTex;uniform vec3 uC1;uniform vec3 uC2;uniform float uOp;varying float vK;varying float vA;void main(){vec4 t=texture2D(uTex,gl_PointCoord);gl_FragColor=vec4(mix(uC1,uC2,vK),t.a*vA*uOp);}';
+    var m=new T.ShaderMaterial({uniforms:uni,vertexShader:vs,fragmentShader:fs,transparent:true,depthWrite:false,blending:T.AdditiveBlending});
+    var pts=new T.Points(g,m); pts.position.set(o.ox||0,o.oy||-60,0); pts.rotation.z=o.rot||-.12; sc.add(pts);
+    loop(function(t){ uni.uTime.value=t; pts.rotation.y=mouse.x*.15; pts.rotation.x=mouse.y*.1; r.render(sc,cam); },opts);
+  }
+
+  /* ---------- globe: point sphere with arcs (global reach) ---------- */
+  function globe(box,st,o,opts){
+    var r=renderer(box), sc=new T.Scene();
+    var cam=new T.PerspectiveCamera(40,1920/1080,1,6000); cam.position.set(0,0,o.camZ||1500);
+    var c1=col(st,'--f','#38BDF8'), c2=col(st,'--f-alt','#A78BFA'); var R=o.r||420, N=o.n||2600; var grp=new T.Group(); grp.position.set(o.ox||430,o.oy||-60,0); sc.add(grp);
+    var pos=new Float32Array(N*3), sz=new Float32Array(N); var phi=Math.PI*(3-Math.sqrt(5));
+    for(var i=0;i<N;i++){ var y=1-(i/(N-1))*2; var rad=Math.sqrt(1-y*y); var th=phi*i; pos[i*3]=Math.cos(th)*rad*R; pos[i*3+1]=y*R; pos[i*3+2]=Math.sin(th)*rad*R; sz[i]=3+Math.random()*4; }
+    var g=new T.BufferGeometry(); g.setAttribute('position',new T.BufferAttribute(pos,3)); g.setAttribute('aSz',new T.BufferAttribute(sz,1));
+    var uni={uTex:{value:dot()},uC1:{value:c1},uC2:{value:c2},uPR:{value:r.getPixelRatio()},uOp:{value:o.op!=null?o.op:.85}};
+    var pm=new T.ShaderMaterial({uniforms:uni,transparent:true,depthWrite:false,blending:T.AdditiveBlending,
+      vertexShader:'attribute float aSz;uniform float uPR;varying float vK;varying float vF;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vK=(position.y/420.0+1.0)*0.5;vF=clamp((mv.z+1500.0+420.0)/840.0,0.0,1.0);gl_PointSize=aSz*(1500.0/-mv.z)*uPR;gl_Position=projectionMatrix*mv;}',
+      fragmentShader:'uniform sampler2D uTex;uniform vec3 uC1;uniform vec3 uC2;uniform float uOp;varying float vK;varying float vF;void main(){vec4 t=texture2D(uTex,gl_PointCoord);gl_FragColor=vec4(mix(uC1,uC2,vK),t.a*uOp*(0.25+0.75*vF));}'});
+    grp.add(new T.Points(g,pm));
+    var arcs=[]; var A=o.arcs||7;
+    function rnd(){ var i=Math.floor(Math.random()*N); return new T.Vector3(pos[i*3],pos[i*3+1],pos[i*3+2]); }
+    for(var k=0;k<A;k++){ var a=rnd(), b=rnd(); var mid=a.clone().add(b).multiplyScalar(.5).normalize().multiplyScalar(R*(1.25+Math.random()*.35)); var curve=new T.QuadraticBezierCurve3(a,mid,b); var cp=curve.getPoints(60);
+      var lg=new T.BufferGeometry().setFromPoints(cp); var lm=new T.LineBasicMaterial({color:k%2?c2:c1,transparent:true,opacity:.0,blending:T.AdditiveBlending,depthWrite:false}); var ln=new T.Line(lg,lm); grp.add(ln); arcs.push({l:ln,ph:Math.random()*8}); }
+    loop(function(t){ grp.rotation.y=t*(o.spin||.08)+mouse.x*.3; grp.rotation.x=.3+mouse.y*.15; arcs.forEach(function(ar){ ar.l.material.opacity=Math.max(0,Math.sin(t*.6+ar.ph))*.8; }); r.render(sc,cam); },opts);
+  }
+
+  return {terrain:terrain,network:network,cubes:cubes,fireflies:fireflies,aurora:aurora,orbit:orbit,waves:waves,particles:particles,globe:globe};
 })();

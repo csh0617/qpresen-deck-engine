@@ -9,6 +9,11 @@ h1,h2,h3,h4,p,ul,ol,figure{margin:0}ul,ol{padding:0;list-style:none}
 strong,b{font-weight:700;color:var(--ink)}em{font-style:normal}
 img,svg{display:block;max-width:100%}
 svg.ic{width:1em;height:1em;display:inline-block;vertical-align:-.15em;flex:none}
+/* precision guards: engine icon holders keep centring/flow even when slide CSS uses broad .x span / .x svg selectors */
+.stage .icon-circle,.stage .ic-sq{display:grid;place-items:center;flex:none;position:relative;line-height:0}
+.stage .icon-circle>svg.ic,.stage .ic-sq>svg.ic{position:static;inset:auto;margin:0;transform:none;display:block}
+.stage svg.ic{overflow:visible}
+.nowrap,.num,.big,.mega,.kpi .v,[data-count]{white-space:nowrap}
 a{color:inherit}
 
 /* ---- stage ---- */
@@ -150,6 +155,13 @@ html.static .deck-nav{display:none}
 html.js [data-reveal]{opacity:0;translate:0 26px;filter:blur(6px);transition:opacity .85s var(--ease),translate .85s var(--ease),scale .85s var(--ease),filter .85s var(--ease);transition-delay:var(--d,0ms)}
 html.js [data-reveal=left]{translate:-30px 0}html.js [data-reveal=right]{translate:30px 0}html.js [data-reveal=scale],html.js [data-reveal=zoom]{translate:0 0;scale:.9}html.js [data-reveal=fade]{translate:0 0}html.js [data-reveal=up]{translate:0 40px}
 html.js [data-reveal].in,html.js.reveal-done [data-reveal]{opacity:1;translate:0 0;scale:1;filter:none}
+/* title choreography variants: data-reveal=mask (wipe up from a hidden band), data-split (per-character cascade) */
+html.js [data-reveal=mask]{translate:0 0;filter:none;clip-path:inset(0 0 100% 0);transition:clip-path 1s var(--ease-out),opacity .4s var(--ease);transition-delay:var(--d,0ms)}
+html.js [data-reveal=mask].in,html.js.reveal-done [data-reveal=mask]{clip-path:inset(0 0 -10% 0)}
+html.js [data-split] .ch{display:inline-block;opacity:0;translate:0 .35em;filter:blur(4px);transition:opacity .55s var(--ease-out),translate .55s var(--ease-out),filter .55s var(--ease-out);transition-delay:calc(var(--d,0ms) + var(--i,0) * 55ms)}
+html.js [data-split].in .ch,html.js.reveal-done [data-split] .ch{opacity:1;translate:0 0;filter:none}
+html.js [data-split]{opacity:1!important;translate:0 0!important;filter:none!important;clip-path:none!important}
+html.static [data-split] .ch{opacity:1!important;translate:0 0!important;filter:none!important}
 html.js:not(.static) [data-bar]:not(.in)>i{width:0}
 html.js:not(.static) [data-draw]{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);transition:stroke-dashoffset 1.3s var(--ease);transition-delay:var(--d,0ms)}
 html.js [data-draw].in,html.js.reveal-done [data-draw]{stroke-dashoffset:0}

@@ -7,7 +7,7 @@ export type JobStatus = 'queued' | 'running' | 'qa' | 'done' | 'error' | 'cancel
 export interface DeckJob {
   id: string; brief: Brief; quality: Quality; status: JobStatus; title: string;
   prog?: Progress; qa?: QaState; result?: any; loading?: boolean;
-  jobId?: string; pageCount?: number; fileId?: string | null; images?: number; error?: string; note?: string;
+  jobId?: string; pageCount?: number; fileId?: string | null; images?: number; error?: string; note?: string; seen?: boolean;
   createdAt: number; startedAt?: number; finishedAt?: number;
 }
 const LS_KEY = 'qp-deck-jobs';
@@ -40,6 +40,8 @@ class DeckJobStore {
   }
   remove(id: string) { const j = this.get(id); if (!j) return; if (j.status === 'running' || j.status === 'qa') this.cancel(id); this.jobs = this.jobs.filter(x => x.id !== id); this.emit(); }
   retry(id: string) { const j = this.get(id); if (!j) return; this.jobs = this.jobs.filter(x => x.id !== id); this.add(j.brief, j.quality); }
+  /** 사용자가 스튜디오 화면을 보고 있으면 끝난 작업은 '확인함'으로 — 사이드바 점이 초록 깜빡임에서 회색으로 돌아간다 */
+  markAllSeen() { let changed = false; for (const j of this.jobs) if ((j.status === 'done' || j.status === 'error' || j.status === 'cancelled') && !j.seen) { j.seen = true; changed = true; } if (changed) this.emit(); }
   clearFinished() { this.jobs = this.jobs.filter(j => j.status === 'queued' || j.status === 'running' || j.status === 'qa'); this.emit(); }
   patch(id: string, p: Partial<DeckJob>) { const j = this.get(id); if (!j) return; Object.assign(j, p); this.emit(); }
   /** 완료 작업의 미리보기를 다시 불러옵니다(새로고침 뒤 등). */
