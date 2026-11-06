@@ -8,3 +8,5 @@ export { fillSlideRich, fixSlideRich, richSystem, parseRich, sanitizeRich, kindF
 export { EXEMPLARS, exemplarsFor } from '../engine/knowledge/exemplars.ts';
 export { directDeck, applyDirection, directionBlock } from '../engine/llm/direct.ts';
 export { writeDossier } from '../engine/llm/dossier.ts';
+export { renderDeck, qpresenBundle, firstSlidePayload, fontCss } from '../engine/renderer/index.ts';
+export { LINT_JS } from '../engine/renderer/lintJs.ts';
