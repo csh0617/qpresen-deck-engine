@@ -50,6 +50,7 @@ bash scripts/release.sh "변경 요약"      # 커밋 → index.remote.ts SHA �
 - 화면: 대시보드 안 '동적 슬라이드 생성'. 입력 후 **발표자료 만들기** 한 번 → 완성본이 내 자료에 저장. 진행 카드에 단계·경과 시간·예상 시간이 보인다.
 - 참고자료 파일 업로드는 `pdfs/{uid}/deck-studio/refs/`에 올라가고 `extract-file-content`가 본문을 뽑는다(스캔 PDF 불가).
 - 크레딧 차감은 아직 없다(가격 규칙 결정 필요 — `credit-operations` 함수에 연결하면 됨).
+- v3.1(2026-11-06 오후): 작업 대기열 `frontend/deckJobs.ts`(React 밖 싱글톤) — 여러 건을 등록하면 순서대로 처리, 중지 버튼(AbortController → 직접 fetch 호출을 끊음; 이미 서버에 들어간 LLM 호출은 끝까지 돌지만 다음 단계는 시작하지 않음), 탭 이동해도 진행 유지, 검수는 deckJobs가 띄우는 숨김 iframe에서 수행, 목록은 localStorage `qp-deck-jobs`(새로고침 시 진행 중이던 작업은 '중단'으로 표시, 완료 작업은 `render register:false images:false`로 미리보기 재로드).
 
 ## 6. 다음 품질 후보
 1. 인터랙티브 장(슬라이더·토글 비교·라이브 데모 목업) — 레퍼런스 덱의 '만져보는' 요소
