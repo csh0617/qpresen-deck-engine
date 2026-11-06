@@ -131,7 +131,7 @@ export default function DeckStudio() {
         </section>
 
         {/* ───── 진행 · 결과 ───── */}
-        <section className="space-y-5 min-w-0 xl:sticky xl:top-6">
+        <section className={`space-y-5 min-w-0 ${phase !== 'done' ? 'xl:sticky xl:top-6' : ''}`}>
           {phase === 'idle' && <div className={`${card} p-6 sm:p-8`}>
             <div className="text-[11px] font-bold tracking-wider text-foreground-400 uppercase">이렇게 만들어집니다</div>
             <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">

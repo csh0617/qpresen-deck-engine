@@ -50,7 +50,7 @@ export async function extractReference(file: File, onStatus: (p: Partial<RefFile
   }
   const { data: { user } } = await supabase.auth.getUser(); if (!user) throw new Error('로그인이 필요합니다');
   onStatus({ status: 'uploading' });
-  const path = `${user.id}/deck-studio/refs/${Date.now()}-${file.name.replace(/[^\w.\-가-힣]+/g, '_')}`;
+  const path = `${user.id}/deck-studio/refs/${Date.now()}-${file.name.replace(/[^A-Za-z0-9._-]+/g, '_')}`;
   const up = await supabase.storage.from('pdfs').upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
   if (up.error) throw new Error('업로드 실패: ' + up.error.message);
   const { data: su, error: se } = await supabase.storage.from('pdfs').createSignedUrl(path, 3600);
