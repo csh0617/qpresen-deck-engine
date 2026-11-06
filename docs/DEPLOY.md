@@ -62,3 +62,9 @@ Readdy 채팅에 `frontend/DeckStudio.tsx`를 첨부하고 `Readdy_지시문.txt
 - 프리미엄 2.0 액션: `plan`(+자료집, `dossier:false`로 끔) → `direct`(아트 디렉션, `imageBudget`) → `fill` → `render`(`maxImages` 기본 10) → `review`(`image` dataURL + `lint`) → `fix`(`source:'vision'|'lint'`). 함수가 GitHub에서 `engine/assets/libs.ts`(730KB: GSAP·Three·modern-screenshot)를 함께 받으므로 콜드 스타트가 1~2초 늘어난다.
 - **프리미엄 2.1 (2026-11-05 저녁, 릴리스 `d4d1b65` / 엔진 `cfc84c3`)**: `direct`가 덱의 브랜드 그라데이션(`brandStops`)·강조색을 고르고 `plan.meta.stops/brand`로 저장(렌더 토큰 `--qg/--q1~3/--brand`). `review`는 `motion`(플레이어 `lintAll()` 결과의 `motion` 필드)을 받아 `dynamics` 축을 채점하고, 어두운(cine) 장은 의도된 다크 무대로 평가. 린트 코드 추가: `MOTION_LOW`·`TEXT_ON_PHOTO`·`CINE_BG_LIGHT`. 스튜디오(DeckStudio.tsx)는 검수 요청에 `motion`을 같이 보내고 디렉션 카드에 그라데이션 스와치를 그린다. 배포 절차는 동일(편집기 한 줄 → Deploy updates).
 - **대형 덱(25장 초과) 플랜 분할 (2026-11-05 16:50)**: 50장 프리미엄 요청이 플랜 단계에서 150초 한도(504)에 걸린 뒤 추가. `plan`에 `phase` 파라미터: `dossier`(자료집만, jobId 생성) → `outline`(개요: 섹션·장 제목·유형·kind) → `detail`(`ids` 묶음의 sub/content_hints/visual_hint/signature, 병렬 가능). 스튜디오는 예상 장수 > 24면 이 순서로 호출(상세는 8장씩 3병렬), 그 이하는 기존 단일 요청. 실측(50장·opus): 자료집 50초 → 개요 41초 → 상세 7묶음 각 17초(총 40초). 504는 스튜디오에서 "엔진 응답 시간 초과 — 장수를 줄이거나 재시도" 메시지로 바뀐다.
+
+## 7. 2026-11-06 릴리스 (프리미엄 2.2 + 스튜디오 v3)
+- 엔진 릴리스 `0da2bad`(엔진 커밋 `b17626e`): 장치 라이브러리, 브라우저 번들에 `renderDeck`/`LINT_JS` export. 편집기 한 줄:
+  `import 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/0da2bad9e04f2ef841be285481094b44afbdd984/supabase/functions/deck-engine/index.remote.ts';`
+- 스튜디오 v3는 `direct`/`review`/`plan phase` 액션을 쓰므로 **함수 배포(v8+)가 먼저**, Readdy 퍼블리시가 그 다음.
+- 대시보드 버그(엔진과 무관, Readdy 앱): 내 슬라이드/교육자료 저장이 스토리지 업로드를 생략해 다운로드 400 · 공유 페이지에 html 뷰어 분기 없음 → Readdy 지시문 v3(`outputs/Readdy_지시문_v3.txt`)로 수정 요청.

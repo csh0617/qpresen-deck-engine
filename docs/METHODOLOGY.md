@@ -290,3 +290,27 @@ BizRouter 특성: Claude 5.5/fable은 `thinking.type.disabled` 거부 → `reaso
 
 ### 11-1. 운영에서 바로 나온 이슈 — 50장 프리미엄의 504
 사용자가 60분·50장 프리미엄을 요청하자 `plan` 요청이 150초(Edge Function 벽시계 한도)에서 504로 끊겼다(로그: OPTIONS 뒤 정확히 150초). 20장 플랜이 opus로 46~57초인데 50장은 2.5배가 넘고, 자료가 없으면 자료집(50초)까지 같은 요청에서 돌았기 때문. 해결은 "한 요청 = LLM 호출 하나"로 쪼개는 것(채우기 단계와 같은 패턴): 자료집 → 개요(제목·유형만, 50장 41초) → 상세(8장씩 병렬, 각 17초). 교훈: 한도가 있는 런타임에서는 출력 길이가 입력 장수에 비례하는 단계를 반드시 분할 가능하게 설계할 것, 그리고 런타임 오류는 사용자가 다음 행동을 알 수 있는 문장으로 바꿀 것("non-2xx"는 아무것도 말해주지 않는다).
+
+## 12. 프리미엄 2.2 — 장치 라이브러리 (2026-11-06)
+
+세 레퍼런스 덱의 "멋진 순간"을 모델이 매번 새로 발명하지 않도록, 엔진이 **장치(device)** 로 제공한다. 모델은 장치를 조립하고 내용·색만 채운다.
+
+| 레퍼런스 순간 | 장치 | 구현 |
+|---|---|---|
+| IR 6장 화면 쇼케이스(돌아가며 보여주기) | `.carousel[data-carousel]` + `.ci` | fxJs `carousel()` · fan/stack 위치, `.flash`, `.car-dots` |
+| IR 8장 번역 전환 | `[data-words]` 타이핑/페이드, `[data-switch]` 패널 전환 | fxJs `words()`, `switches()` |
+| IR 10장 스마트글라스 인포그래픽 | `.dv-glasses/.dv-hud` + `[data-wave]`, `.packet` | fxCss 기기 프레임, fxJs `waves()`, `packets()` |
+| 800조 12장 공정 스테퍼 / 15장 웨이퍼 / 23장 HBM 해부 | `window.SLIDE` 러너(캔버스 시뮬 + 콜아웃) · Three.js 제품 해부 | fxJs `slideRunner()`, libs on demand (THREE) |
+| 고창 표지·간지 3D 장면 | `META.scene = terrain|network|cubes|fireflies` → `<main data-scene>` | engine/assets/libs/scenes.js (DeckScenes) + fxJs `scene()` |
+
+- 아트 디렉터가 `scenes: {cover, section, closing}` 과 `brandStops` 를 정하고(direct.ts), 렌더러가 cine 무대일 때만 장면을 붙인다(slide.ts).
+- 계획 단계의 kind에 `product`(제품·구조·해부) 가 추가됐고, 예시 은행(exemplars)에 IR 6/8/10, 800조 12/15/23 여섯 장이 들어갔다(kind별 2장 선택).
+- 린트 모션 인벤토리가 carousel/words/packets/switch/scene/canvas 를 "살아있는 요소"로 센다.
+
+검증(2026-11-06, 6장 광융합 패키징 프리미엄 실생성): 표지 terrain 장면+카운터, 간지 network 장면, 캔버스 6단계 공정 스테퍼, Three.js CPO 분해도(라벨), HUD 프레임+wave, 웨이퍼 맵 캔버스 — JS 오류 0, 린트 오류는 HUD 장 1곳(오른쪽 패널 넘침 → 자동 수정 라운드 대상). 검증은 브라우저 탭 안에서 `QE.renderDeck` + `QE.LINT_JS` 로 수행(컨테이너로 옮기지 않아도 됨, dist/engine-browser.js 가 둘 다 export).
+
+## 13. 스튜디오 v3 — 입력 → 완성 한 번에 (2026-11-06)
+
+- `frontend/DeckStudio.tsx`(화면) + `frontend/deckStudioEngine.ts`(오케스트레이션)로 분리. 버튼 하나가 계획(25장 초과는 자료집→개요→상세 분할) → 아트 디렉션(프리미엄) → 장별 작성 → 이미지·렌더(내 자료 저장) → 검수(린트 → 프리미엄은 비전 검수 → 수정)까지 이어서 수행.
+- 입력: 주제·목적·톤·장수(제한 없음)·테마·품질·발표자·소속·행사·일자·청중·참고자료(텍스트 + 파일 업로드: `pdfs` 버킷 서명 URL → `extract-file-content`로 본문 추출, 파일당 1만 자, 합계 4만 자)·추가 지시. AI 이미지 체크박스 없음 — 항상 `images:true`, 어느 장에 사진을 쓸지는 엔진(사진 계획/imageTargets)이 결정.
+- 대시보드 레이아웃 안에 콘텐츠로 들어가며 앱의 색 토큰(primary=indigo, accent=violet, 사이드바 그라데이션 purple-600→blue-600)을 그대로 쓴다.
