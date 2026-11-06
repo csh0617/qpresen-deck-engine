@@ -66,5 +66,6 @@ Readdy 채팅에 `frontend/DeckStudio.tsx`를 첨부하고 `Readdy_지시문.txt
 ## 7. 2026-11-06 릴리스 (프리미엄 2.2 + 스튜디오 v3)
 - 엔진 릴리스 `0da2bad`(엔진 커밋 `b17626e`): 장치 라이브러리, 브라우저 번들에 `renderDeck`/`LINT_JS` export. 편집기 한 줄:
   `import 'https://raw.githubusercontent.com/csh0617/qpresen-deck-engine/0da2bad9e04f2ef841be285481094b44afbdd984/supabase/functions/deck-engine/index.remote.ts';`
-- 스튜디오 v3는 `direct`/`review`/`plan phase` 액션을 쓰므로 **함수 배포(v8+)가 먼저**, Readdy 퍼블리시가 그 다음.
+- 스튜디오 v3는 `direct`/`review`/`plan phase` 액션을 쓰므로 **함수 배포가 먼저**, Readdy 퍼블리시가 그 다음.
+- 2026-11-06 03:36 UTC 기준 라이브: deck-engine **v10** (= 릴리스 0da2bad), Readdy **Live Version 2167** (스튜디오 v3 + 대시보드 레이아웃 + 다운로드/공유 수정). 배포 직후 `action:'models'` 호출로 부팅 확인(401 AUTH_REQUIRED = 핸들러 정상 도달).
 - 대시보드 버그(엔진과 무관, Readdy 앱): 내 슬라이드/교육자료 저장이 스토리지 업로드를 생략해 다운로드 400 · 공유 페이지에 html 뷰어 분기 없음 → Readdy 지시문 v3(`outputs/Readdy_지시문_v3.txt`)로 수정 요청.
