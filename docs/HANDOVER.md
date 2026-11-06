@@ -51,6 +51,8 @@ bash scripts/release.sh "변경 요약"      # 커밋 → index.remote.ts SHA �
 - 참고자료 파일 업로드는 `pdfs/{uid}/deck-studio/refs/`에 올라가고 `extract-file-content`가 본문을 뽑는다(스캔 PDF 불가).
 - 크레딧 차감은 아직 없다(가격 규칙 결정 필요 — `credit-operations` 함수에 연결하면 됨).
 - v3.1(2026-11-06 오후): 작업 대기열 `frontend/deckJobs.ts`(React 밖 싱글톤) — 여러 건을 등록하면 순서대로 처리, 중지 버튼(AbortController → 직접 fetch 호출을 끊음; 이미 서버에 들어간 LLM 호출은 끝까지 돌지만 다음 단계는 시작하지 않음), 탭 이동해도 진행 유지, 검수는 deckJobs가 띄우는 숨김 iframe에서 수행, 목록은 localStorage `qp-deck-jobs`(새로고침 시 진행 중이던 작업은 '중단'으로 표시, 완료 작업은 `render register:false images:false`로 미리보기 재로드).
+- v3.2(2026-11-06 저녁, Readdy Live 2170): 사이드바 '동적 슬라이드 생성' 점이 `frontend/DeckStatusDot.tsx`로 바뀜 — 만드는 중/대기 = 노랑 깜빡임, 완성 후 아직 안 봄 = 초록 깜빡임, 오류 미확인 = 빨강, 그 외 = 회색. 스튜디오 화면을 열면 `deckJobs.markAllSeen()`이 돌아 회색으로 돌아간다. '내 슬라이드' 메뉴와 페이지(`my-slides`)는 제거(저장된 파일·대시보드 목록은 그대로).
+- 엔진 정밀 레이어(2.3, 함수 v11): 생성된 CSS의 `span/svg/i` 태그 선택자를 `:where(:not(엔진 부품))`로 자동 재작성, `.icon-circle/.ic-sq` 중앙 정렬 보호, 숫자 라벨 줄바꿈 자가 치유(`fixNumWrap`), `data-connect` 실측 연결선, `data-map` 실측 지도(한국 17개 시·도, 세계 176개국), 표지/간지 장면 9종을 덱 제목 해시로 다르게 조합, 정밀 린트 8종(`ICON_*`, `NUM_WRAP`, `CONNECTOR_OFF`). 상세는 `docs/METHODOLOGY.md` §12~§14.
 
 ## 6. 다음 품질 후보
 1. 인터랙티브 장(슬라이더·토글 비교·라이브 데모 목업) — 레퍼런스 덱의 '만져보는' 요소
