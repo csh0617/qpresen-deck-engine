@@ -449,4 +449,27 @@ html.static .wave i{animation:none}
 .floaty{animation:floaty 5s ease-in-out infinite}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 html.static .floaty,html.static .live::before{animation:none}
+
+/* ---- connectors (data-connect) ---- */
+svg.connect{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2}
+svg.connect .cn-flow{animation:cn-flow 1.1s linear infinite}
+@keyframes cn-flow{to{stroke-dashoffset:-19}}
+svg.connect .cn-label{font-size:14px;font-weight:700;fill:var(--ink);font-family:var(--font)}
+svg.connect .cn-lbg{fill:var(--card,#fff);stroke:var(--line);stroke-width:1}
+.stage.cine svg.connect .cn-lbg{fill:rgba(10,18,36,.85);stroke:rgba(255,255,255,.18)}.stage.cine svg.connect .cn-label{fill:#fff}
+
+/* ---- maps (data-map) ---- */
+.map{position:relative;display:block}.map svg.mp{width:100%;height:100%;display:block;overflow:hidden}
+.mp-r{fill:var(--map-land,#E3E9F3);stroke:var(--map-line,#fff);stroke-width:1.2;stroke-linejoin:round;transition:fill .5s}
+.mp-r.hi{fill:color-mix(in srgb,var(--f) 58%,#fff)}.mp-r.dim{opacity:.55}
+.stage.cine .mp-r{fill:rgba(255,255,255,.1);stroke:rgba(255,255,255,.22)}.stage.cine .mp-r.hi{fill:color-mix(in srgb,var(--f) 70%,transparent)}
+.mp-rl{font-family:var(--font);font-weight:700;font-size:13px;fill:var(--muted);pointer-events:none}.mp-rl.hi{fill:var(--f-ink)}.stage.cine .mp-rl{fill:rgba(255,255,255,.7)}.stage.cine .mp-rl.hi{fill:#fff}
+.mp-m .mp-dot{fill:var(--f);stroke:#fff;stroke-width:2}.mp-m .mp-ring{fill:var(--f);opacity:.25;transform-origin:center;transform-box:fill-box;animation:mp-pulse 2.2s ease-out infinite}
+.mp-m.f-rose .mp-dot,.mp-m.f-rose .mp-ring{fill:var(--rose)}.mp-m.f-amber .mp-dot,.mp-m.f-amber .mp-ring{fill:var(--amber)}.mp-m.f-teal .mp-dot,.mp-m.f-teal .mp-ring{fill:var(--teal)}.mp-m.f-violet .mp-dot,.mp-m.f-violet .mp-ring{fill:var(--violet)}.mp-m.f-azure .mp-dot,.mp-m.f-azure .mp-ring{fill:var(--azure)}.mp-m.f-ok .mp-dot,.mp-m.f-ok .mp-ring{fill:var(--ok)}.mp-m.f-navy .mp-dot,.mp-m.f-navy .mp-ring{fill:var(--navy)}
+.mp-m .mp-lb{font-family:var(--font);font-weight:800;fill:var(--ink)}.mp-m .mp-lbg{fill:var(--card,#fff);stroke:var(--line);stroke-width:1}
+.stage.cine .mp-m .mp-lb{fill:#fff}.stage.cine .mp-m .mp-lbg{fill:rgba(10,18,36,.82);stroke:rgba(255,255,255,.18)}
+.mp-m.pre{opacity:0;transform:translate(0,6px)}.mp-m{transition:opacity .5s,transform .5s}
+.mp-route{fill:none;stroke:var(--f);stroke-linecap:round;opacity:.9}.mp-route.flow{stroke-dasharray:10 9;animation:cn-flow 1.1s linear infinite}
+.stage.cine .mp-route{stroke:#fff;opacity:.75}
+@keyframes mp-pulse{0%{transform:scale(.6);opacity:.45}100%{transform:scale(1.9);opacity:0}}
 `;

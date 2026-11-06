@@ -77,7 +77,12 @@ export const BASE_JS = `
     var iv=setInterval(function(){ var n=Math.min(text.length,Math.floor((Date.now()-t0)/sp)); el.textContent=text.slice(0,n); if(n>=text.length){ clearInterval(iv); setTimeout(function(){el.classList.remove('caret')},900); } },20);
   }
   /* reveal orchestration */
+  /* data-split: wrap each character (keeping <em>/<b> styling) so the title can cascade in letter by letter */
+  function splitChars(){ Array.prototype.slice.call(document.querySelectorAll('[data-split]')).forEach(function(el){ if(el.__split) return; el.__split=true; var i=0;
+    function walk(node){ Array.prototype.slice.call(node.childNodes).forEach(function(c){ if(c.nodeType===3){ var frag=document.createDocumentFragment(); var txt=c.textContent; for(var k=0;k<txt.length;k++){ var ch=txt[k]; if(ch===' '||ch==='\\n'){ frag.appendChild(document.createTextNode(ch)); continue; } var sp=document.createElement('span'); sp.className='ch'; sp.textContent=ch; sp.style.setProperty('--i',String(i++)); frag.appendChild(sp); } node.replaceChild(frag,c); } else if(c.nodeType===1&&c.tagName!=='BR'&&c.tagName!=='SVG'){ var bc=getComputedStyle(c); if(bc.webkitBackgroundClip==='text'||bc.backgroundClip==='text'){ c.classList.add('ch'); c.style.setProperty('--i',String(i)); i+=Math.max(1,Math.round((c.textContent||'').replace(/\s/g,'').length*0.6)); } else walk(c); } }); }
+    walk(el); if(!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal','fade'); }); }
   function reveal(){
+    splitChars();
     var els=Array.prototype.slice.call(document.querySelectorAll('[data-reveal],[data-bar],[data-draw],[data-count],[data-grow],[data-type]'));
     var auto=0;
     els.forEach(function(el){
@@ -141,8 +146,13 @@ export const BASE_JS = `
         setInterval(function(){ items.forEach(function(it){ it.classList.remove('in'); var ty=it.querySelector('[data-type-text]'); if(ty){ ty.__typed=false; ty.textContent=''; } }); if(cur) cur.classList.remove('on'); items.forEach(function(it){ setTimeout(function(){ show(it); }, parseInt(it.getAttribute('data-at'),10)||0); }); }, last+loop); }
     });
   }
+  /* precision self-heal: a number must never break across lines ("3." / "0") — nowrap the holder; the lint still reports NUM_WRAP so the cause gets fixed */
+  function fixNumWrap(){ try{ var root=document.querySelector('.stage')||document.body; var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); var t, n=0;
+    while((t=w.nextNode())){ var s=t.textContent.trim(); if(!s||s.length>14||!/^[+\\-~]?\\d[\\d,.]*\\s*(?:%|[A-Za-z]{1,4}|[가-힣]{1,2})?$/.test(s)) continue; var p=t.parentElement; if(!p||p.closest('svg')) continue;
+      var r=document.createRange(); r.selectNodeContents(t); var rects=r.getClientRects(); if(rects.length>1 && Math.abs(rects[rects.length-1].top-rects[0].top)>4){ p.style.whiteSpace='nowrap'; if(getComputedStyle(p).display!=='inline') p.style.minWidth='max-content'; p.setAttribute('data-numfix','1'); n++; } }
+    return n; }catch(e){ return 0; } }
   function ready(){
-    inject(); fit(); reveal(); initCycle(); initMock();
+    inject(); fit(); reveal(); initCycle(); initMock(); fixNumWrap(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fixNumWrap);
     Array.prototype.slice.call(document.querySelectorAll('canvas[data-particles]')).forEach(function(cv){
       var cs=getComputedStyle(document.documentElement); function rgb(v){ var m=v.trim().match(/#([0-9a-f]{6})/i); if(!m) return null; var h=m[1]; return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
       particles(cv,{n:parseInt(cv.getAttribute('data-particles')||'60',10),link:parseInt(cv.getAttribute('data-link')||'170',10),alpha:parseFloat(cv.getAttribute('data-alpha')||'1'),seed:parseInt(cv.getAttribute('data-seed')||'7',10),c1:rgb(cs.getPropertyValue('--azure'))||[26,140,255],c2:rgb(cs.getPropertyValue('--violet'))||[155,77,255]});

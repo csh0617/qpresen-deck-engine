@@ -93,3 +93,29 @@ export function sanitizeDeckCss(css: string): string {
     return `${sel}{${cleaned}}`;
   });
 }
+
+/** Precision hardening for model-written CSS (slide + deck layer).
+    LLM CSS often scopes styles with bare tag selectors — `.card span{display:block}`, `.orb svg{position:absolute;inset:0}` —
+    which silently capture engine components (span.icon-circle, svg.ic icons, span.pill) and knock icons off-centre or on top of text.
+    Rewrites such compounds to exclude engine components via :where(:not(…)) (zero extra specificity, so cascade order is unchanged). */
+const ENGINE_SPANS = '.icon-circle,.ic-sq,.pill,.tag,.chip,.badge,.num,.dot,.kbd,.sec-num,.numeral,.d-hub,.ic';
+export function hardenCss(css: string): string {
+  if (!css) return css;
+  const rx = /(^|[\s>+~,(])(span|svg|i)(?=$|[\s>+~,:)\]])/g;
+  const fixSel = (prelude: string) => prelude.replace(rx, (_m, pre: string, tag: string) => pre + tag + (tag === 'span' ? `:where(:not(${ENGINE_SPANS}))` : ':where(:not(.ic))'));
+  let out = ''; let i = 0; const n = css.length;
+  while (i < n) {
+    const open = css.indexOf('{', i); if (open < 0) { out += css.slice(i); break; }
+    const prelude = css.slice(i, open); const trimmed = prelude.trim();
+    // matching close brace (handles nested blocks inside at-rules)
+    let depth = 1, j = open + 1; while (j < n && depth > 0) { const ch = css[j]; if (ch === '{') depth++; else if (ch === '}') depth--; j++; }
+    const inner = css.slice(open + 1, j - 1);
+    if (trimmed.startsWith('@')) {
+      const nested = /^@(media|supports|container|layer|scope|document)\b/i.test(trimmed);
+      out += prelude + '{' + (nested ? hardenCss(inner) : inner) + '}';
+    } else if (/^(?:from|to|[\d.]+%)(?:\s*,\s*(?:from|to|[\d.]+%))*$/.test(trimmed)) { out += prelude + '{' + inner + '}'; }
+    else { out += fixSel(prelude) + '{' + inner + '}'; }
+    i = j;
+  }
+  return out;
+}

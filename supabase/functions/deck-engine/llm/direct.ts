@@ -7,9 +7,20 @@ import { HOUSE_STYLE } from './house.ts';
 import type { Brief, Plan, PipelineOptions } from './pipeline.ts';
 import type { DeckDirection, Accent } from '../renderer/types.ts';
 import { sanitizeDeckCss } from '../renderer/util.ts';
+import { SCENE_NAMES, SCENE_CATALOG, suggestScenes, hashStr as hashStr2 } from '../renderer/scenes.ts';
 
 export interface ImagePlan { id: string; role: 'backdrop' | 'side' | 'mock' | 'illustration'; prompt: string; ratio?: '16:9' | '1:1' | '3:4' | '4:3' }
-export interface Direction extends DeckDirection { images?: ImagePlan[]; darkSections?: string[] }
+export interface Direction extends DeckDirection { images?: ImagePlan[]; darkSections?: string[]; variants?: { cover: string; section: string; titleFx: string } }
+const COVER_VARIANTS: Record<string, string> = { A: '좌문우경 — 왼쪽 55%에 제목(64~88px)·부제·메타 줄·키워드 칩, 오른쪽에 사진/장면과 목차 띠 또는 KPI 3개', B: '중앙 집중 — 제목을 무대 중앙에 72~96px, 아래 한 줄 부제와 발표자 배지, 하단에 챕터 3~5개 칩을 가로 띠로. 사진은 전면 백드롭(.backdrop.dim) + 어두운 비네트', C: '하단 띠 — 위 60%는 장면/사진이 주인공(글자 없음), 아래 40%에 제목(60~72px) 왼쪽·메타 오른쪽을 한 줄 띠로', D: '분할 패널 — 왼쪽 42% 브랜드 진한색 단색 패널에 제목·부제·메타·발표자, 오른쪽 58% 사진/장면 전면(.backdrop 를 오른쪽 58%만 차지하게), 경계에 세로 레일', E: '숫자 주인공 — 작은 제목(36~44px) 위, 중앙에 주제의 핵심 숫자 하나를 220px+ .mega 카운트업, 아래 설명 한 줄과 챕터 칩' };
+const SECTION_VARIANTS: Record<string, string> = { A: '로마숫자 거대 타이포(.sec-num 320px+) 왼쪽 + 섹션명(.hero-title) + 다룰 항목 칩 + 진행 표시(.secs)', B: '질문형 — 이 섹션을 여는 질문 한 문장을 중앙 64~80px 로, 위에 작은 번호 칩, 아래 답을 예고하는 키워드 3개', C: '전면 사진 + 하단 띠 — 사진/장면이 무대 전체, 하단 30% 반투명 띠(.band)에 번호·섹션명·다룰 항목 체크리스트', D: '세로 진행 레일 — 왼쪽에 전체 섹션 목록을 세로로(현재 섹션 강조·완료 섹션 체크), 오른쪽에 섹션명(72px)과 핵심 메시지 한 줄' };
+const TITLE_FX: Record<string, string> = { rise: '제목 data-reveal(아래에서 페이드) + 이후 요소 120ms 간격', mask: '제목 data-reveal="mask"(마스크 와이프) + 부제 data-reveal', split: '제목 data-split(글자 단위 55ms 연쇄) + 부제 data-reveal', type: '제목 data-type data-type-text="…"(타자) + 부제 data-after="#제목id"', scale: '제목 data-reveal="scale" + 부제·칩 data-reveal="up"' };
+function variantLine(dir: Direction, kind: string): string {
+  const v = dir.variants; if (!v) return '';
+  if (kind === 'cover') return `\n[표지 구성 — 이 덱은 변주 ${v.cover}] ${COVER_VARIANTS[v.cover] || ''}\n[제목 안무] ${TITLE_FX[v.titleFx] || TITLE_FX.rise}\n`;
+  if (kind === 'section') return `\n[간지 구성 — 이 덱은 변주 ${v.section}] ${SECTION_VARIANTS[v.section] || ''}\n[제목 안무] ${TITLE_FX[v.titleFx] || TITLE_FX.rise}\n`;
+  if (kind === 'closing') return `\n[마무리 구성] 표지 변주 ${v.cover}와 대칭되는 구성(같은 장면·같은 안무)으로 덱을 닫는다.\n`;
+  return '';
+}
 
 export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디렉터이자 프런트엔드 리드다. 장을 그리기 전에, 이 덱 하나만을 위한 시각 언어를 정한다 — 레퍼런스 덱들이 그랬듯 덱 전용 디자인 레이어(CSS/JS)를 먼저 만들고 그 위에 모든 장을 올린다.
 
@@ -24,7 +35,10 @@ export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디�
  "brand": "#1E5BD8",                              // 기본 강조색(--brand: 아이콘 원·링크·활성 상태). 밝은 무대에서 흰 글자가 읽히는 중간 명도
  "sectionAccents": {"s1":"azure","s2":"teal"},   // 섹션 id → brand|azure|violet|teal|amber|rose|navy|ok|danger (섹션마다 다르게, 전체 2~4색)
  "darkSections": [],                              // 시네마틱 다크 무대(.stage.cine)로 그릴 섹션 id (0~1개 권장; 임팩트 장면·클라이맥스)
- "scenes": {"cover":"terrain","section":"network","closing":"fireflies"}, // cine 표지·간지·마무리 위에 깔 3D 배경 장면(terrain 지형 파도 점 | network 별자리 | cubes | fireflies | none). 슬라이드 id로 개별 지정도 가능
+ "scenes": {"cover":"…","section":"…","closing":"…"}, // cine 표지·간지·마무리 위에 깔 3D 배경 장면. 아래 [장면 카탈로그] 9종 중 주제·무드에 맞는 것을 고르되, 세 자리가 서로 다르게. 사용자 메시지의 '제안 조합'은 이 덱용으로 섞어 둔 기본값 — 주제에 더 맞는 장면이 있을 때만 바꾼다(습관적으로 terrain/network 를 고르지 말 것). 슬라이드 id로 개별 지정 가능, "none" 가능
+ "coverVariant": "A|B|C|D|E",                    // 표지 구성(아래 [표지 변주]). '제안 조합'을 기본으로, 주제에 맞게 바꿀 수 있다
+ "sectionVariant": "A|B|C|D",                    // 간지 구성(아래 [간지 변주])
+ "titleFx": "rise|mask|split|type|scale",       // 표지·간지 제목의 등장 안무
  "photoStrategy": "none|backdrops|side|mixed",
  "images": [ {"id":"p03","role":"backdrop|side|mock|illustration","prompt":"장면 묘사(한국어, 구체적·사실적)","ratio":"16:9|1:1|3:4|4:3"} ],  // 최대 imageBudget 장. cover/section/image-hero 제외(엔진이 따로 생성)
  "motion": "모션 언어 2~3문장(등장 리듬·강조 방식·인터랙션 톤)",
@@ -47,6 +61,11 @@ export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디�
 [하우스 스타일 — 반드시 이 안에서 변주한다]
 ${HOUSE_STYLE}
 
+[장면 카탈로그 — scenes 값] ${Object.entries(SCENE_CATALOG).map(([k, v]) => k + ': ' + v).join(' | ')}
+[표지 변주 — coverVariant] A 좌문우경(제목 왼쪽 55%, 오른쪽 사진/장면 + 목차 띠) | B 중앙 집중(제목 중앙 72~96px, 전면 백드롭 + 비네트, 하단 챕터 칩 띠) | C 하단 띠(위 60% 장면/사진이 주인공, 아래 40% 한 줄 띠에 제목·메타) | D 분할 패널(왼쪽 42% 브랜드 진한색 패널에 글, 오른쪽 58% 사진/장면) | E 숫자 주인공(작은 제목 + 중앙 220px+ 핵심 숫자 카운트업 + 챕터 칩)
+[간지 변주 — sectionVariant] A 로마숫자 거대 타이포 + 섹션명 + 칩 | B 질문형(섹션을 여는 질문 한 문장 중앙 64~80px + 키워드 3개) | C 전면 사진 + 하단 반투명 띠(번호·섹션명·체크리스트) | D 세로 진행 레일(전체 섹션 목록, 현재 강조) + 오른쪽 핵심 메시지
+[제목 안무 — titleFx] rise 아래에서 페이드 | mask 마스크 와이프 | split 글자 단위 연쇄 | type 타자 | scale 확대→제자리
+
 [원칙]
 - 주제·청중·목적에 맞는 '하나의' 강한 아이디어를 하우스 스타일 위에 얹는다: 모티프·색 배분·장치의 선택으로 덱의 개성을 만들되, 밝고 화사하며 살아 움직이는 결은 유지한다. 회색 톤의 '얇은 선 리포트', 작은 색인 라벨, 어둡게 누른 사진 위의 작은 글자 같은 '무겁고 정적인' 방향은 어떤 주제에서도 택하지 않는다.
 - 색: 브랜드 그라데이션을 주인공으로 두고 섹션별 강조색(2~4색)을 배분한다. 시네마틱 다크 섹션은 최대 1개(임팩트 장면).
@@ -61,7 +80,9 @@ function themeSummary(plan: Plan): string {
 export async function directDeck(brief: Brief, plan: Plan, opt: PipelineOptions & { imageBudget?: number }): Promise<Direction> {
   const budget = opt.imageBudget ?? 6;
   const outline = plan.slides.map(s => ({ id: s.id, section: s.section, type: s.type, kind: (s as any).kind, title: s.title, signature: (s as any).signature }));
-  const user = `[브리프]\n주제: ${brief.topic}\n목적: ${brief.purpose || ''} / 청중: ${brief.audience || ''} / 톤: ${brief.tone || ''}\n${brief.extra ? '추가 지시: ' + brief.extra + '\n' : ''}[테마] ${themeSummary(plan)}\n[섹션] ${JSON.stringify(plan.sections)}\n[장 개요] ${JSON.stringify(outline)}\n[이미지 예산] imageBudget=${budget} (cover/section/image-hero/closing 제외한 콘텐츠 장 중에서 고른다)\n\n위 덱의 아트 디렉션을 출력 형식대로 작성하라.`;
+  const sug = suggestScenes(String(plan.meta?.title || brief.topic)); const hv = hashStr2(String(plan.meta?.title || brief.topic));
+  const sugVariants = { cover: 'ABCDE'[hv % 5], section: 'ABCD'[(hv >>> 3) % 4], titleFx: ['rise', 'mask', 'split', 'type', 'scale'][(hv >>> 6) % 5] };
+  const user = `[이 덱의 제안 조합 — 덱마다 다르게 섞은 기본값] scenes=${JSON.stringify(sug)} coverVariant=${sugVariants.cover} sectionVariant=${sugVariants.section} titleFx=${sugVariants.titleFx}\n[브리프]\n주제: ${brief.topic}\n목적: ${brief.purpose || ''} / 청중: ${brief.audience || ''} / 톤: ${brief.tone || ''}\n${brief.extra ? '추가 지시: ' + brief.extra + '\n' : ''}[테마] ${themeSummary(plan)}\n[섹션] ${JSON.stringify(plan.sections)}\n[장 개요] ${JSON.stringify(outline)}\n[이미지 예산] imageBudget=${budget} (cover/section/image-hero/closing 제외한 콘텐츠 장 중에서 고른다)\n\n위 덱의 아트 디렉션을 출력 형식대로 작성하라.`;
   const r = await chat(opt.provider, { system: DIRECT_SYSTEM, messages: [{ role: 'user', content: user }], maxTokens: 7000, temperature: 0.6, json: false, nudge: '(출력이 잘렸다. 같은 디렉션을 더 간결하게 — CSS는 핵심 helper만, 세 구간 모두 — 다시 출력하라.)' });
   opt.log?.(`[direct] ${r.model} ${r.ms}ms out=${r.usage?.output ?? '?'} cost=${r.usage?.cost ?? '?'}`);
   const text = r.text.replace(/===\s*JSON\s*===/, '===META===');
@@ -80,10 +101,13 @@ export async function directDeck(brief: Brief, plan: Plan, opt: PipelineOptions 
     fx: (Array.isArray(m.fx) && m.fx.length ? m.fx.filter((f: string) => fxAll.includes(f)) : fxAll) as any,
     deckCss: sanitizeDeckCss(parts.css.slice(0, 12000)) || undefined, deckJs: parts.js.slice(0, 6000) || undefined,
     helpers: Array.isArray(m.helpers) ? m.helpers.map((h: any) => typeof h === 'string' ? h : `${h.class} — ${h.purpose || ''}`).slice(0, 10) : [],
-    scenes: (m.scenes && typeof m.scenes === 'object') ? Object.fromEntries(Object.entries(m.scenes).filter(([, v]) => ['terrain', 'network', 'cubes', 'fireflies', 'none'].includes(String(v))).map(([k, v]) => [String(k), String(v)])) : undefined,
+    scenes: (m.scenes && typeof m.scenes === 'object') ? Object.fromEntries(Object.entries(m.scenes).filter(([, v]) => ([...SCENE_NAMES, 'none'] as string[]).includes(String(v))).map(([k, v]) => [String(k), String(v)])) : undefined,
     images: (Array.isArray(m.images) ? m.images : []).filter((x: any) => x && x.id && x.prompt).slice(0, budget).map((x: any) => ({ id: String(x.id), role: ['backdrop', 'side', 'mock', 'illustration'].includes(x.role) ? x.role : 'side', prompt: String(x.prompt), ratio: ['16:9', '1:1', '3:4', '4:3'].includes(x.ratio) ? x.ratio : undefined })),
     darkSections: Array.isArray(m.darkSections) ? m.darkSections.map(String).slice(0, 2) : [],
+    variants: { cover: /^[A-E]$/.test(String(m.coverVariant || '')) ? String(m.coverVariant) : sugVariants.cover, section: /^[A-D]$/.test(String(m.sectionVariant || '')) ? String(m.sectionVariant) : sugVariants.section, titleFx: ['rise', 'mask', 'split', 'type', 'scale'].includes(String(m.titleFx || '')) ? String(m.titleFx) : sugVariants.titleFx },
   };
+  if (!dir.scenes || !Object.keys(dir.scenes).length) dir.scenes = { ...sug };
+  else { for (const k of ['cover', 'section', 'closing'] as const) if (!dir.scenes[k]) dir.scenes[k] = sug[k]; }
   (dir as any).notes = m.notes ? String(m.notes) : undefined;
   return dir;
 }
@@ -106,7 +130,7 @@ export function directionBlock(dir: Direction | undefined, slide: { id: string; 
   const structural = /^(cover|section|closing)$/.test(String(slide.kind || slide.type || ''));
   if (!img && structural && dir.photoStrategy !== 'none') {
     const base = `\n[아트 디렉션 — 이 덱의 시각 언어, 반드시 따른다]\n무드: ${dir.mood}\n컨셉: ${dir.concept}\n모티프: ${(dir.motifs || []).join(' · ')}\n모션: ${dir.motion}\n${dir.palette?.stops ? '브랜드 그라데이션(--qg · --q1/--q2/--q3): ' + dir.palette.stops.join(' → ') + (dir.palette.brand ? ' · 강조색(--brand) ' + dir.palette.brand : '') + ' — 색은 토큰으로만 쓴다\n' : ''}${dir.palette?.notes ? '타이포: ' + dir.palette.notes + '\n' : ''}${(dir as any).notes ? '지시: ' + (dir as any).notes + '\n' : ''}덱 레이어 helper 클래스(이미 정의됨, 그대로 사용): ${(dir.helpers || []).join(' / ') || '(없음)'}\n`;
-    return base + `이 장(${slide.kind || slide.type})은 무대 전체 구성이다: 주제를 상징하는 사진 백드롭을 넣어라 — <div class="backdrop kb"><img data-image="(한국어로 구체적인 장면 묘사)" alt="" style="--pos:50% 45%"><div class="credit">AI 생성 이미지</div></div> 를 첫 요소로. 기본 백드롭은 왼쪽이 바탕색으로 페이드되므로 글은 왼쪽, 사진은 오른쪽(글을 오른쪽에 두려면 .fade-r). 시네마틱 무대(cine)면 어두운 사진 위 흰 글자. 이미지는 엔진이 생성해 채운다.\n`;
+    return base + variantLine(dir, String(slide.kind || slide.type || '')) + `이 장(${slide.kind || slide.type})은 무대 전체 구성이다: 주제를 상징하는 사진 백드롭을 넣어라 — <div class="backdrop kb"><img data-image="(한국어로 구체적인 장면 묘사)" alt="" style="--pos:50% 45%"><div class="credit">AI 생성 이미지</div></div> 를 첫 요소로. 기본 백드롭은 왼쪽이 바탕색으로 페이드되므로 글은 왼쪽, 사진은 오른쪽(글을 오른쪽에 두려면 .fade-r). 시네마틱 무대(cine)면 어두운 사진 위 흰 글자. 이미지는 엔진이 생성해 채운다.\n`;
   }
   return `\n[아트 디렉션 — 이 덱의 시각 언어, 반드시 따른다]\n무드: ${dir.mood}\n컨셉: ${dir.concept}\n모티프: ${(dir.motifs || []).join(' · ')}\n모션: ${dir.motion}\n${dir.palette?.stops ? '브랜드 그라데이션(--qg · --q1/--q2/--q3): ' + dir.palette.stops.join(' → ') + (dir.palette.brand ? ' · 강조색(--brand) ' + dir.palette.brand : '') + ' — 색은 토큰으로만 쓴다\n' : ''}${dir.palette?.notes ? '타이포: ' + dir.palette.notes + '\n' : ''}${(dir as any).notes ? '지시: ' + (dir as any).notes + '\n' : ''}덱 레이어 helper 클래스(이미 정의됨, 그대로 사용): ${(dir.helpers || []).join(' / ') || '(없음)'}\n${dark ? '이 장은 시네마틱 다크 무대다: 엔진이 .stage.cine 을 적용하므로 어두운 바탕 위 밝은 글자·유리 카드로 설계한다(토큰은 자동 반전).\n' : ''}${img ? `이 장은 사진을 쓴다 (role=${img.role}, ratio=${img.ratio || (img.role === 'backdrop' ? '16:9' : '4:3')}): 레이아웃에 <img data-image="${img.prompt.replace(/"/g, "'")}" alt="…" class="…"> 를 넣어라. backdrop이면 <div class="backdrop kb fade-r"><img data-image=… style="--pos:50% 40%"></div> 를 .body 첫 요소로 두고 글은 왼쪽에, side면 오른쪽 열(≥560px)에 .photo 카드로. 이미지는 엔진이 생성해 채운다(지금은 플레이스홀더).\n` : '이 장에는 사진을 넣지 않는다(다이어그램·SVG·숫자로 표현).\n'}`;
 }
