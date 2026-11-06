@@ -57,7 +57,84 @@ export const FX_JS = `
       setTimeout(function(){ el.classList.add('pop'); },s);
     });
   }
-  function go(){ aurora(); rail(); tilt(); parallax(); pops(); }
+  /* 3D scene layer: <main class="stage" data-scene="terrain|network|cubes|fireflies" data-scene-opts='{…}'> (THREE + DeckScenes inlined on demand).
+     Mounted right after a photo backdrop when one exists (inside .body) so the scene floats over the photo and under the content. */
+  function scene(){
+    var st=stage(); if(!st) return; var name=st.getAttribute('data-scene'); if(!name||name==='none'||!window.DeckScenes||!window.DeckScenes[name]) return;
+    var opts={}; try{ opts=JSON.parse(st.getAttribute('data-scene-opts')||'{}'); }catch(e){}
+    var box=document.createElement('div'); box.className='fx-3d'; if(opts.opacity!=null) box.style.setProperty('--fx-op',opts.opacity);
+    var bd=st.querySelector('.backdrop'); var au=st.querySelector(':scope > .fx-aurora');
+    if(bd&&bd.parentNode){ bd.parentNode.insertBefore(box,bd.nextSibling); } else if(au){ st.insertBefore(box,au.nextSibling); } else { st.insertBefore(box,st.firstChild); }
+    try{ window.DeckScenes[name](box,st,opts,{static:ST||RM}); }catch(e){ console.warn('scene failed',e); box.remove(); }
+  }
+  /* carousel: [data-carousel="3200"] host (class .carousel[.fan|.stack]); children .ci rotate through data-pos; optional [data-dots] + [data-label] inside the host's parent */
+  function carousel(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-carousel]'),function(host){
+      var items=Array.prototype.slice.call(host.querySelectorAll(':scope > .ci')); if(!items.length) return;
+      host.classList.add('carousel'); if(!host.classList.contains('stack')) host.classList.add('fan');
+      var ms=parseInt(host.getAttribute('data-carousel'),10); if(isNaN(ms)) ms=3200;
+      var scope=host.parentNode||host; var dots=scope.querySelector('[data-dots]'); var label=scope.querySelector('[data-label]');
+      if(dots&&!dots.children.length){ dots.classList.add('car-dots'); dots.innerHTML=items.map(function(){return '<i></i>';}).join(''); }
+      var di=dots?Array.prototype.slice.call(dots.children):[]; var k=parseInt(host.getAttribute('data-static-step')||'0',10)||0;
+      function arrange(k,flash){ items.forEach(function(c,j){ c.setAttribute('data-pos',(j-k+items.length)%items.length); }); di.forEach(function(d,j){ d.classList.toggle('on',j===k); });
+        if(label) label.textContent=items[k].getAttribute('data-name')||''; host.setAttribute('data-active',k);
+        if(flash&&!ST&&!RM){ var f=items[k]; f.classList.remove('flash'); void f.offsetWidth; f.classList.add('flash'); }
+        try{ host.dispatchEvent(new CustomEvent('carousel',{detail:{i:k,item:items[k]}})); }catch(e){} }
+      arrange(k,false); if(ST||RM||!ms) { items.forEach(function(c,j){ c.addEventListener('click',function(){ k=j; arrange(j,true); }); }); return; }
+      var timer=setInterval(function(){ k=(k+1)%items.length; arrange(k,true); },ms);
+      items.forEach(function(c,j){ c.addEventListener('click',function(){ k=j; arrange(j,true); clearInterval(timer); timer=setInterval(function(){ k=(k+1)%items.length; arrange(k,true); },ms); }); });
+    });
+  }
+  /* word cycler: <span data-words='["…","…"]' data-interval="2600" data-mode="type|fade" data-sync="#chips">; chips' children get .on by index */
+  function words(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-words]'),function(el){
+      var list; try{ list=JSON.parse(el.getAttribute('data-words')); }catch(e){ return; } if(!list||!list.length) return;
+      var ms=parseInt(el.getAttribute('data-interval'),10)||2600, mode=el.getAttribute('data-mode')||'type', sync=el.getAttribute('data-sync'), chips=sync?document.querySelector(sync):null;
+      var si=parseInt(el.getAttribute('data-static-step')||'0',10)||0, i=si, tm=null;
+      function mark(k){ if(!chips) return; Array.prototype.forEach.call(chips.children,function(c,j){ c.classList.toggle('on',j===k); }); }
+      function show(k){ var t=String(list[k]); mark(k); try{ el.dispatchEvent(new CustomEvent('words',{detail:{i:k,text:t}})); }catch(e){}
+        if(ST||RM){ el.textContent=t; return; }
+        if(mode==='fade'){ el.classList.add('fade-out'); setTimeout(function(){ el.textContent=t; el.classList.remove('fade-out'); el.classList.add('fade-in'); },260); return; }
+        el.textContent=''; el.classList.add('typing'); var n=0, sp=parseInt(el.getAttribute('data-speed'),10)||38; clearInterval(tm);
+        tm=setInterval(function(){ n++; el.textContent=t.slice(0,n); if(n>=t.length){ clearInterval(tm); setTimeout(function(){ el.classList.remove('typing'); },600); } },sp); }
+      show(i); if(ST||RM) return; setInterval(function(){ i=(i+1)%list.length; show(i); },ms);
+    });
+  }
+  /* packets: <path data-packets="3" data-dur="3s" data-r="5"> inside an <svg> → circles riding the path (SMIL animateMotion, no JS per frame) */
+  function packets(){
+    var n=0; Array.prototype.forEach.call(document.querySelectorAll('svg path[data-packets]'),function(path){
+      var cnt=parseInt(path.getAttribute('data-packets'),10)||2, dur=path.getAttribute('data-dur')||'3s', r=path.getAttribute('data-r')||'5';
+      if(!path.id) path.id='qp-path-'+(++n); var svg=path.ownerSVGElement; if(!svg) return; var NS='http://www.w3.org/2000/svg', XL='http://www.w3.org/1999/xlink';
+      for(var k=0;k<cnt;k++){ var c=document.createElementNS(NS,'circle'); c.setAttribute('r',r); c.setAttribute('class','packet'+(path.getAttribute('data-packet-class')?' '+path.getAttribute('data-packet-class'):''));
+        var am=document.createElementNS(NS,'animateMotion'); am.setAttribute('dur',dur); am.setAttribute('repeatCount','indefinite'); am.setAttribute('begin',(-(parseFloat(dur)||3)*k/cnt)+'s');
+        var mp=document.createElementNS(NS,'mpath'); mp.setAttributeNS(XL,'xlink:href','#'+path.id); mp.setAttribute('href','#'+path.id); am.appendChild(mp); c.appendChild(am); svg.appendChild(c); }
+      if(ST||RM){ try{ svg.pauseAnimations(); svg.setCurrentTime(1.2); }catch(e){} }
+    });
+  }
+  /* waveform bars: <div class="wave" data-wave="28"> */
+  function waves(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-wave]'),function(w){ if(w.children.length) return; var n=parseInt(w.getAttribute('data-wave'),10)||24, h=''; w.classList.add('wave');
+      for(var i=0;i<n;i++){ var v=35+Math.round(55*Math.abs(Math.sin(i*1.7)+Math.cos(i*0.6))/2); h+='<i style="--h:'+v+'%;--dl:'+(-(i*137%900))+'ms"></i>'; } w.innerHTML=h; });
+  }
+  /* panel switch: <div data-switch="#stepsHost"> children follow the host's data-cycle index (.on) — scene per step */
+  function switches(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-switch]'),function(box){ var host=document.querySelector(box.getAttribute('data-switch')); if(!host) return;
+      var panels=Array.prototype.slice.call(box.children); function set(k){ panels.forEach(function(p,j){ p.classList.toggle('on',j===k); }); }
+      set(parseInt(host.getAttribute('data-active')||'0',10)||0); host.addEventListener('cycle',function(ev){ set(ev.detail.i); }); host.addEventListener('carousel',function(ev){ set(ev.detail.i); }); });
+  }
+  /* sim runner: a slide may define window.SLIDE={init(){…},tick(dt,t){…}} for canvas/Three simulations — the engine runs init once and ticks every frame
+     (static mode: init + one representative tick at t=4.2s; tab hidden → paused). Same contract as the 800조 reference deck. */
+  function slideRunner(){
+    var S=window.SLIDE; if(!S||typeof S.init!=='function') return;
+    try{ S.init(); }catch(e){ console.warn('SLIDE.init failed',e); return; }
+    if(typeof S.tick!=='function') return;
+    if(ST||RM){ try{ S.tick(0.016,4.2); }catch(e){ console.warn('SLIDE.tick failed',e); } return; }
+    var last=0,t=0,raf=0,alive=true;
+    function loop(now){ if(!alive) return; var dt=last?Math.min(.05,(now-last)/1000):0; last=now; t+=dt; try{ S.tick(dt,t); }catch(e){ console.error(e); alive=false; return; } raf=requestAnimationFrame(loop); }
+    raf=requestAnimationFrame(loop);
+    document.addEventListener('visibilitychange',function(){ if(document.hidden){ alive=false; cancelAnimationFrame(raf); last=0; } else if(!alive){ alive=true; raf=requestAnimationFrame(loop); } });
+  }
+  function go(){ aurora(); rail(); tilt(); parallax(); pops(); scene(); carousel(); words(); packets(); waves(); switches(); slideRunner(); }
   var fired=false;
   document.addEventListener('deck:ready',function(){ if(!fired){ fired=true; go(); } });
   if(window.__QP_READY&&!fired){ fired=true; go(); }

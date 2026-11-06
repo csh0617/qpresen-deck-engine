@@ -1,0 +1,239 @@
+<!-- EXEMPLAR (demo): 언어 전환 자막 — 상단 6단계 파이프라인(아이콘 중심에 맞춘 선·패킷 흐름), 중앙 발표 화면 목업의 자막이 6개 언어로 2.6초마다 타이핑 전환(세그먼트·칩 동기), 우: 수치 카드 + 청중 폰 목업 -->
+<!-- HTML (goes inside <section class="body">) -->
+<div class="lcol">
+      <div class="card glass pipe" id="pipe" data-reveal="up">
+        <svg id="psvg" viewBox="0 0 1396 96" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="pg08" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1A8CFF"/><stop offset=".52" stop-color="#5B63FF"/><stop offset="1" stop-color="#9B4DFF"/></linearGradient>
+            <radialGradient id="pk08"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="#5B63FF"/><stop offset="1" stop-color="#5B63FF" stop-opacity="0"/></radialGradient></defs>
+          <path id="pl08" d="M136 46 L1260 46" fill="none" stroke="var(--line-2)" stroke-width="2" data-draw data-delay="200"/>
+          <path id="pf08" d="M136 46 L1260 46" fill="none" stroke="url(#pg08)" stroke-width="2.5" class="flow" opacity=".9"/>
+          <circle class="pkt" r="9" fill="url(#pk08)"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#pf08"/></animateMotion></circle>
+          <circle class="pkt" r="6" fill="url(#pk08)"><animateMotion dur="2.6s" begin="-1.3s" repeatCount="indefinite"><mpath href="#pf08"/></animateMotion></circle>
+        </svg>
+        <div class="pnodes" id="pnodes">
+          <div class="pn f-azure"><div class="pic"><i data-icon="sparkles"></i><em>01</em></div><b>발표자 음성</b><span>폰 · 글래스 마이크</span></div>
+          <div class="pn f-violet"><div class="pic"><i data-icon="sparkles"></i><em>02</em></div><b>음성 인식(STT)</b><span>자동 언어 감지<br>ko-KR + 후보 8개</span></div>
+          <div class="pn f-brand"><div class="pic"><i data-icon="database"></i><em>03</em></div><b>발화 단위 저장</b><span>전사 · AI 요약 기반</span></div>
+          <div class="pn f-azure"><div class="pic"><i data-icon="sparkles"></i><em>04</em></div><b>실시간 전달</b><span>Realtime + 400ms 폴링</span></div>
+          <div class="pn f-violet"><div class="pic"><i data-icon="languages"></i><em>05</em></div><b>청중별 번역</b><span>청중이 고른 언어로</span></div>
+          <div class="pn f-teal"><div class="pic"><i data-icon="sparkles"></i><em>06</em></div><b>청중 화면 자막</b><span>2줄 · 10초 롤링</span></div>
+        </div>
+      </div>
+      <div class="demo">
+        <div class="scol">
+          <div class="ctrl" data-reveal>
+            <div class="seg g" id="seg"><button data-l="0">KO</button><button data-l="1" class="on">EN</button><button data-l="2">JA</button><button data-l="3">ZH</button><button data-l="4">VI</button><button data-l="5">ES</button></div>
+            <div class="k-small">언어를 누르면 <b>발표자료 · 자막 · 청중 화면</b>이<br>함께 바뀝니다 · 2.6초 자동 순환</div>
+          </div>
+          <div data-reveal="zoom" data-delay="250">
+            <div class="screen" data-allow-scroll>
+              <div class="mini" id="mini">
+                <img class="wm" src="data:IMG" alt="">
+                <div class="top"><img src="data:IMG" alt="Qpresen">
+                  <div class="chips"><span class="chip8"><span class="wave"><i style="--h:8px;--wd:-.1s"></i><i style="--h:14px;--wd:-.5s"></i><i style="--h:10px;--wd:-.3s"></i><i style="--h:16px;--wd:-.8s"></i><i style="--h:9px;--wd:-.2s"></i><i style="--h:13px;--wd:-.6s"></i></span>MIC · LIVE</span><span class="chip8">SLIDE · <b id="slang">EN</b></span></div>
+                </div>
+                <div class="kk">01 · PROBLEM</div>
+                <h3 class="tx" id="st">Presentation halls are still stuck a decade ago</h3>
+                <p class="tx" id="ss">Clunky connections · Costly language barriers · Broken audience engagement</p>
+              </div>
+              <i class="scanbar" id="scan"></i>
+              <div class="cap c8"><span class="lg" id="clang">EN</span><span class="ct" id="ctext">Hello, let's start the Qpresen presentation.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="kpis">
+          <div class="card kp lift f-azure" data-reveal="right"><span class="ic-sq"><i data-icon="globe"></i></span><div class="tt"><div class="v"><span data-count="11">11</span><small>개 언어</small></div><div class="l"><b>UI 다국어</b> — ko · en · ja · zh · es · fr · de · pt · ru · ar · vi</div></div></div>
+          <div class="card kp lift f-violet" data-reveal="right"><span class="ic-sq"><i data-icon="scan"></i></span><div class="tt"><div class="v"><small style="margin:0 6px 0 0">후보</small><span data-count="8">8</span><small>개</small></div><div class="l"><b>자동 언어 감지</b> — 기본 ko-KR + 후보 8개 언어</div></div></div>
+          <div class="card kp lift f-teal" data-reveal="right"><span class="ic-sq"><i data-icon="sparkles"></i></span><div class="tt"><div class="v">태그 · 레이아웃 보존</div><div class="l"><b>텍스트 노드만</b> 배치 번역 — 태그 · 클래스 구조 유지</div></div></div>
+          <div class="card kp lift f-brand" data-reveal="right"><span class="ic-sq"><i data-icon="sparkles"></i></span><div class="tt"><div class="v"><span data-count="100">100</span><span class="dv">·</span><span data-count="500">500</span><span class="dv">·</span>무제한</div><div class="l"><b>요금제별 AI 번역</b> 페이지/월 — Pro · Business · Team</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="rcol" data-reveal="up" data-delay="350">
+      <div class="plabel">AUDIENCE · 청중 화면</div>
+      <div class="phone tilt" data-tilt=".6" style="--ry:-8deg;--rx:3deg;--rz:0deg"><i class="cam"></i>
+        <div class="scr" data-allow-scroll>
+          <div class="app" id="app">
+            <div class="hd"><span class="bn"><img src="data:IMG" alt="">Qpresen</span><span class="lv"><i></i>LIVE</span></div>
+            <div class="aslide"><div class="k">01 · PROBLEM</div><div class="t" id="at">Presentation halls are still stuck a decade ago</div></div>
+            <div class="acap"><div class="h"><span>LIVE CAPTION</span><b id="alang">EN</b></div><div class="box" data-allow-scroll><div class="ct" id="acap">Hello, let's start the Qpresen presentation.</div></div><div class="src"><i data-icon="sparkles"></i>원문 KO · 자동 언어 감지</div></div>
+            <div class="alang"><div class="h">내 언어 선택</div><div class="g" id="ag"><span>KO</span><span class="on">EN</span><span>JA</span><span>ZH</span><span>VI</span><span>ES</span></div></div>
+            <div class="atog"><span>발표자료 언어 변경</span><i></i></div>
+            <div class="atab"><div class="on"><i data-icon="sparkles"></i>자막</div><div><i data-icon="sparkles"></i>Q&amp;A</div><div><i data-icon="shield-check"></i>투표</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- CSS (per-slide) -->
+<style>
+/* ===== slide 08 · live caption ===== */
+.body{display:grid;grid-template-columns:1398px minmax(0,1fr);gap:40px;min-height:0}
+.lcol{display:grid;grid-template-rows:auto minmax(0,1fr);gap:20px;min-width:0;min-height:0}
+
+/* --- pipeline --- */
+.pipe{position:relative;padding:18px 24px 18px;border-radius:22px}
+.pipe>svg{position:absolute;left:0;top:0;width:100%;height:96px;overflow:visible;pointer-events:none}
+.pnodes{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
+.pn{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;cursor:default}
+.pn .pic{position:relative;width:56px;height:56px;border-radius:18px;display:grid;place-items:center;background:var(--card);color:var(--f);border:1px solid var(--line);box-shadow:var(--shadow);transition:scale .35s var(--ease),box-shadow .35s var(--ease)}
+.pn .pic .ic{width:26px;height:26px}
+.pn .pic em{position:absolute;right:-9px;top:-8px;min-width:24px;height:22px;padding:0 6px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-style:normal;font-size:13px;font-weight:800;color:var(--muted);display:grid;place-items:center;letter-spacing:.02em}
+.pn b{margin-top:12px;font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.25;white-space:nowrap}
+.pn span{margin-top:4px;font-size:16px;font-weight:600;color:var(--muted);line-height:1.38}
+.pn.done .pic{background:var(--f-50);border-color:color-mix(in srgb,var(--f) 30%,var(--line))}
+.pn.on .pic{background:var(--qg);color:#fff;border-color:transparent;scale:1.1;box-shadow:0 14px 34px color-mix(in srgb,var(--q2) 40%,transparent)}
+.pn.on .pic em{background:var(--ink);color:#fff;border-color:transparent}
+html.static .pkt{display:none}
+
+/* --- demo row --- */
+.demo{display:grid;grid-template-columns:760px minmax(0,1fr);gap:36px;min-height:0;min-width:0}
+.scol{display:flex;flex-direction:column;gap:14px;min-width:0;min-height:0}
+.ctrl{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.ctrl .seg button{padding:0 15px;letter-spacing:.04em}
+.ctrl .k-small{font-size:16px;text-align:right;line-height:1.35}
+.ctrl .k-small b{color:var(--ink)}
+.screen{aspect-ratio:16/9;width:760px}
+.mini{position:absolute;inset:0;padding:26px 44px;color:#DCE4FF;background:
+  radial-gradient(60% 70% at 88% 30%,rgba(91,99,255,.32),transparent 70%),radial-gradient(50% 60% at 8% 100%,rgba(26,140,255,.18),transparent 70%),#0A1030}
+.mini .top{display:flex;justify-content:space-between;align-items:center}
+.mini .top img{height:22px}
+.mini .chips{display:flex;gap:8px;align-items:center}
+.mini .chip8{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.1);font-size:14px;font-weight:800;letter-spacing:.08em;color:#C9D2F5}
+.mini .chip8 b{color:#fff}
+.wave{display:inline-flex;align-items:center;gap:3px;height:16px}
+.wave i{width:3px;border-radius:2px;background:linear-gradient(#4DA8FF,#B07CFF);height:var(--h,8px);animation:wv 1s ease-in-out infinite;animation-delay:var(--wd,0s)}
+@keyframes wv{0%,100%{height:4px}50%{height:var(--h,14px)}}
+.mini .kk{margin-top:44px;font-size:15px;letter-spacing:.26em;font-weight:800;color:#9AA6FF}
+.mini h3{margin-top:14px;font-size:44px;line-height:1.18;font-weight:800;letter-spacing:-.025em;color:#fff;max-width:640px}
+.mini p{margin-top:16px;font-size:20px;line-height:1.45;color:#AEB8E0;max-width:640px}
+.mini .tx{transition:opacity .32s var(--ease),filter .32s var(--ease),translate .32s var(--ease)}
+.mini.swap .tx{opacity:0;filter:blur(6px);translate:0 6px}
+.mini .wm{position:absolute;right:-36px;top:196px;width:210px;opacity:.1;pointer-events:none}
+.scanbar{position:absolute;top:0;bottom:0;left:0;width:150px;translate:-180px 0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(91,99,255,.0) 10%,rgba(120,130,255,.38) 55%,rgba(220,225,255,.6) 62%,transparent);mix-blend-mode:screen}
+.scanbar.go{animation:scan8 .9s cubic-bezier(.5,0,.3,1) forwards}
+@keyframes scan8{0%{translate:-180px 0;opacity:1}100%{translate:800px 0;opacity:.6}}
+html.static .scanbar{display:none}
+.cap.c8{position:absolute;left:44px;right:44px;bottom:22px;min-height:52px;display:flex;align-items:flex-start}
+.cap.c8 .lg{flex:none;margin-top:3px}
+.cap.c8 .ct{min-width:0}
+
+/* --- KPI column --- */
+.kpis{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:12px;min-height:0}
+.kp{display:flex;align-items:center;gap:18px;padding:14px 22px;border-radius:18px;min-width:0;min-height:0}
+.kp .ic-sq{width:50px;height:50px;border-radius:14px}
+.kp .ic-sq .ic{width:24px;height:24px}
+.kp .tt{min-width:0}
+.kp .v{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--ink);line-height:1.1;white-space:nowrap}
+.kp .v small{font-size:17px;color:var(--f);margin-left:4px;font-weight:800;letter-spacing:-.01em}
+.kp .v .dv{color:var(--faint);font-weight:700;margin:0 6px}
+.kp .l{margin-top:5px;font-size:16px;color:var(--muted);font-weight:600;line-height:1.4}
+.kp .l b{color:var(--text)}
+
+/* --- audience phone --- */
+.rcol{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:0}
+.rcol .plabel{font-size:14px;font-weight:800;letter-spacing:.24em;color:var(--faint)}
+.rcol .phone{--pw:250px}
+.app{position:absolute;inset:0;display:flex;flex-direction:column;gap:12px;padding:34px 11px 10px;background:var(--bg-2);color:var(--text);text-align:left}
+.app .hd{display:flex;align-items:center;justify-content:space-between;padding:2px 3px}
+.app .hd .bn{display:flex;align-items:center;gap:7px;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.01em}
+.app .hd .bn img{width:22px;height:22px}
+.app .hd .lv{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:#0E8A43;letter-spacing:.08em}
+.app .hd .lv i{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.18);animation:blink 1.6s ease-in-out infinite}
+.aslide{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;padding:12px 13px;display:flex;flex-direction:column;justify-content:center;
+  background:radial-gradient(70% 80% at 90% 20%,rgba(91,99,255,.4),transparent 70%),#0A1030;box-shadow:0 8px 20px rgba(10,16,48,.18)}
+.aslide .k{font-size:12px;font-weight:800;letter-spacing:.2em;color:#9AA6FF}
+.aslide .t{margin-top:5px;font-size:16px;line-height:1.24;font-weight:800;color:#fff;letter-spacing:-.02em}
+.aslide .t,.acap .ct,.aslide .k{transition:opacity .3s var(--ease),filter .3s var(--ease)}
+.app.swap .aslide .t{opacity:0;filter:blur(4px)}
+.acap{background:var(--card);border-radius:14px;padding:10px 12px 11px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.acap .h{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--q2)}
+.acap .h b{font-size:13px;letter-spacing:.06em;color:#fff;background:var(--qg);border-radius:6px;padding:1px 7px}
+.acap .box{margin-top:6px;height:44px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;-webkit-mask:linear-gradient(transparent 0,#000 30%);mask:linear-gradient(transparent 0,#000 30%)}
+.acap .src{margin-top:7px;padding-top:7px;border-top:1px dashed var(--line-2);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--faint)}
+.acap .src .ic{width:14px;height:14px;color:var(--q2)}
+.acap .ct{font-size:16px;line-height:1.38;font-weight:700;color:var(--ink)}
+.alang .h{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--faint);padding:0 3px}
+.alang .g{margin-top:6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.alang .g span{height:32px;border-radius:10px;display:grid;place-items:center;font-size:15px;font-weight:800;color:var(--muted);background:var(--card);border:1px solid var(--line);transition:all .35s var(--ease);letter-spacing:.04em}
+.alang .g span.on{background:var(--qg);color:#fff;border-color:transparent;box-shadow:0 6px 16px color-mix(in srgb,var(--q2) 35%,transparent)}
+.atog{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 12px;font-size:14px;font-weight:700;color:var(--text)}
+.atog i{flex:none;width:36px;height:20px;border-radius:999px;background:var(--qg);position:relative}
+.atog i::after{content:'';position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.atab{margin-top:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--card);border-radius:14px;border:1px solid var(--line);padding:7px 4px}
+.atab div{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;font-weight:700;color:var(--faint)}
+.atab div .ic{width:19px;height:19px}
+.atab div.on{color:var(--q2)}
+</style>
+
+<!-- JS (per-slide, runs after base; wrap in deck:ready in your own slide) -->
+<script>
+document.addEventListener('deck:ready',function(e){
+  var STATIC=e.detail.static;
+  var L=[
+    {c:'KO',t:'발표장은 아직, 10년 전 그대로',s:'연결이 번거롭다 · 언어 장벽은 비싸다 · 청중 참여는 끊긴다',p:'안녕하십니까, 큐프리젠 발표를 시작하겠습니다.'},
+    {c:'EN',t:'Presentation halls are still stuck a decade ago',s:'Clunky connections · Costly language barriers · Broken audience engagement',p:"Hello, let's start the Qpresen presentation."},
+    {c:'JA',t:'発表会場はいまだに10年前のまま',s:'接続が面倒 · 言語の壁は高い · 聴衆の参加が途切れる',p:'こんにちは、Qpresenの発表を始めます。'},
+    {c:'ZH',t:'演讲现场，依然停留在十年前',s:'连接繁琐 · 语言壁垒昂贵 · 观众参与中断',p:'大家好，现在开始Qpresen的演示。'},
+    {c:'VI',t:'Hội trường thuyết trình vẫn như 10 năm trước',s:'Kết nối rườm rà · Rào cản ngôn ngữ đắt đỏ · Sự tham gia của khán giả bị gián đoạn',p:'Xin chào, chúng ta bắt đầu bài thuyết trình Qpresen.'},
+    {c:'ES',t:'Las salas de presentación siguen como hace 10 años',s:'Conexión engorrosa · Barreras lingüísticas costosas · Participación interrumpida',p:'Hola, comencemos la presentación de Qpresen.'}
+  ];
+  var $=function(id){return document.getElementById(id)};
+  var btns=[].slice.call(document.querySelectorAll('#seg button')), chips=[].slice.call(document.querySelectorAll('#ag span'));
+  var nodes=[].slice.call(document.querySelectorAll('#pnodes .pn'));
+  var mini=$('mini'), app=$('app'), scan=$('scan');
+  var ctext=$('ctext'), acap=$('acap');
+
+  /* align the pipeline line + packets to the real icon centres */
+  (function(){
+    var pipe=$('pipe'), svg=$('psvg'); var R=pipe.getBoundingClientRect(); var k=R.width/pipe.offsetWidth||1;
+    var W=pipe.clientWidth, ics=nodes.map(function(n){return n.querySelector('.pic').getBoundingClientRect();});
+    var bl=parseFloat(getComputedStyle(pipe).borderLeftWidth)||0, bt=parseFloat(getComputedStyle(pipe).borderTopWidth)||0;
+    var x0=(ics[0].left+ics[0].width/2-R.left)/k-bl, x1=(ics[5].left+ics[5].width/2-R.left)/k-bl, y=(ics[0].top+ics[0].height/2-R.top)/k-bt;
+    svg.setAttribute('viewBox','0 0 '+W+' 96'); svg.style.width=W+'px';
+    var d='M'+x0.toFixed(1)+' '+y.toFixed(1)+' L'+x1.toFixed(1)+' '+y.toFixed(1);
+    ['pl08','pf08'].forEach(function(id){ var p=$(id); p.setAttribute('d',d); try{ p.style.setProperty('--len',p.getTotalLength()); }catch(_){} });
+  })();
+
+  var cur=-1, tt=null, sw=[];
+  function typeTo(txt){
+    clearInterval(tt);
+    if(STATIC){ ctext.textContent=txt; acap.textContent=txt; return; }
+    var k=0; ctext.textContent=''; acap.textContent=''; ctext.classList.add('caret');
+    tt=setInterval(function(){ k++; var s=txt.slice(0,k); ctext.textContent=s; acap.textContent=s; if(k>=txt.length){ clearInterval(tt); setTimeout(function(){ctext.classList.remove('caret')},600); } },30);
+  }
+  function sweep(){
+    sw.forEach(clearTimeout); sw=[];
+    nodes.forEach(function(n){ n.classList.remove('on','done'); });
+    nodes.forEach(function(n,i){ sw.push(setTimeout(function(){ if(i>0){ nodes[i-1].classList.remove('on'); nodes[i-1].classList.add('done'); } n.classList.add('on'); },i*300)); });
+  }
+  function apply(i){
+    var x=L[i];
+    $('st').textContent=x.t; $('ss').textContent=x.s; $('at').textContent=x.t;
+    $('slang').textContent=x.c; $('clang').textContent=x.c; $('alang').textContent=x.c;
+  }
+  function set(i,anim){
+    if(i===cur) return; cur=i;
+    btns.forEach(function(b,j){b.classList.toggle('on',j===i)}); chips.forEach(function(b,j){b.classList.toggle('on',j===i)});
+    if(!anim){ apply(i); typeTo(L[i].p); return; }
+    mini.classList.add('swap'); app.classList.add('swap');
+    scan.classList.remove('go'); void scan.offsetWidth; scan.classList.add('go');
+    setTimeout(function(){ apply(i); mini.classList.remove('swap'); app.classList.remove('swap'); },320);
+    sweep();
+    setTimeout(function(){ typeTo(L[i].p); },260);
+  }
+
+  if(STATIC){
+    set(1,false);
+    nodes.forEach(function(n,i){ n.classList.add(i===5?'on':'done'); });
+    return;
+  }
+  var auto=null;
+  function start(){ clearInterval(auto); auto=setInterval(function(){ set((cur+1)%L.length,true); },2600); }
+  btns.forEach(function(b,j){ b.addEventListener('click',function(){ set(j,true); start(); }); });
+  chips.forEach(function(b,j){ b.style.cursor='pointer'; b.addEventListener('click',function(){ set(j,true); start(); }); });
+  nodes.forEach(function(n){ n.classList.add('done'); });
+  setTimeout(function(){ set(0,true); start(); },600);
+});
+</script>

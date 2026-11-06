@@ -24,6 +24,7 @@ export const DIRECT_SYSTEM = `당신은 Qpresen 스튜디오 덱의 아트 디�
  "brand": "#1E5BD8",                              // 기본 강조색(--brand: 아이콘 원·링크·활성 상태). 밝은 무대에서 흰 글자가 읽히는 중간 명도
  "sectionAccents": {"s1":"azure","s2":"teal"},   // 섹션 id → brand|azure|violet|teal|amber|rose|navy|ok|danger (섹션마다 다르게, 전체 2~4색)
  "darkSections": [],                              // 시네마틱 다크 무대(.stage.cine)로 그릴 섹션 id (0~1개 권장; 임팩트 장면·클라이맥스)
+ "scenes": {"cover":"terrain","section":"network","closing":"fireflies"}, // cine 표지·간지·마무리 위에 깔 3D 배경 장면(terrain 지형 파도 점 | network 별자리 | cubes | fireflies | none). 슬라이드 id로 개별 지정도 가능
  "photoStrategy": "none|backdrops|side|mixed",
  "images": [ {"id":"p03","role":"backdrop|side|mock|illustration","prompt":"장면 묘사(한국어, 구체적·사실적)","ratio":"16:9|1:1|3:4|4:3"} ],  // 최대 imageBudget 장. cover/section/image-hero 제외(엔진이 따로 생성)
  "motion": "모션 언어 2~3문장(등장 리듬·강조 방식·인터랙션 톤)",
@@ -79,6 +80,7 @@ export async function directDeck(brief: Brief, plan: Plan, opt: PipelineOptions 
     fx: (Array.isArray(m.fx) && m.fx.length ? m.fx.filter((f: string) => fxAll.includes(f)) : fxAll) as any,
     deckCss: sanitizeDeckCss(parts.css.slice(0, 12000)) || undefined, deckJs: parts.js.slice(0, 6000) || undefined,
     helpers: Array.isArray(m.helpers) ? m.helpers.map((h: any) => typeof h === 'string' ? h : `${h.class} — ${h.purpose || ''}`).slice(0, 10) : [],
+    scenes: (m.scenes && typeof m.scenes === 'object') ? Object.fromEntries(Object.entries(m.scenes).filter(([, v]) => ['terrain', 'network', 'cubes', 'fireflies', 'none'].includes(String(v))).map(([k, v]) => [String(k), String(v)])) : undefined,
     images: (Array.isArray(m.images) ? m.images : []).filter((x: any) => x && x.id && x.prompt).slice(0, budget).map((x: any) => ({ id: String(x.id), role: ['backdrop', 'side', 'mock', 'illustration'].includes(x.role) ? x.role : 'side', prompt: String(x.prompt), ratio: ['16:9', '1:1', '3:4', '4:3'].includes(x.ratio) ? x.ratio : undefined })),
     darkSections: Array.isArray(m.darkSections) ? m.darkSections.map(String).slice(0, 2) : [],
   };

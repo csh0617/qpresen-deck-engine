@@ -123,7 +123,7 @@ export const BASE_JS = `
     Array.prototype.slice.call(document.querySelectorAll('[data-cycle]')).forEach(function(box){
       var steps=Array.prototype.slice.call(box.querySelectorAll('[data-step]')); if(!steps.length) return;
       var ms=parseInt(box.getAttribute('data-cycle'),10)||2600; var si=parseInt(box.getAttribute('data-static-step')||'0',10), i=0;
-      function set(k){ steps.forEach(function(s,j){ s.classList.toggle('on',j===k); }); box.setAttribute('data-active',k); }
+      function set(k){ steps.forEach(function(s,j){ s.classList.toggle('on',j===k); }); box.setAttribute('data-active',k); try{ box.dispatchEvent(new CustomEvent('cycle',{detail:{i:k,step:steps[k]}})); }catch(e){} }
       if(IS_STATIC){ set(si); return; } set(0); setInterval(function(){ i=(i+1)%steps.length; set(i); },ms);
       steps.forEach(function(s,j){ s.addEventListener('mouseenter',function(){ i=j; set(j); }); });
     });

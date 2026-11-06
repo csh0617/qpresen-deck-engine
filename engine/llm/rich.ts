@@ -10,7 +10,7 @@ export { HOUSE_STYLE } from './house.ts';
 import type { Brief, Plan, PlanSlide, PipelineOptions } from './pipeline.ts';
 import type { Slide, DeckSpec } from '../renderer/types.ts';
 
-export const RICH_KINDS = ['numbers', 'chart', 'compare', 'process', 'concept', 'demo', 'story', 'list', 'cover', 'section', 'closing', 'agenda'] as const;
+export const RICH_KINDS = ['numbers', 'chart', 'compare', 'process', 'concept', 'demo', 'product', 'story', 'list', 'cover', 'section', 'closing', 'agenda'] as const;
 export type RichKind = typeof RICH_KINDS[number];
 /** Structural pages: in premium 2.0 they are designed too (full stage, no engine header), with their own exemplars. */
 export const STRUCTURAL_TYPES = new Set(['cover', 'section', 'agenda', 'closing', 'quote', 'image-hero']);
@@ -31,6 +31,7 @@ export function kindForType(type?: string, hint?: string): RichKind {
   if (/comparison|matrix|pricing/.test(t)) return 'compare';
   if (/process|timeline|checklist/.test(t)) return 'process';
   if (/mockup|annotated/.test(t)) return 'demo';
+  if (/layers|device|product/.test(t) || /제품|구조|해부|단면|부품|장치/.test(h)) return 'product';
   if (/diagram|bullets|summary|team|cards/.test(t)) return /사례|스토리|이야기/.test(h) ? 'story' : 'concept';
   return 'story';
 }
@@ -90,6 +91,17 @@ ${ICON_NAMES}
 - 시네마틱 다크 무대: 아트 디렉션이 지정한 섹션은 .stage.cine(어두운 배경, 유리 카드, 흰 글자)으로 렌더된다 — 그 장은 어두운 바탕에 맞게 설계. cine에서는 토큰이 반전된다: --bg/--card/--line은 어두운 색, --ink/--text는 밝은 글자색 (즉 --ink는 '남색'이 아니라 '글자색'). 배경을 어둡게 칠하려고 var(--ink)를 쓰지 말고 var(--bg)·var(--card)를 쓴다. .stage.cine 의 background 는 엔진이 칠하므로 덮어쓰지 말 것.
 - 라이브러리: gsap 3 전역 사용 가능(gsap.timeline / gsap.to / stagger — 쓰면 자동 포함, 20~50줄의 안무에 권장). THREE(three.js r152) 전역 사용 가능 — 3D가 메시지의 핵심일 때만(부품 구조·공간·흐름), 100줄 이내, 캔버스는 .body 안 컨테이너에 append, STATIC이면 한 프레임만 렌더. 그 외 외부 라이브러리 금지.
 
+[장치 라이브러리 — 레퍼런스 덱의 '멋진 순간'을 그대로 쓸 수 있는 프리미티브. 억지로 넣지 말고, 내용이 그 장치를 부를 때 쓴다]
+- 화면 쇼케이스(실제 화면을 돌려 보여주기): <div data-carousel="3200" style="--cw:440px"><div class="ci" data-name="고창 AI 특강"><img data-image="…"><span class="ci-tag">고창</span></div>…(3~5장)</div> + 형제 <div data-dots></div> <div data-label></div>. 팬 배치(기본)·.stack(겹침). 자동 회전, 점·이름 표시, 클릭 점프, carousel 이벤트(detail.i). 참고 ir-06.
+- 언어/문구 전환(타이핑 순환): <span data-words='["안녕하세요, 발표를 시작합니다","Hello, let's start","こんにちは、始めます"]' data-interval="2600" data-mode="type" data-sync="#chips"></span> — #chips 의 자식이 순서대로 .on. data-mode="fade" 는 크로스페이드. 번역·다국어·슬로건 전환·대사 교체에. 참고 ir-08.
+- 파이프라인 패킷: <svg><path d="M…" class="flowline" data-draw data-packets="3" data-dur="3s"/></svg> → 선 위를 점이 흐른다(SMIL, 정적 모드 정지). 단계 아이콘 사이의 데이터 흐름·공정 이송에.
+- 파형: <div class="wave" data-wave="28" style="color:var(--brand);height:36px"></div> (음성·신호·활동 표시, .mute 로 정지).
+- 장면 전환 패널: 단계 목록 <ol id="steps" data-cycle="5000"><li data-step>…</li></ol> + <div data-switch="#steps" class="fade"><div>장면1</div><div>장면2</div>…</div> — 현재 단계의 패널만 .on. 공정·절차·시나리오(단계마다 다른 그림/캔버스/목업). 참고 p800-12.
+- 시뮬 러너: 캔버스/Three 시뮬은 window.SLIDE={init(){…},tick(dt,t){…}} 로 쓰면 엔진이 init 한 번 + 매 프레임 tick 을 돌린다(정적 모드: init + tick 1회, 탭 숨김 시 정지). 이 전역 하나만 허용. 참고 p800-12·p800-23·p800-15.
+- 기기 프레임: .dv-phone(--pw 폭, 안에 .scr; .tilt3d) · .dv-browser(.bar>i*3+.url, .vw) · .dv-screen(+.dv-stand) · .dv-hud(글라스 HUD 녹색 글자) · .dv-glasses(>.lens×2). 실제 제품 화면·앱·HUD 를 보여줄 때 — 안의 내용은 HTML 로 직접 그린다(스크린샷 흉내가 아니라 살아있는 UI). 참고 ir-10.
+- 3D 배경 장면(표지·간지·마무리의 cine 무대): META.scene="terrain"(지형 파도 점) | "network"(별자리 네트워크) | "cubes" | "fireflies" — 사진 백드롭 위에 은은하게 깔린다(THREE·장면 키트 자동 포함). 참고 고창 표지·간지.
+- 숫자가 사는 장치: 실시간 검사/진행 카운터(수율·처리량·누적 — 캔버스/Three 에서 매 tick 숫자 갱신, p800-15), 슬라이더로 움직이는 차트(ir-04), 번호 타깃 카드(ir-13).
+
 [무대 전체 장 — kind가 cover / section / closing / agenda 일 때]
 - META.head="none": 엔진 헤더가 없으므로 제목·부제·메타를 HTML 안에 직접 쓴다. 무대 패딩(위 104 · 좌우 96 · 아래 100px) 안쪽이 .body(1728×876)이고, <div class="backdrop …"> 는 absolute라 무대 전체(1920×1080)를 채운다.
 - 표지(cover): 사진 백드롭(.backdrop.kb — 글 왼쪽·사진 오른쪽, 또는 cine 무대) + 큰 제목 64~88px(.hero-title, em 강조) + 부제 + 메타 줄(.meta-line: 일시·장소·청중) + 발표자 배지(.speaker) + 키워드 칩 + 오른쪽/아래에 목차 또는 KPI 띠. 참고 슬라이드 ir-01(제품 목업형)·gochang-01(시네마틱형).
@@ -97,9 +109,10 @@ ${ICON_NAMES}
 - 마무리(closing): 핵심 메시지 한 문장(60~80px) + 오늘의 숫자 3개 + 다음 행동/연락처(.contact) + '질문·토론' 안내. QR은 엔진이 제공하지 않으므로 넣지 않는다. 참고 ir-20·gochang-60.
 - 목차(agenda): 섹션 3~6개를 번호·제목·한 줄·분량(장수/분)으로, 왼쪽 큰 번호 타이포 + 오른쪽 설명 카드, 또는 세로 스텝. 각 항목 등장 리듬 120ms.
 - 이 장들에도 시그니처(사진·목업·거대 타이포)를 두되 글자 수는 적게. 발표자 이름·소속·행사·일시는 덱 메타에서 가져온다(없으면 생략).
+- cine 무대의 표지·간지·마무리에는 META.scene 으로 3D 배경 장면을 하나 고른다(표지 terrain, 간지 network 가 고창 덱의 조합; 주제에 따라 cubes·fireflies). 사진 백드롭 + 장면 + 다단 등장(제목 → 메타 → 칩 → 목차 띠)이 '살아있는 표지'를 만든다.
 
 [JS 규칙]
-- 전부 document.addEventListener('deck:ready', function(e){ var STATIC=e.detail.static; … }) 안에 쓴다. 전역 변수 금지(window.DeckFX 등 덱 레이어가 제공한 것은 사용 가능).
+- 전부 document.addEventListener('deck:ready', function(e){ var STATIC=e.detail.static; … }) 안에 쓴다. 전역 변수 금지(window.DeckFX 등 덱 레이어가 제공한 것은 사용 가능). 예외: 캔버스/3D 시뮬은 window.SLIDE={init,tick} 하나로 쓴다(엔진이 루프를 돌림) — 이 경우 deck:ready 래퍼 없이 최상위에서 window.SLIDE 를 정의해도 된다.
 - 자동 데모: 아무것도 누르지 않아도 2~6초 안에 움직임이 보이고, 사용자가 클릭·슬라이더·토글을 만지면 자동 데모를 멈춘다.
 - 금지: alert/confirm/prompt, fetch/XHR, localStorage, location 변경, 키보드 단축키(발표자 키와 충돌), 외부 라이브러리, document.write, 끝없이 누적되는 타이머.
 - 슬라이더·드래그 컨트롤에는 touchstart/touchend 에 stopPropagation (슬라이드 넘김 방지).
@@ -114,9 +127,10 @@ ${ICON_NAMES}
 
 export const RICH_OUTPUT = `[출력 형식 — 정확히 아래 4개 구분선, 그 밖의 설명·코드펜스 금지]
 ===META===
-{"title":"결론형 제목(**강조**)","sub":"근거 한 문장","source":"출처·기준연도(없으면 빈 문자열)","notes":{"t":45,"s":"발표 대본(구어체 존댓말, 80~220자)"},"signature":"이 장의 시그니처 비주얼 한 줄(≤ 40자)","head":"engine|none","stage":"light|cine"}
+{"title":"결론형 제목(**강조**)","sub":"근거 한 문장","source":"출처·기준연도(없으면 빈 문자열)","notes":{"t":45,"s":"발표 대본(구어체 존댓말, 80~220자)"},"signature":"이 장의 시그니처 비주얼 한 줄(≤ 40자)","head":"engine|none","stage":"light|cine","scene":"none|terrain|network|cubes|fireflies"}
  - head: engine = 엔진이 상단에 번호·eyebrow·h1 제목·sub를 그린다(콘텐츠 장 기본). none = 표지·간지·마무리·목차처럼 무대 전체를 직접 구성(제목도 HTML 안에 직접).
  - stage: cine = 시네마틱 다크 무대(토큰 전체가 다크로 반전; 표지·간지·클라이맥스에 권장), light = 기본.
+ - scene(선택): "terrain" | "network" | "cubes" | "fireflies" | "none" — cine 무대 위 3D 배경 장면(표지·간지·마무리). sceneOpts(선택): {"opacity":0.8} 등.
 ===HTML===
 (section.body 안에 들어갈 HTML. <style>·<script> 태그 금지. 외부 리소스·이미지 URL·base64 금지. 아이콘은 <i data-icon="…"></i>)
 ===CSS===
@@ -192,7 +206,7 @@ export function richSlideFromParts(p: PlanSlide, parts: RichParts, model?: strin
     id: p.id, section: p.section || undefined,
     title: String(m.title || p.title), sub: m.sub != null ? String(m.sub) : p.sub, source: m.source ? String(m.source) : undefined, notes,
     body: { type: 'custom', bare: true, rich: true, html: parts.html, css: parts.css || undefined, js: parts.js || undefined, kind: (p as any).kind, signature: m.signature || (p as any).signature, description: m.signature ? String(m.signature) : undefined,
-      noHead: m.head ? m.head === 'none' : FULL_STAGE_KINDS.has(String((p as any).kind || '')), cine: m.stage === 'cine' },
+      noHead: m.head ? m.head === 'none' : FULL_STAGE_KINDS.has(String((p as any).kind || '')), cine: m.stage === 'cine', scene: ['terrain', 'network', 'cubes', 'fireflies', 'none'].includes(String(m.scene || '')) ? String(m.scene) : undefined, sceneOpts: m.sceneOpts && typeof m.sceneOpts === 'object' ? m.sceneOpts : undefined },
     ...(model ? { _model: model } as any : {}),
   } as Slide;
 }
@@ -263,7 +277,7 @@ export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: 
   parts.html = carryImageSrcs(parts.html, srcs);
   const fixed = richSlideFromParts({ id: slide.id!, section: slide.section, type: 'custom', title: slide.title, sub: slide.sub, t: slide.notes?.t, kind: b.kind } as any, parts, r.model);
   if (!parts.meta?.title) { fixed.title = slide.title; fixed.sub = slide.sub; fixed.source = slide.source; fixed.notes = slide.notes; }
-  const fb: any = fixed.body; if (!parts.meta?.head) fb.noHead = !!b.noHead; if (!parts.meta?.stage) fb.cine = !!b.cine;
+  const fb: any = fixed.body; if (!parts.meta?.head) fb.noHead = !!b.noHead; if (!parts.meta?.stage) fb.cine = !!b.cine; if (!parts.meta?.scene && b.scene) fb.scene = b.scene; if (!parts.meta?.sceneOpts && b.sceneOpts) fb.sceneOpts = b.sceneOpts;
   return fixed;
 }
 
@@ -271,8 +285,8 @@ export async function fixSlideRich(slide: Slide, issues: { code?: string; sev?: 
 export const PLAN_PREMIUM_ADDON = `
 [프리미엄 모드 — 추가 지시]
 이 덱은 장마다 맞춤 설계(HTML 직접 작성)로 만들어진다. 각 slide 객체에 다음 두 필드를 더한다:
-- "kind": "numbers"(숫자·현황) | "chart"(추세·분포 차트) | "compare"(비교·전후·선택지) | "process"(단계·흐름·공식) | "concept"(구조·원리·개념도) | "demo"(화면·대화 시연) | "story"(사례·이야기) | "list"(정리·체크리스트)
-- "signature": 이 장의 시그니처 비주얼·인터랙션 한 줄(≤ 40자, 예: "연도 슬라이더로 움직이는 성장 막대차트", "전/후 토글 비교 카드 3장")
+- "kind": "numbers"(숫자·현황) | "chart"(추세·분포 차트) | "compare"(비교·전후·선택지) | "process"(단계·흐름·공정·공식) | "concept"(구조·원리·개념도·인포그래픽) | "demo"(화면·대화·결과물 시연, 언어 전환) | "product"(제품·장치·부품의 구조 해부, 3D/단면/작동 시뮬) | "story"(사례·이야기) | "list"(정리·체크리스트)
+- "signature": 이 장의 시그니처 비주얼·인터랙션 한 줄(≤ 40자, 예: "연도 슬라이더로 움직이는 성장 막대차트", "전/후 토글 비교 카드 3장"). 내용이 부르면 레퍼런스의 장치를 지정한다: 결과물 화면 여러 장 → "실제 화면 팬 캐러셀", 다국어·자막 → "언어 전환 타이핑 자막", 기기·앱 → "기기 HUD/폰 목업 + 번호 기능 카드 순환", 공정·절차 → "단계 자동 진행 + 장면 캔버스", 제품 구조 → "3D 등각 해부(분해·결합)", 검사·수율·처리량 → "실시간 검사 카운터", 변수 설명 → "슬라이더 파라미터 시뮬", 데이터 흐름 → "파이프라인 패킷 흐름". 억지로 끼우지 말고 덱 전체에 4종 이상 섞는다.
 cover/section/agenda/closing/quote/image-hero 는 kind 없이 그대로 둔다. 연속된 장이 같은 kind·같은 signature 를 쓰지 않게 하고, 덱 전체에서 kind 가 5종 이상 섞이게 한다.
 content_hints 는 4~6개까지 넉넉히: 자료가 있으면 자료의 수치·고유명사·예시를, 자료가 없으면 널리 알려진 공개 사실·수치(기관·연도 명시, 불확실하면 '약'·'추정')를 뽑아 장마다 구체적인 재료를 준다. 일반론만 있는 장은 만들지 않는다.`;
 

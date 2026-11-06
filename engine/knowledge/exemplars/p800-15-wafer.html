@@ -1,0 +1,106 @@
+<!-- EXEMPLAR (chart): 실시간 검사 — Three.js 웨이퍼 위 다이가 하나씩 검사되며 정상/불량 색이 켜지고, 우측 수율 %·정상/불량/검사 수가 실시간 카운트 -->
+<!-- HTML (goes inside <section class="body">) -->
+<div class="wy">
+  <canvas id="c-wafer2" data-reveal></canvas>
+  <div class="side">
+    <div class="gauge" data-reveal><div class="lab">테스트 진행 중 · 웨이퍼 수율</div><div class="v"><span id="yv">0</span><small>%</small></div><div class="bar"><i id="yb"></i></div><div class="row"><span>정상 칩 <b id="yg">0</b></span><span>불량 칩 <b id="yr">0</b></span><span>검사 <b id="yt">0</b> / <span id="yn">0</span></span></div></div>
+    <div class="card tint-green" data-reveal><p class="t">수율 1%p의 값</p><p class="d">월 10만 장 웨이퍼를 처리하는 대형 팹에서 수율이 1%p 오르면, 같은 비용으로 <b>칩 수십만 개</b>가 더 나옵니다. 그래서 신공정 도입 초기의 <b>'수율 램프업'</b>이 실적을 가르고, HBM처럼 12~16단을 쌓는 제품은 적층할수록 수율이 곱으로 떨어져 진입 장벽이 됩니다.</p></div>
+    <div class="card" data-reveal><p class="t">연구기관의 접점</p><p class="d yn"><b>웨이퍼 투입량</b> = 매출의 상한 · <b>수율</b> = 이익률 · <b>램프업 속도</b> = 투자 회수 시점. 실적 발표에서 "수율 개선"이 나오면 원가율이 구조적으로 내려간다는 뜻입니다.</p></div>
+  </div>
+</div>
+
+<!-- CSS (per-slide) -->
+<style>
+/* layout rules from the reference deck's shared CSS (only those this slide uses) */
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 14px 40px rgba(11,26,51,.07);padding:28px 30px;position:relative;overflow:hidden}
+.card.tint-blue{background:linear-gradient(180deg,#fff,#F3F7FF)}
+.card.tint-violet{background:linear-gradient(180deg,#fff,#F7F3FF)}
+.card.tint-green{background:linear-gradient(180deg,#fff,#F1FBF6)}
+.card.tint-amber{background:linear-gradient(180deg,#fff,#FFF8EA)}
+.card.tint-rose{background:linear-gradient(180deg,#fff,#FFF3F5)}
+.card.dark{background:linear-gradient(160deg,#0F2A5C,#0B1A33);color:#fff;border-color:transparent}
+.card.dark .t{color:#fff}
+.card.dark .d{color:rgba(255,255,255,.8)}
+.card .ic{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:30px;background:var(--blue-soft);margin-bottom:16px}
+.card .t{font-size:26px;font-weight:800;margin:0 0 8px;letter-spacing:-.01em;line-height:1.3}
+.card .d{font-size:19px;line-height:1.55;color:var(--ink2);margin:0}
+.card .d b{color:var(--ink)}
+.card .tag{position:absolute;right:22px;top:22px;font-size:15px;font-weight:800;color:var(--ink3);letter-spacing:.06em}
+.kpi .lab{font-size:19px;font-weight:700;color:var(--ink);margin-top:14px}
+.flow .st .t{font-size:22px;font-weight:800;margin-bottom:6px}
+.flow .st .d{font-size:17px;color:var(--ink2);line-height:1.5}
+/* bars */
+.bars .row{display:grid;grid-template-columns:200px 1fr 130px;align-items:center;gap:16px;margin-bottom:14px;font-size:19px}
+.bars .row .lab{font-weight:700;text-align:right}
+.bars .row .bar{height:26px;background:#EEF2F8;border-radius:8px;overflow:hidden;position:relative}
+.bars .row .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:linear-gradient(90deg,var(--blue),var(--cyan));width:0;transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+.bars .row .val{font-weight:800;color:var(--ink)}
+.tl .it .t{font-size:22px;font-weight:800;margin-bottom:6px}
+.tl .it .d{font-size:17px;color:var(--ink2);line-height:1.5}
+.chk .it .t{font-size:21px;font-weight:800}
+.chk .it .d{font-size:17px;color:var(--ink2);line-height:1.5;margin-top:4px}
+.wy{display:grid;grid-template-columns:1000px 1fr;gap:34px;align-items:start}
+.wy canvas{display:block}
+.wy .side{display:flex;flex-direction:column;gap:20px}
+.gauge{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px 30px;box-shadow:0 14px 40px rgba(11,26,51,.07)}
+.gauge .lab{font-size:17px;font-weight:800;color:var(--ink3);letter-spacing:.06em}
+.gauge .v{font-size:72px;font-weight:900;letter-spacing:-.04em;color:var(--ink);line-height:1.05;margin-top:6px}
+.gauge .v small{font-size:28px;color:var(--ink2);font-weight:700}
+.gauge .bar{height:18px;background:#EEF2F8;border-radius:9px;overflow:hidden;margin-top:14px}
+.gauge .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#10B981,#34D399);border-radius:9px}
+.gauge .row{display:flex;justify-content:space-between;font-size:17px;color:var(--ink2);margin-top:10px}
+.gauge .row b{color:var(--ink)}
+.yn{font-size:18px;line-height:1.6;color:var(--ink2)}
+.yn b{color:var(--ink)}
+.card,.card[class*='tint-'],.card.dark{border:0;border-top:1px solid #bdc9d5;background:transparent;border-radius:0;box-shadow:none;padding:26px 26px 25px;position:relative;color:var(--ink)}
+.card .t,.card.dark .t{font-size:29px;font-weight:760;line-height:1.3;letter-spacing:-.04em;color:#21384f}
+.card .d,.card.dark .d{font-size:21px;line-height:1.65;color:#65717f;letter-spacing:-.024em}
+.card .d b,.card.dark .d b{font-weight:710;color:#30465c}
+.card .tag{font-size:13px;font-weight:680;letter-spacing:.12em;color:#7b8998}
+.card .ic{background:transparent!important;border:0;border-radius:0;box-shadow:none}
+.card.dark [style*='color:#fff'],.card.dark [style*='color:rgba(255']{color:#233f5c!important}
+.kpi .lab{font-size:22px;line-height:1.45;color:#354e66;font-weight:690}
+.flow .st .d{color:#697a8b}
+.bars .bar,.bars .row .bar{background:#e5ebf1;border-radius:0}
+.bars .row .bar i{border-radius:0;background:linear-gradient(90deg,#86a0ba,#365e86)}
+.chk .it .t{font-size:24px;color:#29415a;font-weight:700}
+.chk .it .d{font-size:19px;color:#76818d}
+/* page-specific */
+/* Page 15: premium light composition */
+.head{margin-bottom:30px}.wy{gap:32px}.wy .side{gap:19px}
+.gauge{border-radius:10px;box-shadow:none;padding:25px 29px 26px;border-top:3px solid #245BDD}.gauge .lab{font-size:18px;letter-spacing:.02em;color:#506985}.gauge .v{font-size:105px;line-height:1.08;letter-spacing:-.06em;margin-top:10px}.gauge .v small{font-size:36px;margin-left:8px}.gauge .bar{height:10px;border-radius:3px;margin-top:18px}.gauge .bar i{border-radius:3px;background:#299879}.gauge .row{font-size:18px;margin-top:15px}
+.wy .side .card{border-radius:8px;padding:23px 27px;box-shadow:none}.wy .side .card .t{font-size:26px;margin-bottom:13px}.wy .side .card .d{font-size:20px;line-height:1.65}.wy .side .card:last-child{background:#F1F6FF;border-left:3px solid #245BDD}
+.head h1{font-size:57px}.head .lead{font-size:22px}.wy{grid-template-columns:1000px 1fr;gap:48px}.wy .side{gap:17px;padding-left:30px;border-left:1px solid #becdda}.gauge{border:0;background:none;border-radius:0;padding:11px 0 25px;box-shadow:none}.gauge .lab{font-size:18px;color:#7d94a8;font-weight:570}.gauge .v{font-size:125px;font-weight:650;color:#2e526f;letter-spacing:-.065em;margin-top:10px;line-height:1}.gauge .v small{font-size:34px;color:#91a5b5}.gauge .bar{border-radius:0;height:4px;background:#dfe8ef;margin-top:27px}.gauge .bar i{border-radius:0;background:#638a87}.gauge .row{font-size:17px;color:#90a1ad;margin-top:17px}.gauge .row b{color:#50798b}.wy .side .card{border:0;border-top:1px solid #c2d0dc;border-radius:0;padding:21px 0;background:none!important;box-shadow:none}.wy .side .card:last-child{border-left:0}.wy .side .card .t{font-size:26px;font-weight:700;color:#3c5c76;margin-bottom:14px}.wy .side .card .d{font-size:21px;line-height:1.7;color:#7d8c99}
+#c-wafer2{width:940px!important;height:648.6px!important;margin-left:10px;margin-top:0}.wy{grid-template-columns:960px 1fr;gap:50px}.wy .side .card .d{font-size:20px;line-height:1.65}.gauge{padding-bottom:20px}.wy .side .card{padding-top:18px;padding-bottom:16px}
+.gauge .bar i{background:#459bad}.gauge #yg{color:#328597}.gauge #yr{color:#b66c79}
+</style>
+
+<!-- JS (per-slide, runs after base; wrap in deck:ready in your own slide) -->
+<script>
+function makeEnv(r){const pm=new THREE.PMREMGenerator(r);const es=new THREE.Scene();es.add(new THREE.Mesh(new THREE.SphereGeometry(30,32,16),new THREE.MeshBasicMaterial({color:0xC9D3E0,side:THREE.BackSide})));
+  const panel=(w,h,x,y,z,c,k)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide}));m.material.color.multiplyScalar(k);m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m);};
+  panel(14,14,0,12,0,0xffffff,4);panel(8,3,10,4,6,0xEAF2FF,3);panel(8,3,-10,3,6,0xFFF3E6,2.6);panel(10,2,0,2,-12,0xDDE8FF,2.2);const t=pm.fromScene(es,.06).texture;pm.dispose();return t;}
+window.SLIDE={init(){
+  const W=1000,H=690;const canvas=document.getElementById('c-wafer2');const r=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});r.setPixelRatio(1.5);r.setSize(W,H,false);canvas.style.width=W+'px';canvas.style.height=H+'px';r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;
+  const scene=new THREE.Scene();scene.environment=makeEnv(r);const cam=new THREE.PerspectiveCamera(30,W/H,.1,100);cam.position.set(0,8.8,8.6);cam.lookAt(0,0,0);
+  scene.add(new THREE.HemisphereLight(0xffffff,0xB8C4D6,.6));const dl=new THREE.DirectionalLight(0xffffff,1);dl.position.set(4,9,5);scene.add(dl);
+  const g=new THREE.Group();scene.add(g);
+  const R=3.3;const wafer=new THREE.Mesh(new THREE.CylinderGeometry(R,R,.08,128),new THREE.MeshPhysicalMaterial({color:0x8d9fb0,metalness:.95,roughness:.2,clearcoat:.8}));g.add(wafer);
+  const N=22,cell=(R*2*.94)/N;const dies=[];for(let i=0;i<N;i++)for(let j=0;j<N;j++){const x=(i+.5-N/2)*cell,z=(j+.5-N/2)*cell;if(Math.hypot(x,z)<R*.94-cell*.55)dies.push({x,z,ok:Math.random()<.86});}
+  const geo=new THREE.BoxGeometry(cell*.86,.06,cell*.86);const mat=new THREE.MeshPhysicalMaterial({color:0xffffff,metalness:.55,roughness:.3,clearcoat:.5});const im=new THREE.InstancedMesh(geo,mat,dies.length);im.position.y=.07;g.add(im);
+  const m4=new THREE.Matrix4();const base=new THREE.Color(0x708da4),good=new THREE.Color(0x4496a8),bad=new THREE.Color(0xc57981),hot=new THREE.Color(0xc59a53);
+  dies.forEach((d,i)=>{m4.makeTranslation(d.x,0,d.z);im.setMatrixAt(i,m4);im.setColorAt(i,base);});im.instanceMatrix.needsUpdate=true;im.instanceColor.needsUpdate=true;
+  const probe=new THREE.Mesh(new THREE.BoxGeometry(cell*1.1,.5,cell*1.1),new THREE.MeshPhysicalMaterial({color:0x279dab,emissive:0x279dab,emissiveIntensity:.5,transparent:true,opacity:.75}));probe.position.y=.45;g.add(probe);
+  // scanning order: row-major sorted by z then x
+  const order=dies.map((d,i)=>i).sort((a,b)=>dies[a].z-dies[b].z||dies[a].x-dies[b].x);
+  const yv=document.getElementById('yv'),yb=document.getElementById('yb'),yg=document.getElementById('yg'),yr=document.getElementById('yr'),yt=document.getElementById('yt'),yn=document.getElementById('yn');yn.textContent=dies.length;
+  const PER=13;let prevK=-1;
+  this.tick=(dt,t)=>{const k=Math.min(t/PER,1);const scanned=Math.floor(Math.min(1,k/.8)*order.length);
+    if(scanned<prevK){dies.forEach((d,i)=>im.setColorAt(i,base));}prevK=scanned;
+    let good_=0,bad_=0;for(let n=0;n<scanned;n++){const i=order[n];const d=dies[i];if(d.ok)good_++;else bad_++;im.setColorAt(i,d.ok?good:bad);}
+    if(scanned<order.length&&scanned>0){const d=dies[order[scanned]];probe.visible=true;probe.position.x=d.x;probe.position.z=d.z;const i=order[scanned];im.setColorAt(i,hot);}else probe.visible=false;
+    im.instanceColor.needsUpdate=true;
+    const y=scanned?good_/scanned*100:0;yv.textContent=y.toFixed(1);yb.style.width=y+'%';yg.textContent=good_;yr.textContent=bad_;yt.textContent=scanned;
+    g.rotation.y=-.32+Math.sin(t*.065)*.08;cam.position.set(Math.sin(t*.06)*.22,8.8,8.6);cam.lookAt(0,0,0);r.render(scene,cam);};
+}};
+</script>

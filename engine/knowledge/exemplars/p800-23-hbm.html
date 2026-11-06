@@ -1,0 +1,110 @@
+<!-- EXEMPLAR (product): 3D 제품 해부 — Three.js로 HBM 12층 스택·GPU 다이·인터포저를 등각 3D로 쌓아 올리며 라벨 표시, 우측에 왜/어떻게/누가 3단 설명 -->
+<!-- HTML (goes inside <section class="body">) -->
+<div class="hb">
+  <div class="wrap" data-reveal><canvas id="c-hbm"></canvas>
+    <div class="lbl" style="left:60px;top:40px">HBM 스택 — DRAM 12단 + 베이스 다이</div>
+    <div class="lbl" style="left:600px;top:40px">GPU 다이</div>
+    <div class="lbl" style="left:820px;top:560px">인터포저 (실리콘 기판)</div>
+  </div>
+  <div class="side">
+    <div class="card tint-violet" data-reveal><p class="t">왜 쌓나</p><p class="d">옆으로 넓히면 배선이 길어져 느려집니다. 위로 쌓고 구멍(TSV)으로 수직 연결하면 거리가 짧아져 <b>대역폭 ↑ 전력 ↓</b>.</p></div>
+    <div class="card tint-amber" data-reveal><p class="t">왜 어렵나</p><p class="d">칩을 머리카락 굵기 이하로 갈고, 12장을 정렬해 붙이고, 열을 빼야 합니다. 개별 다이 검사와 적층 공정의 결함 관리가 중요 — <b>적층 수율의 싸움</b>.</p></div>
+    <div class="card dark" data-reveal><p class="t">누가 만드나</p><p class="d">SK하이닉스가 앞서고(점유율 57%, HBM4 70% 전망), 삼성전자가 추격(2026년 HBM 매출 3배 전망), 마이크론이 뒤따릅니다. <b>3사 모두 2026년 물량 완판.</b></p></div>
+  </div>
+</div>
+<div class="src">HBM3E·HBM4 개념도 · HBM4 2,048 I/O: SK hynix 공식 자료(2025.11) · 시장 비중·전망은 기존 자료 기준</div>
+
+<!-- CSS (per-slide) -->
+<style>
+/* layout rules from the reference deck's shared CSS (only those this slide uses) */
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 14px 40px rgba(11,26,51,.07);padding:28px 30px;position:relative;overflow:hidden}
+.card.tint-blue{background:linear-gradient(180deg,#fff,#F3F7FF)}
+.card.tint-violet{background:linear-gradient(180deg,#fff,#F7F3FF)}
+.card.tint-green{background:linear-gradient(180deg,#fff,#F1FBF6)}
+.card.tint-amber{background:linear-gradient(180deg,#fff,#FFF8EA)}
+.card.tint-rose{background:linear-gradient(180deg,#fff,#FFF3F5)}
+.card.dark{background:linear-gradient(160deg,#0F2A5C,#0B1A33);color:#fff;border-color:transparent}
+.card.dark .t{color:#fff}
+.card.dark .d{color:rgba(255,255,255,.8)}
+.card .ic{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:30px;background:var(--blue-soft);margin-bottom:16px}
+.card .t{font-size:26px;font-weight:800;margin:0 0 8px;letter-spacing:-.01em;line-height:1.3}
+.card .d{font-size:19px;line-height:1.55;color:var(--ink2);margin:0}
+.card .d b{color:var(--ink)}
+.card .tag{position:absolute;right:22px;top:22px;font-size:15px;font-weight:800;color:var(--ink3);letter-spacing:.06em}
+.pill.dark{background:var(--ink);color:#fff;border-color:transparent}
+.src{position:absolute;right:96px;bottom:70px;font-size:15px;color:var(--ink3);z-index:4}
+.flow .st .t{font-size:22px;font-weight:800;margin-bottom:6px}
+.flow .st .d{font-size:17px;color:var(--ink2);line-height:1.5}
+.tl .it .t{font-size:22px;font-weight:800;margin-bottom:6px}
+.tl .it .d{font-size:17px;color:var(--ink2);line-height:1.5}
+.chk .it .t{font-size:21px;font-weight:800}
+.chk .it .d{font-size:17px;color:var(--ink2);line-height:1.5;margin-top:4px}
+.hb{display:grid;grid-template-columns:1120px 1fr;gap:30px;align-items:start}
+.hb canvas{display:block}
+.hb .side{display:flex;flex-direction:column;gap:16px}
+.hb .card .t{font-size:23px}
+.hb .card .d{font-size:17px}
+.hb .lbl{position:absolute;font-size:16px;font-weight:800;color:var(--ink2);background:rgba(255,255,255,.9);padding:6px 12px;border-radius:10px;border:1px solid var(--line);box-shadow:0 6px 16px rgba(11,26,51,.08)}
+.hb .wrap{position:relative}
+.card,.card[class*='tint-'],.card.dark{border:0;border-top:1px solid #bdc9d5;background:transparent;border-radius:0;box-shadow:none;padding:26px 26px 25px;position:relative;color:var(--ink)}
+.card .t,.card.dark .t{font-size:29px;font-weight:760;line-height:1.3;letter-spacing:-.04em;color:#21384f}
+.card .d,.card.dark .d{font-size:21px;line-height:1.65;color:#65717f;letter-spacing:-.024em}
+.card .d b,.card.dark .d b{font-weight:710;color:#30465c}
+.card .tag{font-size:13px;font-weight:680;letter-spacing:.12em;color:#7b8998}
+.card .ic{background:transparent!important;border:0;border-radius:0;box-shadow:none}
+.card.dark [style*='color:#fff'],.card.dark [style*='color:rgba(255']{color:#233f5c!important}
+.flow .st .d{color:#697a8b}
+.chk .it .t{font-size:24px;color:#29415a;font-weight:700}
+.chk .it .d{font-size:19px;color:#76818d}
+.src{font-size:13px;line-height:1.5;color:#8b99a7;right:104px;left:104px;bottom:73px;max-width:none}
+/* Slightly stronger fine-print contrast; approved composition stays unchanged. */
+.src{color:#74869a}
+/* page-specific */
+/* Page-specific editorial layout: 23 */
+.hb{grid-template-columns:1120px 1fr;gap:36px}.hb .wrap{border:1px solid #dce5f2;border-radius:10px;background:radial-gradient(ellipse at 50% 60%,#f0f5fb,#fff 74%);overflow:hidden}
+.hb .side{gap:0;border-top:3px solid #18345d}.hb .card{border:0;border-bottom:1px solid #dce5f2;box-shadow:none;border-radius:0;padding:23px 19px}
+.hb .card .t{font-size:27px;margin-bottom:12px}.hb .card .d{font-size:20px;line-height:1.65}
+.hb .card.dark{background:#f0f5fd!important;border-left:4px solid #2f61c8;border-bottom:0;margin-top:18px}
+.hb .lbl{border:0;border-left:2px solid #6b83aa;border-radius:0;box-shadow:none;background:#ffffffed;font-size:17px;padding:7px 12px;color:#244164;z-index:2}
+.hb .lbl:nth-of-type(2){left:690px!important;top:50px!important}.hb .lbl:nth-of-type(3){left:730px!important;top:573px!important}
+.head{margin-bottom:30px}.lead{max-width:1660px}
+.card,.card[class*="tint-"],.card.dark{background:transparent!important;box-shadow:none!important;border-radius:0!important;border-left:0!important}
+.side{border-top:0!important}.side .card{padding:25px 0 25px 29px;border-top:0!important;border-bottom:1px solid #cdd6df!important}.side .card:first-child{padding-top:10px}.side .card:last-child{border-bottom:0!important;margin-top:0!important}
+.side .card .t{font-size:28px;color:#233c55;letter-spacing:-.035em;margin-bottom:12px}.side .card .d{font-size:21px;line-height:1.7;color:#687582}.side .card .d b{color:#354e64;font-weight:700}.side .card .tag{color:#8391a0!important;font-weight:550;letter-spacing:.1em}.side .kpi .num{color:#284d70!important;font-weight:740;letter-spacing:-.055em}.side .kpi .num small{color:#8493a2!important;font-weight:450}.side .kpi .lab{color:#3d5369!important}.side .kpi .sub{color:#7d8995!important}
+
+
+.hb{grid-template-columns:1140px 1fr;gap:27px}.hb .wrap{border:0;border-radius:0;background:radial-gradient(ellipse at 45% 55%,#e1e8f070,transparent 65%);overflow:visible}.hb .side{padding:22px 0 0 12px}.hb .card{padding:26px 0 26px 24px;border-bottom:1px solid #c9d3df}.hb .card.dark{background:transparent!important}.hb .card .t{font-size:29px}.hb .card .d{font-size:21px;line-height:1.68}.hb .lbl{font-size:16px;font-weight:540;letter-spacing:-.025em;color:#6f7f90;border:0;border-left:1px solid #91a4b8;background:transparent;padding:5px 14px;box-shadow:none}.hb .lbl:first-of-type{top:20px!important;left:32px!important}.hb .lbl:nth-of-type(2){top:20px!important;left:750px!important}.hb .lbl:nth-of-type(3){top:600px!important;left:710px!important}
+.hb .lbl:first-of-type{border-left-color:#8D82AE}.hb .lbl:nth-of-type(2){border-left-color:#5285AC}.hb .lbl:nth-of-type(3){border-left-color:#66A6AD}
+</style>
+
+<!-- JS (per-slide, runs after base; wrap in deck:ready in your own slide) -->
+<script>
+/* helper bag (the reference deck's shared runtime) — minimal shim */
+var H=window.H||{lerp:function(a,b,t){return a+(b-a)*t},clamp:function(v,a,b){return Math.max(a,Math.min(b,v))},easeIO:function(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2},easeOut:function(t){return 1-Math.pow(1-t,3)},TAU:Math.PI*2};
+function makeEnv(r){const pm=new THREE.PMREMGenerator(r),es=new THREE.Scene();es.add(new THREE.Mesh(new THREE.SphereGeometry(30,32,16),new THREE.MeshBasicMaterial({color:0x7f94ab,side:THREE.BackSide})));const panel=(w,h,x,y,z,c,k)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide}));m.material.color.multiplyScalar(k);m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m);};panel(16,10,-6,14,5,0xffffff,3.8);panel(3,14,12,5,0,0xd7eaff,3);panel(9,2,-10,4,-6,0xfaf7ef,2.3);const t=pm.fromScene(es,.045).texture;pm.dispose();return t;}
+window.SLIDE={init(){
+  const W=1120,HT=640,canvas=document.getElementById('c-hbm');
+  const r=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});r.setPixelRatio(1.5);r.setSize(W,HT,false);canvas.style.width=W+'px';canvas.style.height=HT+'px';r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=.88;r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene();scene.environment=makeEnv(r);const cam=new THREE.PerspectiveCamera(29,W/HT,.1,100);
+  scene.add(new THREE.HemisphereLight(0xf2f7ff,0x52657a,.85));const key=new THREE.DirectionalLight(0xffffff,2.3);key.position.set(-7,12,8);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-12;key.shadow.camera.right=12;key.shadow.camera.top=12;key.shadow.camera.bottom=-12;key.shadow.normalBias=.018;key.shadow.bias=-.0002;scene.add(key);
+  const g=new THREE.Group();scene.add(g);
+  const M=(c,o)=>new THREE.MeshPhysicalMaterial(Object.assign({color:c,roughness:.32,metalness:.58,clearcoat:.28,clearcoatRoughness:.22},o||{}));
+  const edge=(mesh,col=0xc4d1df,opacity=.23)=>{const e=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry),new THREE.LineBasicMaterial({color:col,transparent:true,opacity}));mesh.add(e);};
+  const box=(x,y,z,w,h,d,mat,lines=true)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);if(lines)edge(m);return m;};
+  box(0,-.65,0,13,.38,9,M(0x263f56,{roughness:.43,metalness:.42}));
+  box(0,-.35,0,11.8,.17,7.9,M(0x6f8294,{roughness:.3,metalness:.74}));
+  box(0,-.21,0,11.4,.12,7.5,M(0x285461,{roughness:.45,metalness:.3}));
+  // Native traces show the short parallel routes from stacked memory to GPU.
+  for(let j=0;j<26;j++){const z=-2.25+j*.18;const pts=[new THREE.Vector3(-2.5,-.14,z),new THREE.Vector3(-.6,-.14,z),new THREE.Vector3(-.28,-.14,z*.92)];const trace=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:j%4===0?0xd0ac61:0x58a6b5,transparent:true,opacity:j%4===0?.84:.62}));g.add(trace);}
+  const gpu=box(1.8,.09,0,5.1,.39,5.1,M(0x1c4260,{roughness:.26,metalness:.6}));
+  const lid=box(1.8,.32,0,4.64,.1,4.64,M(0x7e94a9,{metalness:.93,roughness:.23,clearcoat:.55}));
+  for(let a=0;a<9;a++)for(let b=0;b<9;b++){const mark=new THREE.Mesh(new THREE.PlaneGeometry(.39,.39),M((a+b)%3===0?0x4f8bad:0x507d99,{metalness:.78,roughness:.36}));mark.rotation.x=-Math.PI/2;mark.position.set(-.11+a*.478,.374,-1.91+b*.478);g.add(mark);}
+  const stacks=[];const mk=(x,z)=>{const st=new THREE.Group();st.position.set(x,0,z);g.add(st);const base=new THREE.Mesh(new THREE.BoxGeometry(2.22,.2,2.9),M(0x334f68,{metalness:.6}));base.position.y=-.04;st.add(base);edge(base);const layers=[];
+    for(let i=0;i<12;i++){const d=new THREE.Mesh(new THREE.BoxGeometry(2.12,.105,2.8),M(i%2?0x778faf:0xa49fbd,{metalness:.83,roughness:.28}));d.userData.y0=.12+i*.135;d.position.y=d.userData.y0;d.castShadow=true;d.receiveShadow=true;st.add(d);edge(d,i%2?0x80bacc:0xc3b2e0,.55);layers.push(d);}
+    const pin=new THREE.CylinderGeometry(.024,.024,1,6),pm=M(0xd2ab62,{metalness:.85,roughness:.28}),im=new THREE.InstancedMesh(pin,pm,49),m4=new THREE.Matrix4();let n=0;for(let i=0;i<7;i++)for(let j=0;j<7;j++){m4.makeTranslation(-.84+i*.28,0,-1.14+j*.38);im.setMatrixAt(n++,m4);}im.instanceMatrix.needsUpdate=true;st.add(im);stacks.push({layers,tsv:im});};
+  mk(-3.2,-1.62);mk(-3.2,1.62);mk(-5.58,-1.62);mk(-5.58,1.62);
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(40,30),new THREE.ShadowMaterial({opacity:.15}));plane.rotation.x=-Math.PI/2;plane.position.y=-.855;plane.receiveShadow=true;scene.add(plane);
+  const pGeo=new THREE.SphereGeometry(.042,6,4),pMat=new THREE.MeshBasicMaterial({color:0x69c3d0}),parts=[];for(let i=0;i<30;i++){const m=new THREE.Mesh(pGeo,pMat);m.userData={t:i/30,lane:(i%13)*.32-1.92,sp:.3+(i%4)*.05};g.add(m);parts.push(m);}
+  this.tick=(dt,t)=>{const phase=(t%28)/28,explode=.18+.82*(.5-.5*Math.cos(phase*Math.PI*2));stacks.forEach(({layers,tsv})=>{layers.forEach((d,i)=>d.position.y=d.userData.y0+explode*i*.105);const height=1.6+explode*1.155;tsv.scale.y=height;tsv.position.y=.12+height/2;});parts.forEach(m=>{const u=m.userData;u.t=(u.t+dt*u.sp)%1;m.position.set(H.lerp(-2.08,-.74,u.t),-.1,u.lane);});const a=.31+Math.sin(t*.09)*.035;cam.position.set(Math.sin(a)*23.5,15,Math.cos(a)*23.5);cam.lookAt(-1,1.12,0);key.position.x=-7+Math.sin(t*.1)*2;r.render(scene,cam);};
+}};
+</script>

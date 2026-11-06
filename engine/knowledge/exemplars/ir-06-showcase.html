@@ -1,0 +1,326 @@
+<!-- EXEMPLAR (demo): 화면 쇼케이스 — 좌: AI 스튜디오 상태머신(단계·칩·진행률), 중: 실제 덱 화면 5장을 돌려 보여주는 팬 캐러셀(data-pos, 점·이름 표시, 클릭 점프), 우: 출력 형식 체크리스트·수치. 이미지는 <img data-image="장면"> 로 대체 -->
+<!-- HTML (goes inside <section class="body">) -->
+<div class="card glass s6-win" data-reveal="left" data-delay="120">
+      <div class="s6-wh">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <img src="data:IMG" alt=""><b>Qpresen AI Studio</b>
+        <span class="pill w"><span class="dot live"></span>AI 브리핑</span>
+      </div>
+      <div class="s6-step" id="step">
+        <div><span class="n"><span>1</span><i data-icon="check"></i></span>목차·장수</div><i class="ln"></i>
+        <div><span class="n"><span>2</span><i data-icon="check"></i></span>톤</div><i class="ln"></i>
+        <div><span class="n"><span>3</span><i data-icon="check"></i></span>청중</div><i class="ln"></i>
+        <div><span class="n"><span>4</span><i data-icon="check"></i></span>형식</div>
+      </div>
+      <div class="s6-msgs">
+        <div class="s6-m u" data-m="0"><div class="s6-bub">지자체 직원 대상 AI 교육, 60장 · 실습 위주로</div></div>
+        <div class="s6-m a" data-m="1"><span class="av"><img src="data:IMG" alt=""></span>
+          <div class="s6-bub"><b>목차 7부 · 60장</b>을 제안합니다. 톤을 골라 주세요.
+            <div class="s6-toc"><span>I</span><span>II</span><span>III</span><span>IV</span><span>V</span><span>VI</span><span>VII</span></div>
+            <div class="s6-chips" id="tone"><span>전문적</span><span data-pick><i data-icon="check"></i>친근한</span><span>임팩트</span></div>
+          </div>
+        </div>
+        <div class="s6-m u" data-m="2"><div class="s6-bub">친근하게, 고창 농업 사례 중심으로</div></div>
+        <div class="s6-m a" data-m="3"><span class="av"><img src="data:IMG" alt=""></span>
+          <div class="s6-prog" id="prog">
+            <div class="r1"><span class="ld"><i data-icon="sparkles"></i></span><span class="okc"><i data-icon="sparkles"></i></span><span id="plab">동적 슬라이드 생성</span><span class="cnt"><span id="pn">60</span> <small>/ 60</small></span></div>
+            <div class="s6-pbar"><i id="pbar"></i></div>
+            <div class="s6-pages" id="pages"></div>
+          </div>
+        </div>
+        <div class="s6-m a" data-m="4"><span class="av" style="visibility:hidden"></span>
+          <div class="s6-done"><i data-icon="sparkles"></i>HTML 60장 · 발표자 노트 60개<em>시연</em></div>
+        </div>
+      </div>
+      <div class="s6-comp"><i data-icon="sparkles"></i><span>자연어로 수정 요청 — 바이브코드 편집</span><i><i data-icon="sparkles"></i></i></div>
+    </div>
+    <div class="s6-hinge" data-reveal="fade" data-delay="400">
+      <svg viewBox="0 0 104 676" aria-hidden="true">
+        <defs><linearGradient id="hg06" gradientUnits="userSpaceOnUse" x1="0" y1="272" x2="96" y2="272"><stop offset="0" stop-color="#1A8CFF"/><stop offset=".5" stop-color="#5B63FF"/><stop offset="1" stop-color="#9B4DFF"/></linearGradient>
+          <marker id="ar06" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9B4DFF"/></marker></defs>
+        <path d="M0 272 L96 272" fill="none" stroke="url(#hg06)" stroke-width="3" stroke-linecap="round" class="flow" marker-end="url(#ar06)"/>
+        <circle r="4.5" fill="#5B63FF"><animateMotion dur="1.4s" repeatCount="indefinite" path="M-4 272 L94 272"/></circle>
+      </svg>
+      <div class="s6-hub"><i class="ring-ping"></i><i data-icon="sparkles"></i></div>
+      <div class="s6-hl">AI</div>
+    </div>
+    <div class="s6-r">
+      <div class="s6-top">
+        <div class="s6-fanbox" data-reveal="zoom" data-delay="260">
+          <div class="s6-fan open" id="fan">
+            <i class="s6-glow"></i><i class="s6-floor"></i>
+            <div class="s6-tc" data-pos="0" data-name="고창군농업기술센터 AI 교육" data-no="60장"><img src="data:IMG" alt="동적 HTML 슬라이드 — 고창 AI 교육 표지"><i class="s6-scan"></i><i class="s6-flash"></i><span class="s6-tag"><span class="dot"></span>HTML</span></div>
+            <div class="s6-tc" data-pos="1" data-name="고창군농업기술센터 AI 교육" data-no="60장"><img src="data:IMG" alt="동적 HTML 슬라이드 — 데이터 카드"><i class="s6-scan"></i><i class="s6-flash"></i><span class="s6-tag"><span class="dot"></span>HTML</span></div>
+            <div class="s6-tc" data-pos="2" data-name="고창군농업기술센터 AI 교육" data-no="60장"><img src="data:IMG" alt="동적 HTML 슬라이드 — 실습 화면"><i class="s6-scan"></i><i class="s6-flash"></i><span class="s6-tag"><span class="dot"></span>HTML</span></div>
+            <div class="s6-tc" data-pos="3" data-name="한국광기술원 세미나 「800조의 문법」" data-no="60장"><img src="data:IMG" alt="동적 HTML 슬라이드 — 반도체 수율 시뮬레이션"><i class="s6-scan"></i><i class="s6-flash"></i><span class="s6-tag"><span class="dot"></span>HTML</span></div>
+            <div class="card glass s6-fl f1 floaty"><span class="ic-sq g"><i data-icon="sparkles"></i></span><div><b>동적 HTML 60장</b><small>시연 예시 · 목차 7부</small></div></div>
+            <div class="card glass s6-fl f2 floaty" style="animation-delay:-3s"><span class="ic-sq f-violet"><i data-icon="sparkles"></i></span><div><b>발표자 노트 60개</b><small>시연 예시 · 자동 생성</small></div></div>
+          </div>
+          <div class="s6-cap">
+            <span class="s6-dots" id="dots"><i class="on"></i><i></i><i></i><i></i></span>
+            <span class="t">동적 HTML 슬라이드 예시 · 실사용 강의 자료 — <b id="dname">고창군농업기술센터 AI 교육</b></span>
+          </div>
+        </div>
+        <div class="s6-side">
+          <div class="card glass s6-fmt" data-reveal="right" data-delay="380">
+            <div class="k-eyebrow">OUTPUT · 출력 형식</div>
+            <div class="s6-fr f-azure" data-f><span class="ic-sq"><i data-icon="sparkles"></i></span><b>HTML</b><small>동적</small><span class="ck"><i data-icon="check"></i></span></div>
+            <div class="s6-fr f-violet" data-f><span class="ic-sq"><i data-icon="layers"></i></span><b>Reveal.js</b><span class="ck"><i data-icon="check"></i></span></div>
+            <div class="s6-fr f-amber" data-f><span class="ic-sq"><i data-icon="presentation"></i></span><b>PPTX</b><span class="ck"><i data-icon="check"></i></span></div>
+            <div class="s6-fr f-rose" data-f><span class="ic-sq"><i data-icon="sparkles"></i></span><b>PDF</b><span class="ck"><i data-icon="check"></i></span></div>
+          </div>
+          <div class="card s6-met" data-reveal="right" data-delay="480">
+            <div class="top"><span class="v num-g" data-count="13" data-delay="700">13<small>종</small></span><span class="l">컴포넌트</span></div>
+            <div class="s6-comps" id="comps"></div>
+          </div>
+          <div class="card s6-met" data-reveal="right" data-delay="560">
+            <div class="top"><span class="v num-g" data-count="3" data-delay="800">3<small>종</small></span><span class="l">테마</span></div>
+            <div class="s6-themes"><i class="t1"></i><i class="t2"></i><i class="t3"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="s6-feats">
+        <div class="card lift s6-ft f-violet" data-reveal="up" data-delay="620"><span class="ic-sq"><i data-icon="sparkles"></i></span><div><div class="k-eyebrow">VIBE CODE</div><div class="tt">바이브코드 편집</div><div class="dd">자연어로 HTML 슬라이드 수정</div></div></div>
+        <div class="card lift s6-ft f-azure" data-reveal="up" data-delay="700"><span class="ic-sq"><i data-icon="sparkles"></i></span><div><div class="k-eyebrow">SPEAKER NOTES</div><div class="tt">발표자 노트 자동 생성</div><div class="dd">장마다 대본 초안</div></div></div>
+        <div class="card lift s6-ft f-teal" data-reveal="up" data-delay="780"><span class="ic-sq"><i data-icon="sparkles"></i></span><div><div class="k-eyebrow">AI SUMMARY</div><div class="tt">AI 요약</div><div class="dd">전사 기반 발표 요약</div></div></div>
+      </div>
+    </div>
+
+<!-- CSS (per-slide) -->
+<style>
+/* ===== slide 06 · AI studio ===== */
+.body{display:grid;grid-template-columns:640px 104px minmax(0,1fr);gap:0;min-height:0}
+/* ---------- left : AI Studio chat window ---------- */
+.s6-win{display:flex;flex-direction:column;padding:0;overflow:hidden;min-height:0;min-width:0}
+.s6-wh{display:flex;align-items:center;gap:12px;height:58px;padding:0 22px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--card-2) 70%,transparent);flex:none}
+.s6-wh .dots{display:flex;gap:7px;margin-right:6px}
+.s6-wh .dots i{width:11px;height:11px;border-radius:50%;background:var(--line-2)}
+.s6-wh img{width:28px;height:28px;object-fit:contain}
+.s6-wh b{font-size:19px;letter-spacing:-.01em}
+.s6-wh .pill{margin-left:auto;height:30px;font-size:15px;padding:0 13px}
+/* briefing stepper */
+.s6-step{display:flex;align-items:center;gap:12px;padding:14px 22px 13px;flex:none;border-bottom:1px solid var(--line)}
+.s6-step>.ln{flex:1;min-width:16px;height:2px;border-radius:2px;background:var(--line-2);position:relative;overflow:hidden}
+.s6-step>.ln::after{content:'';position:absolute;inset:0;background:var(--qg);transform-origin:left;scale:0 1;transition:scale .5s var(--ease)}
+.s6-step>.ln.ok::after{scale:1 1}
+.s6-step>div{position:relative;display:flex;align-items:center;gap:9px;font-size:16px;font-weight:700;color:var(--faint);transition:color .4s;flex:none}
+.s6-step .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:800;background:var(--card-3);color:var(--muted);flex:none;transition:all .4s var(--ease)}
+.s6-step .n .ic{width:15px;height:15px;display:none}
+.s6-step>div.cur{color:var(--ink)}
+.s6-step>div.cur .n{background:var(--card);color:var(--q2);box-shadow:inset 0 0 0 2px var(--q2),0 0 0 5px color-mix(in srgb,var(--q2) 14%,transparent)}
+.s6-step>div.ok{color:var(--ink)}
+.s6-step>div.ok .n{background:var(--qg);color:#fff}
+.s6-step>div.ok .n .ic{display:block}.s6-step>div.ok .n span{display:none}
+/* message list */
+.s6-msgs{flex:1;min-height:0;display:flex;flex-direction:column;gap:13px;padding:18px 22px 14px}
+.s6-m{display:flex;gap:12px;align-items:flex-start;transition:opacity .55s var(--ease),translate .55s var(--ease),filter .55s var(--ease)}
+html.js:not(.static) .s6-m:not(.in){opacity:0;translate:0 16px;filter:blur(4px)}
+.s6-m.u{justify-content:flex-end}
+.s6-m .av{width:36px;height:36px;border-radius:12px;flex:none;display:grid;place-items:center;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--line)}
+.s6-m .av img{width:24px;height:24px;object-fit:contain}
+.s6-bub{font-size:18px;line-height:1.5;padding:11px 17px;border-radius:18px;max-width:86%;min-width:0}
+.s6-m.u .s6-bub{background:var(--qg);color:#fff;border-bottom-right-radius:6px;font-weight:600;box-shadow:0 10px 24px color-mix(in srgb,var(--q2) 26%,transparent)}
+.s6-m.a .s6-bub{background:var(--card-2);border:1px solid var(--line);color:var(--text);border-top-left-radius:6px}
+.s6-m.a .s6-bub b{color:var(--ink)}
+.s6-toc{display:flex;gap:5px;margin-top:9px}
+.s6-toc span{height:26px;min-width:34px;padding:0 7px;border-radius:7px;display:grid;place-items:center;font-size:15px;font-weight:800;color:var(--q2);background:var(--brand-50);border:1px solid color-mix(in srgb,var(--q2) 18%,transparent);transition:all .35s var(--ease)}
+html.js:not(.static) .s6-m:not(.in) .s6-toc span{opacity:0;scale:.6}
+.s6-chips{display:flex;gap:8px;margin-top:10px}
+.s6-chips span{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 15px;border-radius:999px;font-size:16px;font-weight:700;background:var(--card);color:var(--muted);box-shadow:inset 0 0 0 1.5px var(--line-2);transition:all .45s var(--ease)}
+.s6-chips span .ic{width:16px;height:16px;display:none}
+.s6-chips span.on{background:var(--qg);color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--q2) 34%,transparent);scale:1.04}
+.s6-chips span.on .ic{display:block}
+/* progress card */
+.s6-prog{flex:1;min-width:0;padding:14px 18px;border-radius:18px;border-top-left-radius:6px;background:var(--card);border:1px solid color-mix(in srgb,var(--q2) 26%,var(--line));box-shadow:var(--shadow)}
+.s6-prog .r1{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;color:var(--ink)}
+.s6-prog .r1 .ic{width:20px;height:20px;color:var(--q2)}
+.s6-prog .r1 .ld,.s6-prog .r1 .okc{display:grid;place-items:center}
+.s6-prog .r1 .okc{display:none}.s6-prog .r1 .okc .ic{color:var(--teal)}
+.s6-prog:not(.done) .r1 .ld{animation:spin 1.1s linear infinite}
+.s6-prog.done .r1 .ld{display:none}.s6-prog.done .r1 .okc{display:grid}
+.s6-prog .r1 .cnt{margin-left:auto;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.s6-prog .r1 .cnt small{font-size:16px;color:var(--faint);font-weight:700}
+.s6-pbar{margin-top:10px;height:9px;border-radius:9px;background:var(--card-3);overflow:hidden;position:relative}
+.s6-pbar i{position:absolute;left:0;top:0;bottom:0;width:var(--pp,100%);border-radius:9px;background:var(--qg);background-size:200% 100%}
+.s6-pbar i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);background-size:50% 100%;background-repeat:no-repeat;animation:s6sh 1.4s linear infinite}
+@keyframes s6sh{0%{background-position:-60% 0}100%{background-position:160% 0}}
+.s6-prog.done .s6-pbar i::after{display:none}
+.s6-pages{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px;margin-top:9px}
+.s6-pages i{height:7px;border-radius:2px;background:var(--card-3);transition:background .25s}
+.s6-pages i.on{background:color-mix(in srgb,var(--q2) 55%,var(--card))}
+/* done line */
+.s6-done{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:14px;background:var(--teal-50);border:1px solid color-mix(in srgb,var(--teal) 30%,var(--line));color:var(--ink);font-size:18px;font-weight:700}
+.s6-done .ic{width:22px;height:22px;color:var(--teal)}
+.s6-done em{margin-left:auto;font-size:15px;font-weight:700;color:var(--teal)}
+/* composer */
+.s6-comp{flex:none;margin:0 22px 18px;display:flex;align-items:center;gap:12px;height:54px;padding:0 8px 0 18px;border-radius:16px;background:var(--card);border:1px solid var(--line-2);box-shadow:var(--shadow)}
+.s6-comp .ic.l{width:20px;height:20px;color:var(--q3)}
+.s6-comp span{flex:1;font-size:16px;color:var(--faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s6-comp i{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--qg);color:#fff;flex:none}
+.s6-comp i .ic{width:20px;height:20px}
+
+/* ---------- middle : generate hinge ---------- */
+.s6-hinge{position:relative;min-height:0}
+.s6-hinge>svg{position:absolute;left:0;top:0;width:104px;height:676px;overflow:visible}
+.s6-hub{position:absolute;left:26px;top:246px;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--qg);color:#fff;box-shadow:0 12px 30px color-mix(in srgb,var(--q2) 40%,transparent),0 0 0 6px color-mix(in srgb,var(--q2) 10%,transparent)}
+.s6-hub .ic{width:24px;height:24px}
+.s6-hub .ring-ping{inset:0;--f:var(--q2)}
+.s6-hl{position:absolute;left:0;right:0;top:310px;text-align:center;font-size:15px;font-weight:800;letter-spacing:.14em;color:var(--q2)}
+
+/* ---------- right ---------- */
+.s6-r{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:18px;min-height:0;min-width:0}
+.s6-top{display:grid;grid-template-columns:minmax(0,1fr) 272px;gap:22px;min-height:0}
+/* fan of real deck thumbnails */
+.s6-fanbox{position:relative;display:flex;flex-direction:column;min-height:0;min-width:0}
+.s6-fan{position:relative;flex:1;min-height:0;perspective:1600px;perspective-origin:50% 40%}
+.s6-glow{position:absolute;left:50%;top:52%;width:640px;height:380px;margin:-190px 0 0 -320px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--q2) 16%,transparent),transparent);pointer-events:none}
+.s6-floor{position:absolute;left:50%;bottom:6px;width:430px;height:30px;margin-left:-215px;border-radius:50%;background:radial-gradient(closest-side,rgba(30,40,120,.16),transparent);pointer-events:none}
+.s6-tc{position:absolute;left:50%;top:50%;width:440px;aspect-ratio:16/9;margin:-124px 0 0 -220px;border-radius:14px;overflow:hidden;background:var(--card-3);
+  box-shadow:0 2px 6px rgba(16,24,64,.10),0 26px 60px rgba(30,42,120,.24);outline:1px solid rgba(255,255,255,.55);outline-offset:-1px;
+  transform-style:preserve-3d;transition:transform 1.1s var(--ease),opacity 1.1s var(--ease),filter 1.1s var(--ease);will-change:transform}
+.s6-tc img{width:100%;height:100%;object-fit:cover;display:block}
+.s6-tc::after{content:'';position:absolute;inset:0;background:linear-gradient(125deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 38%);pointer-events:none}
+.s6-tc[data-pos="0"]{transform:translate3d(0,34px,0) rotateZ(0) scale(1);z-index:4}
+.s6-tc[data-pos="1"]{transform:translate3d(160px,0,-60px) rotateY(-24deg) rotateZ(6deg) scale(.8);z-index:3}
+.s6-tc[data-pos="3"]{transform:translate3d(-160px,0,-60px) rotateY(24deg) rotateZ(-6deg) scale(.8);z-index:2}
+.s6-tc[data-pos="2"]{transform:translate3d(20px,-96px,-140px) scale(.73);z-index:1;opacity:.7;filter:saturate(.8)}
+/* collapsed (generating) state before the deck fans out */
+.s6-fan:not(.open) .s6-tc{transform:translate3d(0,44px,0) scale(.96)}
+.s6-fan:not(.open) .s6-tc[data-pos="0"]{transform:translate3d(0,34px,0) scale(1)}
+.s6-scan{position:absolute;inset:0;z-index:5;opacity:0;pointer-events:none;transition:opacity .5s;
+  background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,var(--q1) 30%,transparent) 48%,color-mix(in srgb,var(--q3) 34%,transparent) 52%,transparent 70%);background-size:260% 100%;animation:s6scan 1.3s linear infinite}
+@keyframes s6scan{0%{background-position:120% 0}100%{background-position:-20% 0}}
+.s6-fan.gen .s6-tc[data-pos="0"] .s6-scan{opacity:1}
+.s6-flash{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.65) 50%,transparent 65%);background-size:250% 100%;background-position:150% 0}
+.s6-tc.flash .s6-flash{animation:s6flash 1s var(--ease) forwards}
+@keyframes s6flash{0%{opacity:1;background-position:150% 0}100%{opacity:0;background-position:-50% 0}}
+.s6-tag{position:absolute;left:12px;top:10px;z-index:7;height:26px;padding:0 10px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:800;background:color-mix(in srgb,var(--card) 92%,transparent);color:var(--ink);box-shadow:0 4px 14px rgba(10,20,60,.18);opacity:0;transition:opacity .4s}
+.s6-tc[data-pos="0"] .s6-tag{opacity:1}
+.s6-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--q2)}
+/* floating glass chips over the fan */
+.s6-fl{position:absolute;z-index:8;display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:16px}
+.s6-fl.card{padding:10px 15px}
+.s6-fl .ic-sq{width:38px;height:38px;border-radius:11px}
+.s6-fl .ic-sq .ic{width:19px;height:19px}
+.s6-fl b{display:block;font-size:18px;line-height:1.2;letter-spacing:-.01em}
+.s6-fl small{display:block;font-size:15px;color:var(--muted);font-weight:700}
+.s6-fl.f1{left:0;top:28px}
+.s6-fl.f2{right:0;bottom:22px}
+/* caption row */
+.s6-cap{flex:none;display:flex;align-items:center;gap:14px;padding:4px 6px 0}
+.s6-dots{display:flex;gap:6px;flex:none}
+.s6-dots i{width:8px;height:8px;border-radius:8px;background:var(--line-2);transition:all .5s var(--ease)}
+.s6-dots i.on{width:26px;background:var(--qg)}
+.s6-cap .t{font-size:16px;color:var(--muted);font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s6-cap .t b{color:var(--ink);font-weight:800}
+/* side column : formats + metrics */
+.s6-side{display:flex;flex-direction:column;gap:14px;min-height:0}
+.s6-fmt{padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;flex:none}
+.s6-fmt .k-eyebrow{font-size:14px;margin-bottom:4px}
+.s6-fr{display:flex;align-items:center;gap:12px;height:46px;padding:0 12px 0 8px;border-radius:13px;background:var(--card-2);border:1px solid var(--line);transition:all .5s var(--ease)}
+.s6-fr .ic-sq{width:32px;height:32px;border-radius:9px}
+.s6-fr .ic-sq .ic{width:17px;height:17px}
+.s6-fr b{font-size:18px;letter-spacing:-.01em}
+.s6-fr small{font-size:15px;color:var(--muted);font-weight:700;margin-left:-4px}
+.s6-fr .ck{margin-left:auto;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--card-3);color:transparent;transition:all .45s var(--ease)}
+.s6-fr .ck .ic{width:14px;height:14px}
+.s6-fr.on{background:var(--card);border-color:color-mix(in srgb,var(--f) 34%,var(--line));box-shadow:var(--shadow)}
+.s6-fr.on .ck{background:var(--teal);color:#fff;scale:1.06}
+.s6-met{flex:1;min-height:0;padding:16px 18px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.s6-met .top{display:flex;align-items:baseline;gap:10px}
+.s6-met .v{font-size:46px;font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.s6-met .v small{font-size:20px;margin-left:2px;color:var(--q2);-webkit-text-fill-color:var(--q2)}
+.s6-met .l{font-size:17px;font-weight:700;color:var(--ink)}
+.s6-comps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.s6-comps i{height:16px;border-radius:4px;background:color-mix(in srgb,var(--q2) 18%,var(--card));transition:background .3s,scale .3s var(--ease)}
+.s6-comps i.on{background:var(--qg)}
+html.js:not(.static) .s6-comps:not(.go) i{scale:.4;background:var(--card-3)}
+.s6-themes{display:flex;gap:10px}
+.s6-themes i{flex:1;height:30px;border-radius:9px;border:1px solid var(--line);position:relative;overflow:hidden}
+.s6-themes i::after{content:'';position:absolute;left:8px;right:40%;top:9px;height:4px;border-radius:3px;background:currentColor;opacity:.55}
+.s6-themes i::before{content:'';position:absolute;left:8px;right:58%;top:17px;height:4px;border-radius:3px;background:currentColor;opacity:.3}
+.s6-themes .t1{background:var(--card);color:var(--ink)}
+.s6-themes .t2{background:var(--navy);color:var(--card);border-color:transparent}
+.s6-themes .t3{background:var(--qg);color:var(--card);border-color:transparent}
+/* bottom feature cards */
+.s6-feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.s6-ft{display:flex;align-items:center;gap:14px;padding:20px 18px;min-width:0}
+.s6-ft .ic-sq{width:46px;height:46px;border-radius:13px;flex:none}
+.s6-ft .k-eyebrow{font-size:14px;letter-spacing:.14em}
+.s6-ft .tt{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.25;margin-top:2px}
+.s6-ft .dd{font-size:17px;color:var(--muted);line-height:1.4;margin-top:3px}
+</style>
+
+<!-- JS (per-slide, runs after base; wrap in deck:ready in your own slide) -->
+<script>
+document.addEventListener('deck:ready',function(e){
+  var STATIC=e.detail.static; function QEVERY(ms,fn){ if(STATIC) return null; return setInterval(fn,ms); }
+  var $=function(s){return document.querySelector(s)}, $$=function(s){return [].slice.call(document.querySelectorAll(s))};
+  /* build page ticks (60) and component tiles (13) */
+  var pages=$('#pages'), ph=''; for(var i=0;i<60;i++) ph+='<i></i>'; pages.innerHTML=ph;
+  var ticks=$$('#pages i');
+  var comps=$('#comps'), ch=''; for(var j=0;j<13;j++) ch+='<i style="transition-delay:'+(j*45)+'ms"></i>'; comps.innerHTML=ch;
+  var cTiles=$$('#comps i');
+  var msgs=$$('.s6-m'), steps=$$('#step>div'), slines=$$('#step>.ln'), pick=$('#tone [data-pick]'), fmts=$$('[data-f]');
+  var prog=$('#prog'), pn=$('#pn'), pbar=$('#pbar'), plab=$('#plab');
+  var fan=$('#fan'), cards=$$('#fan .s6-tc'), dots=$$('#dots i'), dname=$('#dname');
+
+  /* ---- fan carousel: slide-owned rotation (고창 cards first, other deck last) ---- */
+  var k=0;
+  function arrange(k){
+    cards.forEach(function(c,j){ c.setAttribute('data-pos',(j-k+cards.length)%cards.length); });
+    dots.forEach(function(d,j){ d.classList.toggle('on',j===k); });
+    dname.textContent=cards[k].getAttribute('data-name');
+    if(!STATIC){ var f=cards[k]; f.classList.remove('flash'); void f.offsetWidth; f.classList.add('flash'); }
+  }
+  cards.forEach(function(c,j){ c.addEventListener('click',function(){ k=j; arrange(j); }); c.style.cursor='pointer'; });
+  arrange(0);
+
+  /* ---- state helpers ---- */
+  function setStep(n){ steps.forEach(function(s,i){ s.classList.toggle('ok',i<n); s.classList.toggle('cur',i===n); }); slines.forEach(function(l,i){ l.classList.toggle('ok',i<n-1||(i<n&&n<4)); }); }
+  function setProg(v){ pn.textContent=v; pbar.style.setProperty('--pp',(v/60*100).toFixed(1)+'%'); ticks.forEach(function(t,i){ t.classList.toggle('on',i<v); }); }
+  function finalState(){
+    msgs.forEach(function(m){m.classList.add('in')}); pick.classList.add('on'); setStep(4);
+    setProg(60); plab.textContent='동적 슬라이드 생성'; prog.classList.add('done');
+    fmts.forEach(function(f){f.classList.add('on')}); comps.classList.add('go'); cTiles.forEach(function(t){t.classList.add('on')});
+    fan.classList.add('open'); fan.classList.remove('gen');
+  }
+  if(STATIC){ finalState(); return; }
+
+  /* ---- live: replayable conversation timeline (0.5s rhythm) ---- */
+  var T=[];
+  function at(ms,fn){ T.push(setTimeout(fn,ms)); }
+  function reset(){
+    T.forEach(function(id){ clearTimeout(id); clearInterval(id); }); T=[];
+    k=0; arrange(0);
+    msgs.forEach(function(m){m.classList.remove('in')}); pick.classList.remove('on'); setStep(0);
+    setProg(0); plab.textContent='동적 슬라이드 생성 중 …'; prog.classList.remove('done');
+    fmts.forEach(function(f){f.classList.remove('on')}); comps.classList.remove('go'); cTiles.forEach(function(t){t.classList.remove('on')});
+    fan.classList.remove('open'); fan.classList.add('gen');
+  }
+  function play(){
+    reset();
+    at(250,function(){ msgs[0].classList.add('in'); setStep(0); });
+    at(650,function(){ msgs[1].classList.add('in'); setStep(1); });
+    at(1000,function(){ pick.classList.add('on'); });
+    at(1150,function(){ msgs[2].classList.add('in'); setStep(3); });
+    /* generation: 0 → 42 (ease) · visible hold at 42 (≈1.3s) · 42 → 60 */
+    at(1400,function(){ msgs[3].classList.add('in');
+      var t0=Date.now(), iv=setInterval(function(){ var t=Date.now()-t0, v;
+        if(t<600){ var p=t/600; v=Math.round(42*(1-Math.pow(1-p,2))); }
+        else if(t<1900){ v=42; }
+        else { var q=Math.min(1,(t-1900)/300); v=Math.round(42+18*q*q); }
+        setProg(v);
+        if(t>=2200){ clearInterval(iv); setProg(60); plab.textContent='동적 슬라이드 생성'; prog.classList.add('done'); } },30); T.push(iv); });
+    at(1500,function(){ comps.classList.add('go'); cTiles.forEach(function(t){t.classList.add('on')}); });
+    at(2050,function(){ fan.classList.remove('gen'); fan.classList.add('open'); k=0; arrange(0); });
+    /* first switch at 4.8s, then every 3.2s */
+    at(1600,function(){ var fanIv=setInterval(function(){ k=(k+1)%cards.length; arrange(k); },3200); T.push(fanIv); });
+    at(3750,function(){ msgs[4].classList.add('in'); setStep(4); });
+    fmts.forEach(function(f,i){ at(2100+i*130,function(){ f.classList.add('on'); }); });
+  }
+  /* the 0..1500ms reveal blur hides the first frames; start when the window lands */
+  play();
+  QEVERY(16000,play);
+});
+</script>

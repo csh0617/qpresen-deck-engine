@@ -1,0 +1,193 @@
+<!-- EXEMPLAR (process): 공정 8단계 — 좌: 단계 리스트가 5초마다 자동 진행(일시정지 버튼), 우: 캔버스가 단계마다 다른 장면(모래→환원로→실리콘…)을 그려 전환. 색은 토큰(var(--brand) 등)으로 -->
+<!-- HTML (goes inside <section class="body">) -->
+<div class="proc-grid">
+    <ol class="steps" data-reveal id="steps"></ol>
+    <div class="proc-view" data-reveal>
+      <canvas class="c2d" id="c-proc"></canvas>
+      <div class="cap"><span id="proc-cap"></span><button id="proc-play">⏸ 자동 재생 중</button></div>
+    </div>
+  </div>
+
+<!-- CSS (per-slide) -->
+<style>
+/* layout rules from the reference deck's shared CSS (only those this slide uses) */
+canvas.c2d{display:block}
+/* slide 8: process */
+.proc-grid{display:grid;grid-template-columns:560px 1fr;gap:40px;align-items:start}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{position:relative;display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;padding:12px 16px 14px 12px;border-radius:14px;cursor:pointer;border:1px solid transparent;transition:background .2s,border-color .2s;overflow:hidden}
+.steps li:hover{background:rgba(255,255,255,.7)}
+.steps li.on{background:#fff;border-color:var(--line);box-shadow:0 8px 24px rgba(15,31,61,.06)}
+.steps .n{width:40px;height:40px;border-radius:12px;background:var(--si-soft);color:var(--ink2);font-weight:800;font-size:19px;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s}
+.steps li.on .n{background:var(--ink);color:#fff}
+.steps .t{font-size:21px;font-weight:700;line-height:1.3}
+.steps .d{font-size:16.5px;color:var(--ink2);line-height:1.45;max-height:0;overflow:hidden;opacity:0;transition:max-height .35s ease,opacity .35s ease,margin .35s}
+.steps li.on .d{max-height:90px;opacity:1;margin-top:4px}
+.steps li.done .n{background:#DCFCE7;color:#15803D}
+.steps .bar{position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--e);border-radius:2px}
+.proc-view{background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;position:relative}
+.proc-view canvas{display:block}
+.proc-view .cap{position:absolute;left:28px;right:28px;bottom:16px;font-size:19px;color:var(--ink2);display:flex;justify-content:space-between;align-items:center}
+.proc-view .cap button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer;color:var(--ink2)}
+#proc-play{display:none}
+/* page-specific */
+/* Page 12: premium light composition */
+.head{margin-bottom:30px}.proc-grid{grid-template-columns:440px 1fr;gap:32px}
+.steps{gap:5px;padding-right:12px}.steps li{border-radius:6px;padding:13px 12px 14px;grid-template-columns:40px 1fr;gap:12px;border-bottom:1px solid #E1E8F2}
+.steps li.on{background:#EEF4FF;border-color:#C6D7F4;box-shadow:none}.steps .n{border-radius:5px;width:38px;height:38px;background:#EDF2F8;font-size:18px}.steps li.on .n{background:#245BDD}
+.steps .t{font-size:22px;font-weight:750}.steps .d{font-size:18px;line-height:1.5}.steps li.on .d{max-height:150px;margin-top:9px}.steps .bar{height:3px}
+.proc-view{border-radius:10px;min-height:652px;background:#fff;border-color:#D7E2F0}.proc-view canvas{margin:0 auto}.proc-view .cap{left:28px;right:28px;bottom:18px;font-size:19px;padding-top:16px;border-top:1px solid #DFE7F2;gap:18px}.proc-view .cap button{flex:none;border-radius:5px;color:#245BDD;font-weight:650;padding:9px 14px}
+.head h1{font-size:57px}.head .lead{font-size:22px}.proc-grid{grid-template-columns:424px 1fr;gap:55px}.steps{gap:0;padding-right:0}.steps li{border:0;border-bottom:1px solid #cfdae4;border-radius:0;padding:15px 0 15px;grid-template-columns:40px 1fr;gap:18px;background:none!important}.steps li.on{box-shadow:none;border-color:#93aac0}.steps .n{width:34px;height:34px;border-radius:0;background:none;font-size:19px;font-weight:500;color:#879db1}.steps li.on .n{background:#477090;color:#fff}.steps .t{font-size:23px;font-weight:670;color:#3d5d77}.steps .d{font-size:18px;line-height:1.65;color:#8795a1}.steps .bar{height:1px;background:#7796b0}.proc-view{background:radial-gradient(ellipse at 50% 45%,#fff,#f0f4f755);border:0;border-radius:0;min-height:650px;box-shadow:none}.proc-view canvas{max-width:100%;height:auto!important}.proc-view .cap{left:18px;right:18px;bottom:12px;font-size:19px;padding-top:20px;border-color:#bdcdda;color:#668299}.proc-view .cap button{background:none;border:1px solid #c1d0dd;border-radius:0;font-size:16px;color:#7d95a8;padding:9px 15px}
+</style>
+
+<!-- JS (per-slide, runs after base; wrap in deck:ready in your own slide) -->
+<script>
+(function(){
+'use strict';
+const FONT='"Pretendard","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo","Noto Sans CJK KR","Segoe UI",sans-serif';
+const C={ink:'#253d53',ink2:'#6b8193',ink3:'#8b9caa',line:'#d6e0e8',e:'#377cad',eSoft:'#e3eef5',h:'#c57981',hSoft:'#f3e5e8',si:'#8ea0b0',siSoft:'#e6edf2',ox:'#c59a53',oxSoft:'#f3eddf',metal:'#bba487',metalSoft:'#eae3d8',ok:'#4a9782',violet:'#8373b5',bg:'#f4f7f9',lamp:'#c59a53'};
+const rand=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeIO=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const easeOut=t=>1-Math.pow(1-t,3);
+const TAU=Math.PI*2;
+
+/* (stage fit removed — the engine scales the stage) */
+
+/* ---------- canvas helpers ---------- */
+function cv(id,w,h){const c=document.getElementById(id);c.width=w*2;c.height=h*2;c.style.width=w+'px';c.style.height=h+'px';const g=c.getContext('2d');g.scale(2,2);return {c,g,w,h};}
+function ptr(c,e){const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*(c.width/2),y:(e.clientY-r.top)/r.height*(c.height/2)};}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function txt(g,s,x,y,size,color,weight,align,base){g.font=`${weight||500} ${size}px ${FONT}`;g.fillStyle=color||C.ink;g.textAlign=align||'left';g.textBaseline=base||'middle';g.fillText(s,x,y);}
+function dot(g,x,y,r,fill,stroke,lw){g.beginPath();g.arc(x,y,r,0,TAU);g.fillStyle=fill;g.fill();if(stroke){g.lineWidth=lw||2;g.strokeStyle=stroke;g.stroke();}}
+function arrow(g,x1,y1,x2,y2,color,lw,head){g.strokeStyle=color;g.fillStyle=color;g.lineWidth=lw||3;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();const a=Math.atan2(y2-y1,x2-x1),hd=head||12;g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-hd*Math.cos(a-.5),y2-hd*Math.sin(a-.5));g.lineTo(x2-hd*Math.cos(a+.5),y2-hd*Math.sin(a+.5));g.closePath();g.fill();}
+function electron(g,x,y,r){g.beginPath();g.arc(x,y,r||6,0,TAU);g.fillStyle=C.e;g.fill();g.lineWidth=2;g.strokeStyle='#fff';g.stroke();}
+function hole(g,x,y,r){g.beginPath();g.arc(x,y,r||6,0,TAU);g.fillStyle='#fff';g.fill();g.lineWidth=2.5;g.strokeStyle=C.h;g.stroke();}
+function setRange(el){const p=(el.value-el.min)/(el.max-el.min)*100;el.style.setProperty('--p',p+'%');}
+document.querySelectorAll('input[type=range]').forEach(el=>{setRange(el);el.addEventListener('input',()=>setRange(el));});
+
+
+const M={};
+M.process={init(){
+  const {c,g,w,h}=cv('c-proc',1126,600);
+  const STEPS=[
+    {t:'규사 정제',d:'모래(SiO₂)에서 산소를 떼어 내 아주 순수한 실리콘을 얻는다',cap:'모래 → 고온 환원 → 순수 실리콘 덩어리'},
+    {t:'잉곳 → 웨이퍼',d:'녹인 실리콘에서 씨앗 결정을 천천히 끌어올려 단결정 기둥을 만들고 얇게 썬다',cap:'회전하며 끌어올린 단결정 잉곳을 0.7 mm 두께로 절단'},
+    {t:'산화 · 감광액 도포',d:'표면에 절연막(산화막)을 만들고, 빛에 반응하는 감광액을 얇게 바른다',cap:'웨이퍼 단면 — 산화막 위에 감광액(보라)을 코팅'},
+    {t:'노광 (포토)',d:'회로 그림이 새겨진 마스크에 빛을 통과시켜 감광액에 패턴을 찍는다',cap:'빛이 마스크의 열린 곳만 통과해 감광액을 바꾼다'},
+    {t:'현상 · 식각',d:'빛을 받은 감광액을 녹여 내고, 드러난 막을 깎아 패턴을 새긴다',cap:'감광액이 열린 곳의 산화막만 깎여 나간다'},
+    {t:'이온 주입 (도핑)',d:'열린 곳에 인·붕소 이온을 쏘아 넣어 n형·p형 영역을 만든다',cap:'이온이 열린 곳으로만 들어가 n형 영역(파랑)이 생긴다'},
+    {t:'증착 · 배선',d:'금속과 절연막을 층층이 쌓아 트랜지스터를 잇는 배선을 만든다. 3~7단계를 수십 번 반복',cap:'금속 배선과 절연막을 여러 층 쌓아 회로를 잇는다'},
+    {t:'절단 · 패키징',d:'웨이퍼를 칩 단위로 자르고, 보호 케이스에 넣어 전기 단자를 붙인다',cap:'웨이퍼 한 장에서 수백 개의 칩이 나온다'}];
+  const ol=document.getElementById('steps');
+  STEPS.forEach((s,i)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${i+1}</span><div><div class="t">${s.t}</div><div class="d">${s.d}</div></div><span class="bar"></span>`;li.addEventListener('click',()=>{set(i);});ol.appendChild(li);});
+  const lis=[...ol.children],cap=document.getElementById('proc-cap'),btn=document.getElementById('proc-play');
+  const S={i:0,t:0,play:true,dur:5};this.S=S;
+  const set=(i)=>{S.i=(i+STEPS.length)%STEPS.length;S.t=0;lis.forEach((li,k)=>{li.classList.toggle('on',k===S.i);li.classList.toggle('done',k<S.i);li.querySelector('.bar').style.width='0';});cap.textContent=STEPS[S.i].cap;};
+  btn.addEventListener('click',()=>{S.play=!S.play;btn.textContent=S.play?'⏸ 자동 재생 중':'▶ 자동 재생';});
+  set(0);this.reset=()=>set(0);
+  // drawing helpers
+  const SX0=180,SX1=950,ST=330,SB=440;const OPEN=[[330,420],[560,650],[770,860]];
+  const substrate=(lbl)=>{g.fillStyle='#D9E0EB';g.fillRect(SX0,ST,SX1-SX0,SB-ST);g.strokeStyle='#B7C2D3';g.lineWidth=2;g.strokeRect(SX0,ST,SX1-SX0,SB-ST);txt(g,lbl||'실리콘 웨이퍼 (단면 확대)',SX0+16,SB-22,16,C.ink2,700);};
+  const oxide=(k,gaps)=>{g.fillStyle=C.ox;if(!gaps){g.fillRect(SX0,ST-22*k,SX1-SX0,22*k);return;}let x=SX0;OPEN.forEach(([a,b])=>{g.fillRect(x,ST-22,a-x,22);x=b;});g.fillRect(x,ST-22,SX1-x,22);};
+  const resist=(k,exposed,gaps)=>{const y=ST-22-26*k;if(!gaps){g.fillStyle='#b4a4d2';g.fillRect(SX0,y,SX1-SX0,26*k);if(exposed>0){g.fillStyle=`rgba(237,233,254,${exposed})`;OPEN.forEach(([a,b])=>g.fillRect(a,y,b-a,26*k));}return;}
+    g.fillStyle='#b4a4d2';let x=SX0;OPEN.forEach(([a,b])=>{g.fillRect(x,y,a-x,26);x=b;});g.fillRect(x,y,SX1-x,26);};
+  const nplus=(k)=>{g.fillStyle=`rgba(150,190,215,${k})`;OPEN.forEach(([a,b])=>{rr(g,a-6,ST,b-a+12,44*k,10);g.fill();});};
+  const mask=(y)=>{g.fillStyle='#1F2A44';let x=SX0-20;OPEN.forEach(([a,b])=>{g.fillRect(x,y,a-x,18);x=b;});g.fillRect(x,y,SX1+20-x,18);txt(g,'마스크 (회로 그림)',SX1+30,y+9,16,C.ink2,700);};
+  const layerLabel=(y,s,col)=>{txt(g,s,SX0-14,y,16,col||C.ink2,700,'right');};
+  const flame=(x,y,t)=>{for(let i=0;i<5;i++){const k=(t*.55+i*.2)%1;g.beginPath();g.moveTo(x-20+i*10,y);g.bezierCurveTo(x-25+i*10,y-18,x-15+i*10,y-32,x-20+i*10,y-52);g.lineWidth=1.5;g.strokeStyle=`rgba(168,128,64,${.16+.26*Math.sin(k*Math.PI)})`;g.stroke();}};
+  const wafer=(cx,cy,R,grid,hiDie)=>{g.beginPath();g.arc(cx,cy,R,0,TAU);g.fillStyle='#E7ECF4';g.fill();g.strokeStyle='#9AA7BD';g.lineWidth=2.5;g.stroke();
+    if(grid){const s=grid;g.strokeStyle='#B7C2D3';g.lineWidth=1;for(let x=-R;x<=R;x+=s)for(let y=-R;y<=R;y+=s){if(Math.hypot(x+s/2,y+s/2)<R-8){g.fillStyle='#F3F6FA';g.fillRect(cx+x+2,cy+y+2,s-4,s-4);g.strokeRect(cx+x+2,cy+y+2,s-4,s-4);}}
+      if(hiDie){g.fillStyle=C.e;g.fillRect(cx+hiDie[0]*s+2,cy+hiDie[1]*s+2,s-4,s-4);}}};
+  const chipPkg=(x,y,k)=>{g.fillStyle='#2B3648';rr(g,x,y,150,150,12);g.fill();g.fillStyle='#8FA0BC';for(let i=0;i<8;i++){g.fillRect(x-22,y+12+i*17,22,8);g.fillRect(x+150,y+12+i*17,22,8);}
+    g.fillStyle=C.e;g.globalAlpha=k;g.fillRect(x+45,y+45,60,60);g.globalAlpha=1;txt(g,'칩',x+75,y+120,18,'#fff',800,'center');};
+  const draw=(i,t,clock)=>{g.clearRect(0,0,w,h);const e=easeOut(clamp(t,0,1));const zoom=(i===0);if(zoom){g.save();g.translate(w/2,290);g.scale(1.22,1.22);g.translate(-w/2,-290);}
+    switch(i){
+      case 0:{// sand → furnace → silicon
+        const sx=250,sy=330;g.fillStyle='#d9cfb9';g.beginPath();g.moveTo(sx-120,sy);g.quadraticCurveTo(sx,sy-160,sx+120,sy);g.closePath();g.fill();
+        g.fillStyle='#D6B77A';for(let k=0;k<70;k++){const a=k*1.37,rad=((k*37)%100)/100;const px=sx+Math.cos(a)*rad*100,py=sy-Math.abs(Math.sin(a))*rad*60-6;if(py<sy)dot(g,px,py,2.5,'#ad9b7c');}
+        txt(g,'모래 (규사, SiO₂)',sx,sy+36,20,C.ink,800,'center');txt(g,'지구에 가장 흔한 재료',sx,sy+62,15,C.ink2,500,'center');
+        // furnace
+        const fx=560,fy=250;const steel=g.createLinearGradient(fx-90,fy,fx+90,fy+170);steel.addColorStop(0,'#607a8d');steel.addColorStop(.5,'#a7bac8');steel.addColorStop(1,'#4d6a80');g.fillStyle=steel;rr(g,fx-90,fy-10,180,170,2);g.fill();const heat=g.createLinearGradient(fx,fy+10,fx,fy+120);heat.addColorStop(0,'#eff0eb');heat.addColorStop(.55,'#e2d3b5');heat.addColorStop(1,'#c9a86a');g.fillStyle=heat;rr(g,fx-70,fy+10,140,110,1);g.fill();
+        flame(fx-30,fy+120,clock);flame(fx+30,fy+120,clock+.5);g.fillStyle='#BBB';g.fillRect(fx-40,fy+96,80,16);
+        txt(g,'고온 환원로 (약 2,000 °C)',fx,fy+192,18,C.ink,800,'center');txt(g,'탄소와 반응시켜 산소를 떼어 낸다: SiO₂ + 2C → Si + 2CO',fx,fy+218,15,C.ink2,500,'center');
+        // silicon chunk
+        const cx=900,cy=300;g.fillStyle='#8ea0b0';g.beginPath();g.moveTo(cx-80,cy+40);g.lineTo(cx-50,cy-50);g.lineTo(cx+20,cy-70);g.lineTo(cx+80,cy-20);g.lineTo(cx+70,cy+50);g.lineTo(cx-20,cy+70);g.closePath();g.fill();
+        g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.moveTo(cx-50,cy-50);g.lineTo(cx+20,cy-70);g.lineTo(cx+30,cy-10);g.lineTo(cx-30,cy+5);g.closePath();g.fill();
+        txt(g,'순수 실리콘 (순도 9N)',cx,cy+100,20,C.ink,800,'center');txt(g,'불순물 10억 개 중 1개 이하',cx,cy+126,15,C.ink2,500,'center');
+        // moving arrows
+        g.setLineDash([]);arrow(g,390,300,455,300,C.ink3,1.5,9);arrow(g,665,300,800,300,C.ink3,1.5,9);break;}
+      case 1:{// crystal pulling
+        const cx=330,cy=300;g.fillStyle='#9AA7BD';g.beginPath();g.moveTo(cx-120,cy-40);g.lineTo(cx-120,cy+120);g.quadraticCurveTo(cx,cy+190,cx+120,cy+120);g.lineTo(cx+120,cy-40);g.lineTo(cx+100,cy-40);g.lineTo(cx+100,cy+110);g.quadraticCurveTo(cx,cy+160,cx-100,cy+110);g.lineTo(cx-100,cy-40);g.closePath();g.fill();
+        g.fillStyle='#d7a086';g.beginPath();g.moveTo(cx-100,cy-10);g.lineTo(cx-100,cy+110);g.quadraticCurveTo(cx,cy+160,cx+100,cy+110);g.lineTo(cx+100,cy-10);g.closePath();g.fill();
+        g.save();g.shadowColor='rgba(197,143,99,.42)';g.shadowBlur=30;g.fillStyle='rgba(197,143,99,.28)';g.fillRect(cx-100,cy-10,200,20);g.restore();
+        // ingot growing, pulled up
+        const len=lerp(0,230,clamp(e/.7,0,1));const top=cy-10-len;const rad=lerp(12,58,clamp(e/.7,0,1));
+        g.fillStyle='#8ea0b0';g.fillRect(cx-4,60,8,Math.max(0,top-60));g.beginPath();g.moveTo(cx-12,top);g.lineTo(cx+12,top);g.lineTo(cx+rad,top+40);g.lineTo(cx+rad,cy-6);g.lineTo(cx-rad,cy-6);g.lineTo(cx-rad,top+40);g.closePath();g.fill();
+        g.fillStyle='rgba(255,255,255,.3)';g.fillRect(cx-rad+8,top+40,14,Math.max(0,cy-6-top-40));
+        arrow(g,cx+120,220,cx+120,120,C.ink,3,12);txt(g,'천천히 끌어올리며 회전',cx+135,170,16,C.ink2,600);
+        txt(g,'녹은 실리콘 (약 1,420 °C)',cx,cy+205,18,C.ink,800,'center');txt(g,'씨앗 결정을 담갔다 빼면 같은 방향으로 원자가 붙어 하나의 결정이 된다',cx,cy+232,15,C.ink2,500,'center');
+        // slicing on right
+        const k=clamp((e-.55)/.45,0,1);if(k>0){const ix=690,iy=250;g.globalAlpha=k;g.fillStyle='#8ea0b0';rr(g,ix,iy-45,300,90,45);g.fill();g.fillStyle='#A9B5C8';g.beginPath();g.ellipse(ix+300,iy,18,45,0,0,TAU);g.fill();
+          g.strokeStyle='#fff';g.lineWidth=2;const cuts=Math.floor(k*12);for(let s=0;s<cuts;s++){const x=ix+40+s*20;g.beginPath();g.moveTo(x,iy-45);g.lineTo(x,iy+45);g.stroke();}
+          const wy=440;for(let s=0;s<Math.min(cuts,5);s++){g.beginPath();g.ellipse(ix+60+s*52,wy,22,48,0,0,TAU);g.fillStyle='#E7ECF4';g.fill();g.strokeStyle='#9AA7BD';g.lineWidth=2;g.stroke();}
+          txt(g,'잉곳 (단결정 기둥, 지름 300 mm)',ix+150,iy+80,18,C.ink,800,'center');txt(g,'다이아몬드 톱으로 얇게 썰어 웨이퍼로',ix+150,wy+72,15,C.ink2,500,'center');g.globalAlpha=1;}break;}
+      case 2:{substrate();const k1=clamp(e/.45,0,1),k2=clamp((e-.5)/.5,0,1);oxide(k1);if(k1>0)layerLabel(ST-11,'산화막 (SiO₂, 절연)','#a69171');
+        if(k2>0){resist(k2);layerLabel(ST-22-13,'감광액 (빛에 반응)','#73609c');
+          // dispenser
+          g.fillStyle='#4B5A75';g.fillRect(560,120,24,60);g.fillStyle='#b4a4d2';g.beginPath();g.moveTo(566,180);g.lineTo(578,180);g.lineTo(572,180+lerp(0,90,k2));g.closePath();g.fill();
+          txt(g,'웨이퍼를 빠르게 돌려 고르게 편다 (스핀 코팅)',560,100,16,C.ink2,600,'center');
+          for(let i=0;i<2;i++){const a=clock*3+i*Math.PI;g.strokeStyle='#8b9caa';g.lineWidth=2.5;g.beginPath();g.ellipse(565,ST-22-26-4,lerp(40,90,k2),8,0,a,a+2);g.stroke();}}
+        else{g.fillStyle='rgba(255,197,61,.35)';for(let i=0;i<8;i++){const x=SX0+40+i*100,y=ST-40-((clock*60+i*23)%60);txt(g,'O₂',x,y,14,'#a69171',700,'center');}txt(g,'고온의 산소 속에서 표면이 산화막으로 변한다',565,120,16,C.ink2,600,'center');}
+        break;}
+      case 3:{substrate();oxide(1);resist(1,clamp((e-.35)/.5,0,1));mask(150);layerLabel(ST-11,'산화막','#a69171');layerLabel(ST-35,'감광액','#73609c');
+        // UV rays
+        const ry=lerp(70,150,clamp(e/.3,0,1));g.strokeStyle='rgba(131,115,181,.68)';g.lineWidth=3;
+        for(let x=SX0;x<=SX1;x+=24){g.beginPath();g.moveTo(x,60);g.lineTo(x,ry);g.stroke();}
+        if(e>.3){const ry2=lerp(168,ST-48,clamp((e-.3)/.3,0,1));OPEN.forEach(([a,b])=>{for(let x=a+8;x<b;x+=20){g.beginPath();g.moveTo(x,168);g.lineTo(x,ry2);g.stroke();}});}
+        g.fillStyle='#8373b5';rr(g,SX0-20,30,SX1-SX0+40,30,10);g.fill();txt(g,'빛 (자외선, EUV)',565,45,18,'#fff',800,'center');
+        txt(g,'빛을 받은 부분(연한 보라)만 성질이 바뀐다',565,ST+70,16,C.ink2,600,'center');break;}
+      case 4:{substrate();const k1=clamp(e/.4,0,1),k2=clamp((e-.45)/.55,0,1);
+        // oxide with gaps growing
+        g.fillStyle=C.ox;let x=SX0;OPEN.forEach(([a,b])=>{g.fillRect(x,ST-22,a-x,22);const m=(a+b)/2,hw=(b-a)/2;g.fillRect(a,ST-22,(b-a),22);g.fillStyle='#fff';g.fillRect(m-hw*k2,ST-22,hw*2*k2,22);g.fillStyle=C.ox;x=b;});g.fillRect(x,ST-22,SX1-x,22);
+        // resist with exposed regions dissolving
+        g.fillStyle='#b4a4d2';x=SX0;OPEN.forEach(([a,b])=>{g.fillRect(x,ST-48,a-x,26);g.fillStyle=`rgba(237,233,254,${1-k1})`;g.fillRect(a,ST-48,b-a,26*(1-k1));g.fillStyle='#b4a4d2';x=b;});g.fillRect(x,ST-48,SX1-x,26);
+        layerLabel(ST-11,'산화막','#a69171');layerLabel(ST-35,'감광액','#73609c');
+        if(k1<1){txt(g,'현상액으로 빛 받은 감광액을 씻어 낸다',565,120,16,C.ink2,600,'center');for(let i=0;i<6;i++){const dx=SX0+80+i*130,dy=140+((clock*80+i*40)%120);dot(g,dx,dy,4,'#93C5FD');}}
+        else{txt(g,'플라즈마(이온)로 드러난 산화막을 깎아 낸다 — 식각',565,120,16,C.ink2,600,'center');OPEN.forEach(([a,b])=>{for(let xx=a+12;xx<b;xx+=22){const yy=150+((clock*140+xx)%150);arrow(g,xx,yy,xx,yy+18,'#8b9caa',2,8);}});}
+        break;}
+      case 5:{substrate();oxide(1,true);const k1=clamp(e/.7,0,1),k2=clamp((e-.75)/.25,0,1);nplus(k1);
+        if(k2<1){g.globalAlpha=1-k2;resist(1,0,true);g.globalAlpha=1;}
+        layerLabel(ST-11,'산화막','#a69171');if(k1>.3)layerLabel(ST+22,'n형 영역 (도핑됨)','#377cad');
+        if(k1<1){g.fillStyle='#4B5A75';rr(g,SX0-20,40,SX1-SX0+40,26,10);g.fill();txt(g,'이온 주입기 — 인(P) 이온을 가속해 쏜다',565,53,16,'#fff',800,'center');
+          for(let i=0;i<40;i++){const [a,b]=OPEN[i%3];const xx=a+10+((i*53)%(b-a-20));const yy=70+((clock*260+i*37)%(ST-40-70));dot(g,xx,yy,3.5,C.e);}
+          for(let i=0;i<24;i++){const xx=SX0+10+((i*67)%(SX1-SX0-20));const yy=70+((clock*260+i*53)%(ST-48-70));if(!OPEN.some(([a,b])=>xx>a&&xx<b))dot(g,xx,yy,3.5,'rgba(47,107,255,.35)');}
+          txt(g,'감광액이 막은 곳에는 들어가지 못한다',565,ST+70,16,C.ink2,600,'center');}
+        else txt(g,'남은 감광액을 벗겨 내면 도핑 패턴만 남는다',565,120,16,C.ink2,600,'center');break;}
+      case 6:{substrate();oxide(1,true);nplus(1);const k1=clamp(e/.35,0,1),k2=clamp((e-.4)/.3,0,1),k3=clamp((e-.72)/.28,0,1);
+        g.fillStyle=C.metal;OPEN.forEach(([a,b])=>{g.fillRect(a,ST-22*k1,b-a,22*k1);});
+        if(k2>0){g.fillStyle=C.metal;g.fillRect(OPEN[0][0],ST-22-18,(OPEN[1][1]-OPEN[0][0])*k2,18);g.fillRect(OPEN[2][0],ST-22-18,(OPEN[2][1]-OPEN[2][0])*k2,18);}
+        if(k3>0){g.fillStyle='rgba(217,224,235,.9)';g.fillRect(SX0,ST-40-30*k3,SX1-SX0,30*k3);g.fillStyle=C.metal;const y2=ST-40-30-16;g.fillRect(OPEN[1][0],y2,(OPEN[2][1]-OPEN[1][0])*k3,16);g.fillRect(OPEN[1][0]+20,y2+16,26,30*k3);}
+        layerLabel(ST-11,'금속 플러그','#9A3412');if(k2>.2)layerLabel(ST-31,'1층 배선','#9A3412');if(k3>.5){layerLabel(ST-55,'절연막',C.ink2);layerLabel(ST-78,'2층 배선','#9A3412');}
+        txt(g,k3>0?'절연막을 덮고 그 위에 다시 배선 — 실제 칩은 10층 이상':k2>0?'구리·알루미늄 배선으로 트랜지스터끼리 연결':'열린 구멍에 금속을 채워 전극을 만든다',565,120,16,C.ink2,600,'center');
+        if(k3>=1){txt(g,'포토 → 식각 → 주입 → 증착을 반복하면 한 층씩 올라간다',565,ST+70,16,C.ink2,600,'center');}break;}
+      case 7:{const cx=300,cy=290;const k1=clamp(e/.5,0,1),k2=clamp((e-.5)/.5,0,1);wafer(cx,cy,180,36,k1>0?[1,-1]:null);
+        txt(g,'웨이퍼 (지름 300 mm) — 칩 수백 개',cx,cy+215,18,C.ink,800,'center');
+        // die moving
+        const dx=lerp(cx+36+2,700,easeOut(k1)),dy=lerp(cy-36+2,290,easeOut(k1)),ds=lerp(32,60,easeOut(k1));
+        if(k2<1){g.fillStyle=C.e;g.fillRect(dx,dy,ds,ds);}
+        if(k1>=1){chipPkg(720,240,k2);txt(g,'패키징 — 케이스에 넣고 다리(단자)를 붙인다',800,430,18,C.ink,800,'center');txt(g,'이제 기판에 꽂아 쓸 수 있는 반도체 칩',800,458,15,C.ink2,500,'center');}
+        else{arrow(g,cx+200,cy,660,cy,C.ink3,3,12);txt(g,'다이아몬드 날로 잘라 낸다',cx+330,cy-26,15,C.ink2,600,'center');}break;}
+    }
+    if(zoom)g.restore();
+    txt(g,`${i+1} / ${STEPS.length}`,w-24,26,15,C.ink3,700,'right');
+  };
+  this.tick=(dt,t)=>{if(S.play){S.t+=dt/S.dur;lis[S.i].querySelector('.bar').style.width=(clamp(S.t,0,1)*100)+'%';if(S.t>=1)set(S.i+1);}draw(S.i,S.play?S.t:1,t);};
+  this.enter=()=>{S.play=true;btn.textContent='⏸ 자동 재생 중';};
+}};
+
+
+window.SLIDE={init(){M.process.init();this.tick=(dt,t)=>M.process.tick(dt,t);}};
+})();
+</script>

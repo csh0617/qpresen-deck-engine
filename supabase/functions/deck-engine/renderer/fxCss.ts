@@ -372,4 +372,81 @@ html.static .gsteps li{translate:0 0}
 @keyframes dot{0%,80%,100%{opacity:.25;translate:0 0}40%{opacity:1;translate:0 -4px}}
 @keyframes caret{50%{opacity:0}}
 html.static .tilt{transform:none!important}
+
+/* ===== device kit (ported from the Qpresen IR deck) — frames for real-looking screens ===== */
+.dv-phone{--pw:300px;position:relative;width:var(--pw);padding:calc(var(--pw)*.034);border-radius:calc(var(--pw)*.17);background:linear-gradient(150deg,#39425F 0%,#0C1124 34%,#151B33 70%,#2B3352 100%);box-shadow:inset 0 0 0 1.5px #4A5478,inset 0 0 0 4px #0A0E1D,0 34px 80px rgba(24,32,110,.26),0 10px 22px rgba(24,32,110,.16)}
+.dv-phone::before{content:'';position:absolute;right:-3px;top:22%;width:3px;height:12%;border-radius:0 3px 3px 0;background:#2C3454}
+.dv-phone::after{content:'';position:absolute;left:-3px;top:18%;width:3px;height:7%;border-radius:3px 0 0 3px;background:#2C3454}
+.dv-phone .scr{position:relative;border-radius:calc(var(--pw)*.135);overflow:hidden;background:#fff;aspect-ratio:640/1571;color:var(--ink)}
+.dv-phone .scr>img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.dv-phone .cam{position:absolute;top:calc(var(--pw)*.035);left:50%;translate:-50% 0;width:calc(var(--pw)*.034);height:calc(var(--pw)*.034);border-radius:50%;background:#0A0E1D;box-shadow:0 0 0 2px #1B2240;z-index:4}
+.dv-phone.tilt3d{transform:perspective(1600px) rotateY(var(--ry,-14deg)) rotateX(var(--rx,6deg)) rotateZ(var(--rz,2deg));transition:transform .8s var(--ease)}
+.dv-browser{border-radius:18px;overflow:hidden;background:var(--card);box-shadow:var(--shadow-lg);border:1px solid var(--line)}
+.dv-browser .bar{height:38px;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--card-2);border-bottom:1px solid var(--line)}
+.dv-browser .bar i{width:11px;height:11px;border-radius:50%;background:#FF5F57}
+.dv-browser .bar i:nth-child(2){background:#FEBC2E}
+.dv-browser .bar i:nth-child(3){background:#28C840}
+.dv-browser .bar .url{margin-left:12px;flex:1;height:24px;border-radius:7px;background:var(--card);border:1px solid var(--line);font-size:14px;color:var(--muted);display:flex;align-items:center;padding:0 12px;gap:6px;font-weight:600}
+.dv-browser .vw{position:relative;overflow:hidden}
+.dv-browser .vw>img{width:100%;display:block}
+.dv-screen{position:relative;border-radius:16px;overflow:hidden;background:#0A1030;box-shadow:0 0 0 10px #10162E,0 0 0 11px #2A3256,var(--shadow-xl);color:#fff}
+.dv-stand{width:180px;height:16px;margin:16px auto 0;border-radius:0 0 12px 12px;background:linear-gradient(#D8DEEA,#C3CBDB)}
+.dv-hud{font-family:var(--font);color:#9BE15D;background:#050A06;border-radius:18px;padding:18px 22px;box-shadow:inset 0 0 0 1px #1E3A1A,0 20px 50px rgba(0,0,0,.25);text-shadow:0 0 8px rgba(155,225,93,.45)}
+.dv-glasses{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:34px;padding:16px 22px 22px;border-radius:38% 38% 44% 44% / 30% 30% 50% 50%;background:linear-gradient(180deg,#1B2235,#0B0F1E);box-shadow:inset 0 0 0 2px #3A4466,0 24px 60px rgba(0,0,0,.3)}
+.dv-glasses::before{content:'';position:absolute;left:50%;top:14px;width:34px;height:14px;translate:-50% 0;border-radius:0 0 12px 12px;background:#2C3454}
+.dv-glasses>.lens{min-height:220px;border-radius:26% 26% 36% 36% / 24% 24% 44% 44%;background:#050A06;color:#9BE15D;padding:18px 20px;box-shadow:inset 0 0 0 1px #1E3A1A;text-shadow:0 0 8px rgba(155,225,93,.45);font-size:15px;line-height:1.5}
+
+/* ===== carousel: [data-carousel] host, children .ci get data-pos (0=front) — fan/stack layouts ===== */
+.carousel{position:relative;perspective:1600px;transform-style:preserve-3d}
+.carousel>.ci{position:absolute;left:50%;top:50%;width:var(--cw,440px);aspect-ratio:16/9;margin:calc(var(--cw,440px)*-.28) 0 0 calc(var(--cw,440px)*-.5);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:0 2px 6px rgba(16,24,64,.10),0 26px 60px rgba(30,40,120,.22);transition:transform .75s var(--ease),opacity .6s var(--ease),filter .6s;cursor:pointer;transform-style:preserve-3d}
+.carousel>.ci>img{width:100%;height:100%;object-fit:cover;display:block}
+.carousel>.ci::after{content:'';position:absolute;inset:0;background:linear-gradient(125deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 38%);pointer-events:none}
+.carousel>.ci[data-pos="0"]{transform:translate3d(0,34px,0) scale(1);z-index:6}
+.carousel>.ci[data-pos="1"]{transform:translate3d(38%,0,-60px) rotateY(-24deg) rotateZ(6deg) scale(.8);z-index:5}
+.carousel>.ci[data-pos="2"]{transform:translate3d(6%,-26%,-140px) scale(.73);z-index:3;opacity:.72;filter:saturate(.8)}
+.carousel>.ci[data-pos="3"]{transform:translate3d(-38%,0,-60px) rotateY(24deg) rotateZ(-6deg) scale(.8);z-index:5}
+.carousel>.ci[data-pos="4"],.carousel>.ci[data-pos="5"],.carousel>.ci[data-pos="6"],.carousel>.ci[data-pos="7"]{transform:translate3d(0,-40%,-240px) scale(.6);opacity:0;z-index:1}
+.carousel.stack>.ci[data-pos="1"]{transform:translate3d(6%,-10%,-60px) scale(.92);z-index:5;opacity:.9}
+.carousel.stack>.ci[data-pos="2"]{transform:translate3d(12%,-20%,-120px) scale(.84);z-index:4;opacity:.7}
+.carousel.stack>.ci[data-pos="3"]{transform:translate3d(18%,-30%,-180px) scale(.76);z-index:3;opacity:.5}
+.carousel>.ci .ci-tag{position:absolute;left:12px;bottom:12px;padding:5px 10px;border-radius:999px;background:rgba(10,14,30,.72);color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .4s}
+.carousel>.ci[data-pos="0"] .ci-tag{opacity:1}
+.carousel>.ci.flash::before{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);animation:ciflash 1s var(--ease) forwards;z-index:2;pointer-events:none}
+@keyframes ciflash{to{transform:translateX(120%)}}
+.car-dots{display:flex;gap:7px;justify-content:center;align-items:center}
+.car-dots i{width:7px;height:7px;border-radius:999px;background:var(--line-2);transition:all .35s}
+.car-dots i.on{width:22px;background:var(--qg)}
+html.static .carousel>.ci{transition:none}
+
+/* ===== word cycler: [data-words='["…","…"]'] (type|fade) + waveform bars [data-wave] ===== */
+[data-words]{display:inline-block;min-width:1ch}
+[data-words].typing::after{content:'';display:inline-block;width:2px;height:.95em;margin-left:2px;vertical-align:-.12em;background:currentColor;animation:caret 1s steps(2) infinite}
+[data-words].fade-out{opacity:0;transition:opacity .25s}
+[data-words].fade-in{opacity:1;transition:opacity .35s}
+.wave{display:flex;align-items:center;gap:3px;height:28px}
+.wave i{width:3px;border-radius:2px;background:currentColor;height:var(--h,40%);opacity:.85;animation:wavebar 1.1s ease-in-out infinite alternate;animation-delay:var(--dl,0ms)}
+.wave.mute i{animation-play-state:paused;opacity:.35}
+@keyframes wavebar{0%{transform:scaleY(.35)}100%{transform:scaleY(1)}}
+html.static .wave i{animation:none}
+
+/* ===== packets along an SVG path: <path data-packets="3" data-dur="3s"> (fxJs adds circles with animateMotion) ===== */
+.packet{fill:var(--f);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--f) 70%,transparent))}
+
+/* ===== panel switch: [data-switch="#cycleHost"] container — children follow the host's cycle index (.on) ===== */
+[data-switch]>*{display:none}
+[data-switch]>.on{display:block}
+[data-switch].fade>*{display:block;position:absolute;inset:0;opacity:0;transition:opacity .45s var(--ease);pointer-events:none}
+[data-switch].fade>.on{opacity:1;pointer-events:auto}
+
+/* ===== 3D scene layer (Three.js scene kit: terrain / network / cubes / fireflies) ===== */
+.fx-3d{position:fixed!important;inset:0;z-index:1;pointer-events:none;opacity:var(--fx-op,.95)} /* fixed = full stage even when mounted inside .body after a backdrop */
+.fx-3d canvas{display:block;width:100%;height:100%}
+
+/* ===== small status helpers (from the IR deck): .live dot, .floaty hover-float, .status pill ===== */
+.live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.14em;color:#2BD67B}
+.live::before{content:'';width:8px;height:8px;border-radius:50%;background:#2BD67B;box-shadow:0 0 0 0 rgba(43,214,123,.6);animation:livedot 1.6s ease-out infinite}
+@keyframes livedot{70%{box-shadow:0 0 0 9px rgba(43,214,123,0)}100%{box-shadow:0 0 0 0 rgba(43,214,123,0)}}
+.floaty{animation:floaty 5s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+html.static .floaty,html.static .live::before{animation:none}
 `;
